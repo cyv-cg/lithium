@@ -8,7 +8,7 @@ public class EnforceInheritanceTests {
 	[Fact]
 	public void ConstructorTest01() {
 		Type parentType = typeof(string);
-		EnforceInheritance attribute = new EnforceInheritance(parentType);
+		EnforceInheritance<string> attribute = new EnforceInheritance<string>();
 
 		Assert.Equal(parentType, attribute.ParentType);
 	}
