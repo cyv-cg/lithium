@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<ProjectReference Include="..\Lithium.Strings\Lithium.Strings.csproj" />
+		<ProjectReference Include="..\Lithium.Core\Lithium.Core.csproj" />
+	</ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<RootNamespace>Lithium</RootNamespace>
+	</PropertyGroup>
+</Project>

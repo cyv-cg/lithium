@@ -1,0 +1,8 @@
+**/appsettings*.json
+**/launchSettings.json
+
+**/obj
+**/bin
+
+*.code-workspace
+.vscode
