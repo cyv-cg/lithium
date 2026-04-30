@@ -1,0 +1,7 @@
+<Defs>
+	<Lithium.Defs.Tests.MockDef10>
+		<key>MockDef</key>
+		<label>MockDef_Label</label>
+		<typeField>System.Action</typeField>
+	</Lithium.Defs.Tests.MockDef10>
+</Defs>

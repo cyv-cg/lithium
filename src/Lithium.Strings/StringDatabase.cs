@@ -21,13 +21,11 @@ public static class StringDatabase {
 			doc.LoadXml(contents);
 
 			XmlNode? stringsNode = doc.SelectSingleNode("/Strings");
-			if (stringsNode != null) {
-				foreach (XmlNode entry in stringsNode.ChildNodes) {
-					AddToDB(entry);
-				}
+			if (stringsNode == null) {
+				continue;
 			}
-			else {
-				throw new Exception($"No 'Strings' node found in {path}.");
+			foreach (XmlNode entry in stringsNode.ChildNodes) {
+				AddToDB(entry);
 			}
 		}
 	}

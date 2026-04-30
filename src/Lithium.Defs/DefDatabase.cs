@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using Lithium.Core;
 
 namespace Lithium.Defs;
 
@@ -11,21 +12,23 @@ public static class DefDatabase {
 	private static Dictionary<string, Def>? ParsedDefinitions { get; set; }
 
 	internal static void Initialize(IEnumerable<string> defFiles) {
+		XmlDefinitions = new Dictionary<string, XmlNode>();
+
 		foreach (string path in defFiles) {
 			HashSet<Def> defs = new HashSet<Def>();
 
-			string contents = File.ReadAllText(path);
-			XmlDocument doc = new XmlDocument();
-			doc.LoadXml(contents);
+			XmlDocument doc = XmlLoader.LoadDocument(path);
 
 			XmlNode? defsNode = doc.SelectSingleNode("/Defs");
-			if (defsNode != null) {
-				foreach (XmlNode child in defsNode.ChildNodes) {
-					AddToDB(child);
-				}
+			if (defsNode == null) {
+				continue;
 			}
-			else {
-				throw new Exception($"No 'Defs' node found in {path}.");
+			foreach (XmlNode child in defsNode.ChildNodes) {
+				if (child.NodeType == XmlNodeType.Comment) {
+					continue;
+				}
+
+				AddToDB(child);
 			}
 		}
 
@@ -60,9 +63,9 @@ public static class DefDatabase {
 		return keyNode.InnerText;
 	}
 
-	public static XmlNode? Load(string key) {
+	public static XmlNode LoadXml(string key) {
 		if (XmlDefinitions == null) {
-			return null;
+			throw new Exception("Defs have not been initialized.");
 		}
 		if (!XmlDefinitions.TryGetValue(key, out XmlNode? value)) {
 			throw new Exception($"No Def was found with the key '{key}'.");

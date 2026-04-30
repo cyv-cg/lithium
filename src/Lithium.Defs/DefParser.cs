@@ -26,12 +26,26 @@ public static class DefParser {
 		if (string.IsNullOrEmpty(DefRootDirectory)) {
 			throw new Exception("Def root directory has not been set.");
 		}
-
 		defLinks.Clear();
+
 		IEnumerable<string> defFiles = XmlLoader.GetAllFiles(DefRootDirectory);
 		DefDatabase.Initialize(defFiles);
-		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
 
+		Load();
+	}
+	/// <summary>
+	/// Initializes the DefParser by loading defs from a single XML file.
+	/// </summary>
+	/// <param name="defFile">Absolute path to the XML file to load.</param>
+	public static void LoadSingle(string defFile) {
+		defLinks.Clear();
+		DefDatabase.Initialize(new string[] { defFile });
+
+		Load();
+	}
+
+	private static void Load() {
+		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
 		foreach (XmlNode node in defNodes) {
 			ParseDef(node);
 		}
@@ -60,15 +74,9 @@ public static class DefParser {
 	/// <param name="node">XML node containing the data for the def.</param>
 	/// <returns>Parsed def.</returns>
 	private static Def ParseDef(XmlNode node) {
-		string defClassName = node.Name;
-		Type? defType = Type.GetType(defClassName);
+		Type? defType = TypeChecker.ResolveType(node.Name);
 		if (defType == null) {
-			defClassName = $"Lithium.{node.Name}";
-			defType = Type.GetType(defClassName);
-		}
-
-		if (defType == null) {
-			throw new Exception($"Could not find def class '{defClassName}'.");
+			throw new Exception($"Could not find def class '{node.Name}'.");
 		}
 
 		string defKey = DefDatabase.GetDefKey(node);
@@ -77,25 +85,26 @@ public static class DefParser {
 			return def!;
 		}
 
-		object? defInstance = Activator.CreateInstance(defType);
+		object defInstance = Activator.CreateInstance(defType)!;
 
-		// Load the "Root" def, if present.
-		if (node.Attributes != null && node.Attributes.Count > 0) {
+		if (node.Attributes != null) {
+			// Load the "Root" def, if present.
 			XmlAttribute? rootAttr = node.Attributes["Root"];
 			if (rootAttr != null) {
 				if (rootAttr.Value == defKey) {
 					throw new Exception($"Def '{defKey}' cannot refer to itself as the root.");
 				}
 				else {
+					Type parentType = TypeChecker.ResolveType(DefDatabase.LoadXml(rootAttr.Value).Name)!;
+					if (!parentType.Equals(defType)) {
+						throw new Exception($"Def '{defKey}' ({defType}) is attempting to inherit from '{rootAttr.Value}' ({parentType}).");
+					}
 					if (TryLoadDef(rootAttr.Value, defType, out Def? loadedDef)) {
-						defInstance = loadedDef;
+						defInstance = loadedDef!;
 					}
 					else {
 						// Load the root instance of the def.
-						XmlNode? rootNode = DefDatabase.Load(rootAttr.Value);
-						if (rootNode == null) {
-							throw new Exception($"Failed to load root instance '{rootAttr.Value}' for '{defKey}'.");
-						}
+						XmlNode rootNode = DefDatabase.LoadXml(rootAttr.Value);
 						object rootInstance = ParseDef(rootNode);
 						// After that, copy properties from the root instance to the new one.
 						// The reason we have to do that in 2 steps is because ParseDef here will return an instance of the root class.
@@ -106,10 +115,6 @@ public static class DefParser {
 					}
 				}
 			}
-		}
-
-		if (defInstance == null) {
-			throw new Exception($"Failed to initialize def '{defKey}'.");
 		}
 
 		// Load def properties.
@@ -126,11 +131,7 @@ public static class DefParser {
 	/// <param name="instance">Output variable for the loaded def instance.</param>
 	/// <returns>True if the def was successfully loaded, false otherwise.</returns>
 	private static bool TryLoadDef(string defKey, Type defType, out Def? instance) {
-		MethodInfo? loadMethod = typeof(DefDatabase).GetMethod("Load", 1, BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null);
-		if (loadMethod == null) {
-			instance = null;
-			return false;
-		}
+		MethodInfo loadMethod = typeof(DefDatabase).GetMethod("Load", 1, BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null)!;
 
 		MethodInfo genericMethod = loadMethod.MakeGenericMethod(defType);
 		object? result = genericMethod.Invoke(null, new object[] { defKey });
@@ -146,11 +147,11 @@ public static class DefParser {
 	/// <param name="type">Type of the class to parse into.</param>
 	/// <param name="instance">Reference to the instance to populate.</param>
 	private static void ParseXmlToClass(XmlNode node, Type type, ref object instance) {
-		if (node.NodeType == XmlNodeType.Comment) {
-			return;
-		}
-
 		foreach (XmlNode propNode in node.ChildNodes) {
+			if (propNode.NodeType == XmlNodeType.Comment) {
+				continue;
+			}
+
 			FieldInfo? prop = type.GetField(propNode.Name);
 			if (prop == null) {
 				throw new WarningException($"Property '{propNode.Name}' does not exist on {type}");
@@ -158,23 +159,17 @@ public static class DefParser {
 
 			// Load list elements individually.
 			if (prop.FieldType.IsList(out Type? listType)) {
-				if (listType == null) {
-					throw new Exception($"Could not extract generic type of list '{prop.Name}'.");
-				}
-				IList? typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(listType)) as IList;
-				if (typedList == null) {
-					throw new Exception($"Failed to initialize list instance for {type}.{prop.Name}.");
-				}
+				IList typedList = (Activator.CreateInstance(typeof(List<>).MakeGenericType(listType!)) as IList)!;
 				if (propNode.HasChildNodes) {
 					foreach (XmlNode li in propNode.ChildNodes) {
 						if (li.NodeType == XmlNodeType.Comment) {
 							continue;
 						}
-						if (listType.IsDef()) {
-							SaveDefLink(instance, li, prop, listType, typedList);
+						if (listType!.IsDef()) {
+							SaveDefLink(instance, li, prop, listType!, typedList);
 						}
 						else {
-							object? entry = Load(li, prop, listType);
+							object? entry = Load(li, prop, listType!);
 							if (entry != null) {
 								typedList.Add(entry);
 							}
@@ -230,70 +225,64 @@ public static class DefParser {
 	/// <param name="type"><see cref="Type"/> of the data to read as.</param>
 	/// <returns>Data parsed to the given type.</returns>
 	private static object? Load(XmlNode node, FieldInfo prop, Type type) {
-		// Recursively load defs.
-		if (type.IsDef()) {
-			if (TryLoadDef(node.InnerText, type, out Def? defInstance)) {
-				return defInstance;
-			}
-			else {
-				XmlNode? innerDef = DefDatabase.Load(node.InnerText);
-				if (innerDef == null) {
-					throw new Exception($"Failed to load def '{node.InnerText}'");
-				}
-				return ParseDef(innerDef);
-			}
-		}
 		// Load classes with a special constructor.
-		else if (type.IsSpecialConstructor(out MethodBase? factory)) {
-			if (factory != null) {
-				if (factory.IsConstructor) {
-					return ((ConstructorInfo)factory).Invoke(new object[] { node });
-				}
-				return factory.Invoke(null, new object[] { node });
-			}
-			else {
-				return null;
-			}
+		if (type.IsSpecialConstructor(out MethodBase? factory)) {
+			return LoadFactory(node, factory!);
 		}
 		// Parse enum values.
 		else if (type.IsEnum()) {
-			if (Enum.TryParse(type, node.InnerText, out object? value)) {
-				return value;
-			}
-			else {
-				throw new Exception($"Invalid value for enum {type}: '{node.InnerText}'.");
-			}
+			return LoadEnum(node, type);
 		}
 		// Special case for System.Type.
 		else if (type.IsType()) {
-			Type? targetType = Type.GetType(node.InnerText);
-			if (targetType == null) {
-				throw new Exception($"Could not find type '{node.InnerText}'.");
-			}
-			if (prop.IsDefined(typeof(EnforceInheritance))) {
-				EnforceInheritance? enforceAttr = prop.GetCustomAttribute<EnforceInheritance>();
-				if (enforceAttr != null) {
-					Type enforcedType = enforceAttr.ParentType;
-					if (!enforcedType.IsAssignableFrom(targetType)) {
-						throw new Exception($"Prop '{prop.Name}': Type '{targetType}' must inherit from '{enforcedType}'.");
-					}
-				}
-				else {
-					throw new Exception($"Failed to load {typeof(EnforceInheritance)} properties for {type}.{prop.Name}.");
-				}
-			}
-			return targetType;
+			return LoadType(node, prop, type);
 		}
 		// Load sub-classes.
 		else if (type.IsNonPrimitive()) {
-			object? subClass = Activator.CreateInstance(type);
-			if (subClass == null) {
-				throw new Exception($"Failed to initialize instance of '{type}'.");
-			}
-			ParseXmlToClass(node, type, ref subClass);
-			return subClass;
+			return LoadClass(node, type);
 		}
 
+		// Convert primitive types.
 		return Convert.ChangeType(node.InnerText, type);
+	}
+
+	private static object? LoadFactory(XmlNode node, MethodBase factory) {
+		if (factory.IsConstructor) {
+			return ((ConstructorInfo)factory).Invoke(new object[] { node });
+		}
+		return factory.Invoke(null, new object[] { node });
+	}
+	private static object? LoadEnum(XmlNode node, Type type) {
+		if (Enum.TryParse(type, node.InnerText, out object? value)) {
+			return value;
+		}
+		else {
+			throw new Exception($"Invalid value for enum {type}: '{node.InnerText}'.");
+		}
+	}
+	private static Type? LoadType(XmlNode node, FieldInfo prop, Type type) {
+		Type? targetType = TypeChecker.ResolveType(node.InnerText);
+		if (targetType == null) {
+			throw new Exception($"Could not find type '{node.InnerText}'.");
+		}
+
+		object? enforceAttr = prop.GetCustomAttributes(false).FirstOrDefault(
+			attr => attr.GetType().IsGenericType &&
+			attr.GetType().GetGenericTypeDefinition() == typeof(EnforceInheritance<>)
+		);
+
+		if (enforceAttr != null) {
+			PropertyInfo parentTypeProperty = enforceAttr.GetType().GetProperty("ParentType")!;
+			Type enforcedType = (Type)parentTypeProperty.GetValue(enforceAttr)!;
+			if (!enforcedType.IsAssignableFrom(targetType)) {
+				throw new Exception($"Prop '{prop.Name}': Type '{targetType}' must inherit from '{enforcedType}'.");
+			}
+		}
+		return targetType;
+	}
+	private static object LoadClass(XmlNode node, Type type) {
+		object subClass = Activator.CreateInstance(type)!;
+		ParseXmlToClass(node, type, ref subClass);
+		return subClass;
 	}
 }

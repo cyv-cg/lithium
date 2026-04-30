@@ -1,0 +1,9 @@
+<Defs>
+	<Lithium.Defs.Tests.MockDef11>
+		<key>MockDef</key>
+		<label>MockDef_Label</label>
+		<classField>
+			<value>1</value>
+		</classField>
+	</Lithium.Defs.Tests.MockDef11>
+</Defs>

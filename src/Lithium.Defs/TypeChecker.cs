@@ -9,6 +9,24 @@ namespace Lithium.Defs;
 
 internal static class TypeChecker {
 	/// <summary>
+	/// Attempts to resolve a type by its name. First checks for internal types in the Lithium namespace, then checks all loaded assemblies.
+	/// </summary>
+	/// <param name="typeName">Name of the type to resolve.</param>
+	/// <returns>The resolved type, or null if it could not be found.</returns>
+	internal static Type? ResolveType(string typeName) {
+		// First assume the type is internal.
+		Type? defType = Type.GetType($"Lithium.{typeName}");
+		// If it couldn't be resolved to an internal type, check all loaded assemblies.
+		if (defType == null) {
+			defType = AppDomain.CurrentDomain
+				.GetAssemblies()
+				.Select(a => a.GetType(typeName))
+				.FirstOrDefault(t => t != null);
+		}
+		return defType;
+	}
+
+	/// <summary>
 	/// Determines if the given type is a Def.
 	/// </summary>
 	/// <param name="type">Type to check.</param>
@@ -59,21 +77,21 @@ internal static class TypeChecker {
 		}
 
 		// Verify the factory has the appropriate return type.
-		Type? factoryReturnType = null;
+		Type? factoryReturnType = typeof(void);
 		if (factory is MethodInfo method) {
 			factoryReturnType = method.ReturnType;
 		}
 		else if (factory is ConstructorInfo ctor) {
 			factoryReturnType = ctor.DeclaringType;
 		}
-		if (factoryReturnType == null || factoryReturnType != type) {
+		if (factoryReturnType != type) {
 			throw new Exception($"Def factory must return {type} but it returns {factoryReturnType}.");
 		}
 
 		// Verify factory parameters match what's expected.
 		Type[] paramTypes = factory.GetParameters().Select(p => p.ParameterType).ToArray();
 		if (paramTypes.Length != 1 || paramTypes[0] != typeof(XmlNode)) {
-			throw new Exception($"Def factory must take {typeof(XmlNode)} as the sole parameter.");
+			throw new Exception($"Def factory/constructor must take {typeof(XmlNode)} as the sole parameter.");
 		}
 
 		return true;

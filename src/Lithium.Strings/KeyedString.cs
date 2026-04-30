@@ -17,7 +17,7 @@ public partial class KeyedString {
 	/// </summary>
 	public string key;
 	/// <summary>
-	/// Raw text for the <see cref="KeyedString"/> as defined in XML .
+	/// Raw text for the <see cref="KeyedString"/> as defined in XML.
 	/// </summary>
 	private string? raw;
 
@@ -26,18 +26,14 @@ public partial class KeyedString {
 	/// </summary>
 	/// <param name="key">Key of the defined string, used for XML lookup.</param>
 	public KeyedString(string key) {
+		this.key = key;
+
 		XmlNode? stringNode = StringDatabase.LoadXml(key);
 		if (stringNode == null) {
-			throw new Exception($"String def '{key}' not found.");
+			throw new WarningException($"String def '{key}' not found.");
 		}
 
-		this.key = StringDatabase.GetStringKey(stringNode);
-
-		foreach (XmlNode node in stringNode) {
-			raw = GetLocaleText(node);
-		}
-
-		StringDatabase.AddToDB(this);
+		raw = GetLocaleText(stringNode);
 	}
 	/// <summary>
 	/// Creates a KeyedString from an XML node.
@@ -68,7 +64,7 @@ public partial class KeyedString {
 		string? text = null;
 
 		foreach (XmlNode localeText in textNode.ChildNodes) {
-			if (localeText.InnerText.Equals(StringParser.Locale)) {
+			if (localeText.Name.Equals(StringParser.Locale)) {
 				text = noTrim ? localeText.InnerText : localeText.InnerText.Trim();
 				break;
 			}
@@ -126,6 +122,27 @@ public partial class KeyedString {
 	}
 	public override string ToString() {
 		return Translate();
+	}
+
+	public override bool Equals(object? obj) {
+		if (obj == null || obj.GetType() != typeof(KeyedString)) {
+			return false;
+		}
+
+		KeyedString? other = obj as KeyedString;
+		if (other == null) {
+			return false;
+		}
+
+		if (string.IsNullOrEmpty(other.raw)) {
+			return string.IsNullOrEmpty(raw);
+		}
+
+		return other.raw.Equals(raw);
+	}
+
+	public override int GetHashCode() {
+		return HashCode.Combine(key, raw);
 	}
 
 	[GeneratedRegex(@"\{\d\}")]

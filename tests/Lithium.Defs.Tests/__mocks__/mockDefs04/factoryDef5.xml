@@ -1,0 +1,7 @@
+<Defs>
+	<Lithium.Defs.Tests.MockDef8>
+		<key>MockDef</key>
+		<label>MockDef_Label</label>
+		<factoryClass>0</factoryClass>
+	</Lithium.Defs.Tests.MockDef8>
+</Defs>
