@@ -2,14 +2,14 @@ name: Build and Test Lithium.sln
 
 on:
   push:
+    branches:
+      - main
+      - develop
   pull_request:
+    branches:
+      - main
+      - develop
   workflow_dispatch:
-    inputs:
-      packAndUpload:
-        description: "Whether to pack the built solution as a .nupkg and upload the artifact."
-        type: boolean
-        required: false
-        default: false
 
 jobs:
   test:
@@ -50,14 +50,21 @@ jobs:
           format: markdown
           indicators: true
           output: both
-          thresholds: "30 60"
+          thresholds: "60 80"
 
       - name: Write to Job Summary
         run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
 
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
   pack-and-upload:
     needs: test
-    if: ${{ needs.test.result == 'success' && github.event.inputs.packAndUpload }}
+    if: ${{ needs.test.result == 'success' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
