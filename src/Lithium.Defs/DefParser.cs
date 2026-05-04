@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Attributes;
+using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs;
 
@@ -78,6 +79,9 @@ public static class DefParser {
 		if (defType == null) {
 			throw new Exception($"Could not find def class '{node.Name}'.");
 		}
+		if (!TypeChecker.IsDef(defType)) {
+			throw new DefInheritanceException(defType);
+		}
 
 		string defKey = DefDatabase.GetDefKey(node);
 
@@ -124,7 +128,7 @@ public static class DefParser {
 	}
 
 	/// <summary>
-	/// Attempts to load an existing def.
+	/// /// Attempts to load an existing def.
 	/// </summary>
 	/// <param name="defKey">Key of the def to load.</param>
 	/// <param name="defType">Type of the def to load.</param>
@@ -147,12 +151,17 @@ public static class DefParser {
 	/// <param name="type">Type of the class to parse into.</param>
 	/// <param name="instance">Reference to the instance to populate.</param>
 	private static void ParseXmlToClass(XmlNode node, Type type, ref object instance) {
+		// Check if any required fields are not defined in XML.
+		if (!ValidateRequiredFields(node, type, out IEnumerable<FieldInfo> missingProps)) {
+			throw new MissingDefFieldException(DefDatabase.GetDefKey(node), missingProps.ToArray());
+		}
+
 		foreach (XmlNode propNode in node.ChildNodes) {
 			if (propNode.NodeType == XmlNodeType.Comment) {
 				continue;
 			}
 
-			FieldInfo? prop = type.GetField(propNode.Name);
+			FieldInfo? prop = type.GetField(propNode.Name, TypeChecker.DEF_FIELD_BINDINGS);
 			if (prop == null) {
 				throw new WarningException($"Property '{propNode.Name}' does not exist on {type}");
 			}
@@ -195,6 +204,34 @@ public static class DefParser {
 		if (type.IsDef() && instance != null) {
 			DefDatabase.AddToDB((Def)instance);
 		}
+	}
+
+	/// <summary>
+	/// Validates that all required fields are present in the XML node.
+	/// </summary>
+	/// <param name="defNode">XML node containing the def data.</param>
+	/// <param name="type">Type of the def being loaded.</param>
+	/// <param name="missingProps">Output variable containing any missing required fields.</param>
+	/// <returns>True if all required fields are present, false otherwise.</returns>
+	private static bool ValidateRequiredFields(XmlNode defNode, Type type, out IEnumerable<FieldInfo> missingProps) {
+		missingProps = new List<FieldInfo>();
+		// Look at every field on the type.
+		foreach (FieldInfo prop in type.GetFields(TypeChecker.DEF_FIELD_BINDINGS)) {
+			// Reflections does not supply a way to check if the 'required' modifier is added directly.
+			// When compiled, required types are given the [RequiredMember] attribute, which we can test for instead.
+			// If that attribute isn't there, then it doesn't matter whether that property is defined.
+			if (!Attribute.IsDefined(prop, typeof(System.Runtime.CompilerServices.RequiredMemberAttribute))) {
+				continue;
+			}
+			// Try to grab the matching node from the XML.
+			XmlNode? propNode = defNode.SelectSingleNode(prop.Name);
+			if (propNode == null) {
+				// If the node isn't defined, add it to the list.
+				missingProps = missingProps.Append(prop);
+			}
+		}
+		// If we didn't find any missing nodes, we're good!
+		return !missingProps.Any();
 	}
 
 	/// <summary>
