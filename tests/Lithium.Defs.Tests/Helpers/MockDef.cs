@@ -5,46 +5,46 @@ using Lithium.Defs;
 
 namespace Lithium.Defs.Tests;
 
-public class MockDef1 : Def {
+public record MockDef1 : Def {
 	public int sampleValue1;
 }
 
-public class MockDef2 : Def {
+public record MockDef2 : Def {
 	public required MockDef1 subDef;
 }
 
-public class MockDef3 : Def {
+public record MockDef3 : Def {
 	public required List<Def> defList;
 }
 
-public class MockDef4 : Def {
+public record MockDef4 : Def {
 	public required FactoryClass1 factoryClass;
 }
-public class MockDef5 : Def {
+public record MockDef5 : Def {
 	public required FactoryClass2 factoryClass;
 }
-public class MockDef6 : Def {
+public record MockDef6 : Def {
 	public required FactoryClass3 factoryClass;
 }
-public class MockDef7 : Def {
+public record MockDef7 : Def {
 	public required FactoryClass4 factoryClass;
 }
-public class MockDef8 : Def {
+public record MockDef8 : Def {
 	public required FactoryClass5 factoryClass;
 }
 
-public class MockDef9 : Def {
+public record MockDef9 : Def {
 	public float primitiveField;
 	public MockEnum enumField;
 	public Type? typeField;
 	public MockDataClass? classField;
 	public List<int>? listField;
 }
-public class MockDef10 : Def {
+public record MockDef10 : Def {
 	[EnforceInheritance<System.IComparable>]
 	public required Type typeField;
 }
-public class MockDef11 : Def {
+public record MockDef11 : Def {
 	public Nullable<MockDataStruct> classField;
 }
 

@@ -65,7 +65,7 @@ public static class DefDatabase {
 	/// </summary>
 	/// <param name="def">The def to add to the database. Must have a unique 'key' property.</param>
 	internal static void AddToDB(Def def) {
-		ParsedDefinitions.TryAdd(def.key, def);
+		ParsedDefinitions.TryAdd(def.Key, def);
 	}
 
 	/// <summary>
