@@ -16,11 +16,7 @@ internal static class Init {
 		StringParser.LoadAll();
 	}
 	internal static void SetupDefs(byte i) {
-		DefParser.SetDefRootDirectory(MockDirectory(i));
+		Settings.SetDefRootDirectory(MockDirectory(i));
 		DefParser.LoadAll();
-	}
-	internal static void Setup(byte i) {
-		SetupStrings();
-		SetupDefs(i);
 	}
 }

@@ -4,12 +4,17 @@ using Xunit;
 namespace Lithium.Defs.Tests;
 
 public class DefDatabaseTests {
+	public DefDatabaseTests() {
+		Init.SetupStrings();
+		Settings.DeferredParsing = false;
+	}
+
 	/// <summary>
 	/// Tests that the DefDatabase is properly initialized and that no defs are loaded when the files contain no defs.
 	/// </summary>
 	[Fact]
 	public void InitializeTest01() {
-		Init.Setup(8);
+		Init.SetupDefs(8);
 
 		Assert.Empty(DefDatabase.LoadAll());
 	}
@@ -20,7 +25,7 @@ public class DefDatabaseTests {
 	[Fact]
 	public void GetDefKeyTest01() {
 		Exception e = Assert.Throws<Exception>(
-			() => Init.Setup(9)
+			() => Init.SetupDefs(9)
 		);
 		Assert.Equal("Def node missing 'Key' child element.", e.Message);
 	}
@@ -31,7 +36,7 @@ public class DefDatabaseTests {
 	[Fact]
 	public void LoadXmlTest01() {
 		Exception e = Assert.Throws<Exception>(
-			() => Init.Setup(10)
+			() => Init.SetupDefs(10)
 		);
 		Assert.Equal("No Def was found with the key 'DefThatDoesNotExist'.", e.Message);
 	}
@@ -41,7 +46,7 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest01() {
-		Init.Setup(1);
+		Init.SetupDefs(1);
 
 		Def? loadedDef = DefDatabase.Load<MockDef5>("MockDef");
 		Assert.Null(loadedDef);

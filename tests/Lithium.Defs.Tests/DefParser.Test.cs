@@ -13,14 +13,18 @@ using Lithium.Defs.Exceptions;
 namespace Lithium.Defs.Tests;
 
 public class DefParserTests {
+	public DefParserTests() {
+		Init.SetupStrings();
+		Settings.DeferredParsing = false;
+	}
+
 	#region LoadAll tests
 	/// <summary>
 	/// Tests that an Exception is thrown when the def directory has not been set.
 	/// </summary>
 	[Fact]
 	public void LoadAllTest01() {
-		Init.SetupStrings();
-		DefParser.SetDefRootDirectory(string.Empty);
+		Settings.SetDefRootDirectory(string.Empty);
 
 		Assert.Throws<Exception>(
 			() => DefParser.LoadAll()
@@ -31,7 +35,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest02() {
-		Init.Setup(1);
+		Init.SetupDefs(1);
 
 		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
 
@@ -45,7 +49,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest03() {
-		Init.Setup(2);
+		Init.SetupDefs(2);
 
 		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
 
@@ -64,7 +68,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest04() {
-		Init.Setup(2);
+		Init.SetupDefs(2);
 
 		MockDef3? loadedDef = DefDatabase.Load<MockDef3>("ThirdDef");
 
@@ -75,14 +79,14 @@ public class DefParserTests {
 		Assert.NotEmpty(loadedDef.DefList);
 		Assert.Collection<Def>(loadedDef.DefList,
 			d => {
-				Assert.IsType<MockDef2>(d);
-				Assert.Equal("MockDef", d.Key);
-				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
-			},
-			d => {
 				Assert.IsType<MockDef1>(d);
 				Assert.Equal("SecondDef", d.Key);
 				Assert.Equal(2, ((MockDef1)d).SampleValue1);
+			},
+			d => {
+				Assert.IsType<MockDef2>(d);
+				Assert.Equal("MockDef", d.Key);
+				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
 			}
 		);
 	}
@@ -91,8 +95,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest05() {
-		Init.SetupStrings();
-		DefParser.SetDefRootDirectory(Init.MockDirectory(3));
+		Settings.SetDefRootDirectory(Init.MockDirectory(3));
 
 		Assert.Throws<Exception>(
 			() => DefParser.LoadAll()
@@ -106,7 +109,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest01() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs.xml");
 		DefParser.LoadSingle(mockFile);
 
@@ -123,7 +125,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest02() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidEnum.xml");
 
 		Exception e = Assert.Throws<Exception>(
@@ -136,7 +137,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest03() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidType.xml");
 
 		Exception e = Assert.Throws<Exception>(
@@ -149,7 +149,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest04() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-inheritance-valid.xml");
 		DefParser.LoadSingle(mockFile);
 
@@ -163,7 +162,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest05() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-inheritance-invalid.xml");
 
 		Exception e = Assert.Throws<Exception>(
@@ -176,7 +174,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest06() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidProp.xml");
 
 		Exception e = Assert.Throws<WarningException>(
@@ -189,8 +186,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest07() {
-		Init.SetupStrings();
-		DefParser.SetDefRootDirectory(Init.MockDirectory(11));
+		Settings.SetDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
 			() => DefParser.LoadAll()
@@ -201,8 +197,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest08() {
-		Init.SetupStrings();
-		DefParser.SetDefRootDirectory(Init.MockDirectory(12));
+		Settings.SetDefRootDirectory(Init.MockDirectory(12));
 
 		Exception e = Assert.Throws<DefInheritanceException>(
 			() => DefParser.LoadAll()
@@ -216,7 +211,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest01() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef1.xml");
 		DefParser.LoadSingle(mockFile);
 
@@ -230,7 +224,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest02() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef2.xml");
 		DefParser.LoadSingle(mockFile);
 
@@ -244,7 +237,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest03() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef3.xml");
 
 		Exception e = Assert.Throws<Exception>(
@@ -257,7 +249,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest04() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef4.xml");
 
 		Exception e = Assert.Throws<Exception>(
@@ -270,7 +261,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest05() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef5.xml");
 
 		Exception e = Assert.Throws<Exception>(
@@ -286,8 +276,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest01() {
-		Init.SetupStrings();
-		DefParser.SetDefRootDirectory(Init.MockDirectory(6));
+		Settings.SetDefRootDirectory(Init.MockDirectory(6));
 
 		Exception e = Assert.Throws<Exception>(
 			() => DefParser.LoadAll()
@@ -299,7 +288,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest02() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentValid.xml");
 		DefParser.LoadSingle(mockFile);
 
@@ -317,7 +305,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest03() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-selfReference.xml");
 
 		Exception e = Assert.Throws<Exception>(
@@ -330,7 +317,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest04() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentInvalid.xml");
 
 		Exception e = Assert.Throws<Exception>(
@@ -343,7 +329,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest05() {
-		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentInvalid2.xml");
 
 		Exception e = Assert.Throws<Exception>(
