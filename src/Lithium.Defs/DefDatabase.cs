@@ -39,6 +39,13 @@ public static class DefDatabase {
 	}
 
 	/// <summary>
+	/// Performs cleanup after all defs have been loaded.
+	/// </summary>
+	internal static void PostLoad() {
+		XmlDefinitions.Clear();
+	}
+
+	/// <summary>
 	/// Returns all XML nodes currently stored in the DefDatabase.
 	/// </summary>
 	/// <returns>An enumerable of all XML nodes currently stored in the DefDatabase.</returns>
@@ -99,12 +106,42 @@ public static class DefDatabase {
 	/// <param name="key">The key of the def to return.</param>
 	/// <returns>The def associated with the provided key in the DefDatabase, or null if not available.</returns>
 	public static T? Load<T>(string key) where T : Def {
-		if (!ParsedDefinitions.TryGetValue(key, out Def? value)) {
+		Def? loadedDef;
+
+		if (Settings.DeferredParsing) {
+			loadedDef = LoadDeferred<T>(key);
+		}
+		else {
+			loadedDef = LoadDirect(key) as Def;
+		}
+
+		if (loadedDef == null || loadedDef is not T) {
 			return null;
 		}
-		if (value is not T) {
-			return null;
+
+		return loadedDef as T;
+	}
+	internal static T? LoadDeferred<T>(string key) where T : Def {
+		// Dynamically parse if it hasn't been loaded yet.
+		if (XmlDefinitions.TryGetValue(key, out XmlNode? loadedNode)) {
+			// Parse the def.
+			Def def = DefParser.ParseDef(loadedNode);
+			DefParser.ResolveDefLinks();
+			if (def is not T) {
+				return null;
+			}
+			// Store the parsed value.
+			AddToDB(def);
+			// Clean up the XML, which should no longer be needed.
+			XmlDefinitions.Remove(key);
+			return def as T;
 		}
-		return value as T;
+		return null;
+	}
+	internal static object? LoadDirect(string key) {
+		if (ParsedDefinitions.TryGetValue(key, out Def? value)) {
+			return value;
+		}
+		return null;
 	}
 }

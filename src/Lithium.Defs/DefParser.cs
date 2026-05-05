@@ -12,27 +12,26 @@ using Lithium.Defs.Exceptions;
 namespace Lithium.Defs;
 
 public static class DefParser {
-	private static string? DefRootDirectory { get; set; }
-
-	private static Dictionary<Type, List<DefLink>> defLinks = new Dictionary<Type, List<DefLink>>();
-
-	public static void SetDefRootDirectory(string path) {
-		DefRootDirectory = path;
-	}
+	/// <summary>
+	/// Collection of references to nested def properties to be resolved after all top-level defs have been loaded.
+	/// </summary>
+	private static Stack<DefLink> defLinks = new Stack<DefLink>();
 
 	/// <summary>
 	/// Initializes the DefParser by loading all XML files from the defined root directory.
 	/// </summary>
 	public static void LoadAll() {
-		if (string.IsNullOrEmpty(DefRootDirectory)) {
+		if (string.IsNullOrEmpty(Settings.DefRootDirectory)) {
 			throw new Exception("Def root directory has not been set.");
 		}
 		defLinks.Clear();
 
-		IEnumerable<string> defFiles = XmlLoader.GetAllFiles(DefRootDirectory);
+		IEnumerable<string> defFiles = XmlLoader.GetAllFiles(Settings.DefRootDirectory);
 		DefDatabase.Initialize(defFiles);
 
-		Load();
+		if (!Settings.DeferredParsing) {
+			Load();
+		}
 	}
 	/// <summary>
 	/// Initializes the DefParser by loading defs from a single XML file.
@@ -42,31 +41,56 @@ public static class DefParser {
 		defLinks.Clear();
 		DefDatabase.Initialize(new string[] { defFile });
 
-		Load();
+		if (!Settings.DeferredParsing) {
+			Load();
+		}
 	}
 
-	private static void Load() {
-		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
-		foreach (XmlNode node in defNodes) {
-			ParseDef(node);
-		}
+	/// <summary>
+	/// Parses out nested def references.
+	/// </summary>
+	internal static void ResolveDefLinks() {
+		// Load nested defs.
+		while (defLinks.Count > 0) {
+			DefLink link = defLinks.Pop();
+			Type defType = link.Field.PropertyType.IsList(out Type? listType) ? listType! : link.Field.PropertyType;
 
-		foreach (Type def in defLinks.Keys) {
-			List<DefLink> links = defLinks[def];
-			foreach (DefLink link in links) {
-				if (TryLoadDef(link.DefName, def, out Def? defValue)) {
-					if (link.ParentList == null) {
-						link.Field.SetValue(link.Instance, defValue);
-					}
-					else {
-						link.ParentList.Add(defValue);
-					}
+			// Fetch value from loaded defs.
+			if (TryLoadDef(link.DefName, defType, out Def? defValue, true)) {
+				if (link.ParentList == null) {
+					link.Field.SetValue(link.Instance, defValue);
 				}
 				else {
-					throw new Exception($"Failed to load def '{link.DefName}'");
+					link.ParentList.Add(defValue);
+				}
+			}
+			// Parse an unloaded def.
+			else {
+				defValue = ParseDef(DefDatabase.LoadXml(link.DefName));
+				DefDatabase.AddToDB(defValue);
+				if (link.ParentList == null) {
+					link.Field.SetValue(link.Instance, defValue);
+				}
+				else {
+					link.ParentList.Add(defValue);
 				}
 			}
 		}
+	}
+
+	/// <summary>
+	/// Loads defs from all XML nodes currently stored in the <see cref="DefDatabase"/>.
+	/// </summary>
+	private static void Load() {
+		// Immediately load all XML nodes.
+		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
+		foreach (XmlNode node in defNodes) {
+			Def instance = ParseDef(node);
+			DefDatabase.AddToDB(instance);
+		}
+
+		ResolveDefLinks();
+		DefDatabase.PostLoad();
 	}
 
 	/// <summary>
@@ -74,7 +98,7 @@ public static class DefParser {
 	/// </summary>
 	/// <param name="node">XML node containing the data for the def.</param>
 	/// <returns>Parsed def.</returns>
-	private static Def ParseDef(XmlNode node) {
+	internal static Def ParseDef(XmlNode node) {
 		Type? defType = TypeChecker.ResolveType(node.Name);
 		if (defType == null) {
 			throw new Exception($"Could not find def class '{node.Name}'.");
@@ -84,11 +108,6 @@ public static class DefParser {
 		}
 
 		string defKey = DefDatabase.GetDefKey(node);
-
-		if (TryLoadDef(defKey, defType, out Def? def)) {
-			return def!;
-		}
-
 		object defInstance = Activator.CreateInstance(defType)!;
 
 		if (node.Attributes != null) {
@@ -99,14 +118,19 @@ public static class DefParser {
 					throw new Exception($"Def '{defKey}' cannot refer to itself as the root.");
 				}
 				else {
-					Type parentType = TypeChecker.ResolveType(DefDatabase.LoadXml(rootAttr.Value).Name)!;
-					if (!parentType.Equals(defType)) {
-						throw new Exception($"Def '{defKey}' ({defType}) is attempting to inherit from '{rootAttr.Value}' ({parentType}).");
-					}
 					if (TryLoadDef(rootAttr.Value, defType, out Def? loadedDef)) {
+						// Validate the types match.
+						if (loadedDef!.GetType() != defType) {
+							throw new Exception($"Def '{defKey}' ({defType}) is attempting to inherit from '{rootAttr.Value}' ({loadedDef!.GetType()}).");
+						}
 						defInstance = loadedDef!;
 					}
 					else {
+						// Validate the types match.
+						Type parentType = TypeChecker.ResolveType(DefDatabase.LoadXml(rootAttr.Value).Name)!;
+						if (!parentType.Equals(defType)) {
+							throw new Exception($"Def '{defKey}' ({defType}) is attempting to inherit from '{rootAttr.Value}' ({parentType}).");
+						}
 						// Load the root instance of the def.
 						XmlNode rootNode = DefDatabase.LoadXml(rootAttr.Value);
 						object rootInstance = ParseDef(rootNode);
@@ -128,19 +152,32 @@ public static class DefParser {
 	}
 
 	/// <summary>
-	/// /// Attempts to load an existing def.
+	/// Attempts to load an existing def.
 	/// </summary>
 	/// <param name="defKey">Key of the def to load.</param>
 	/// <param name="defType">Type of the def to load.</param>
 	/// <param name="instance">Output variable for the loaded def instance.</param>
+	/// <param name="direct">
+	/// 	If <see langword="true"/>, only tries to get the pre-loaded def from the database.
+	/// 	Otherwise will attempt to dynamically load from XML.
+	/// 	Importantly, this should always be used when loading a nested def.
+	/// </param>
 	/// <returns>True if the def was successfully loaded, false otherwise.</returns>
-	private static bool TryLoadDef(string defKey, Type defType, out Def? instance) {
-		MethodInfo loadMethod = typeof(DefDatabase).GetMethod("Load", 1, BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null)!;
-
-		MethodInfo genericMethod = loadMethod.MakeGenericMethod(defType);
-		object? result = genericMethod.Invoke(null, new object[] { defKey });
+	private static bool TryLoadDef(string defKey, Type defType, out Def? instance, bool direct = false) {
+		object? result;
+		if (direct) {
+			// Only fetch from defs that have already been loaded.
+			result = DefDatabase.LoadDirect(defKey);
+			instance = result as Def;
+		}
+		else {
+			// Complicated but necessary way to grab the DefDatabase.Load<T> function.
+			MethodInfo loadMethod = typeof(DefDatabase).GetMethod("Load", 1, BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null)!;
+			MethodInfo genericMethod = loadMethod.MakeGenericMethod(defType);
+			// Dynamically load the def with the given key.
+			result = genericMethod.Invoke(null, new object[] { defKey });
+		}
 		instance = result as Def;
-
 		return instance != null;
 	}
 
@@ -200,10 +237,6 @@ public static class DefParser {
 				}
 			}
 		}
-
-		if (type.IsDef() && instance != null) {
-			DefDatabase.AddToDB((Def)instance);
-		}
 	}
 
 	/// <summary>
@@ -243,14 +276,7 @@ public static class DefParser {
 	/// <param name="propType">Type of the property being set.</param>
 	/// <param name="parent">Optional parent list if the def is part of a list.</param>
 	private static void SaveDefLink(object instance, XmlNode node, PropertyInfo prop, Type propType, IList? parent = null) {
-		DefLink link = new DefLink(instance, prop, node.InnerText, parent);
-
-		if (defLinks.TryGetValue(propType, out List<DefLink>? links)) {
-			links.Add(link);
-		}
-		else {
-			defLinks.Add(propType, new List<DefLink>() { link });
-		}
+		defLinks.Push(new DefLink(instance, prop, node.InnerText, parent));
 	}
 
 	/// <summary>
