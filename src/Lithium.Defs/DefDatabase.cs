@@ -76,7 +76,7 @@ public static class DefDatabase {
 	internal static string GetDefKey(XmlNode node) {
 		XmlNode? keyNode = node.SelectSingleNode("Key");
 		if (keyNode == null) {
-			throw new Exception("Def node missing 'key' child element.");
+			throw new Exception("Def node missing 'Key' child element.");
 		}
 		return keyNode.InnerText;
 	}
