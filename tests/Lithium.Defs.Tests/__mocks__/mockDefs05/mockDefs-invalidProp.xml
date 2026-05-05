@@ -1,8 +1,8 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef1>
-		<key>MockDef</key>
-		<label>MockDef_Label</label>
-		<sampleValue1>1</sampleValue1>
-		<propThatDoesNotExist>1</propThatDoesNotExist>
+		<Key>MockDef</Key>
+		<Label>MockDef_Label</Label>
+		<SampleValue1>1</SampleValue1>
+		<PropThatDoesNotExist>1</PropThatDoesNotExist>
 	</Lithium.Defs.Tests.MockDef1>
 </Defs>

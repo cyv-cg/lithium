@@ -1,22 +1,22 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef2>
-		<key>MockDef</key>
-		<label>MockDef_Label</label>
-		<subDef>SecondDef</subDef>
+		<Key>MockDef</Key>
+		<Label>MockDef_Label</Label>
+		<SubDef>SecondDef</SubDef>
 	</Lithium.Defs.Tests.MockDef2>
 
 	<Lithium.Defs.Tests.MockDef1>
-		<key>SecondDef</key>
-		<label>MockDef_Label</label>
-		<sampleValue1>2</sampleValue1>
+		<Key>SecondDef</Key>
+		<Label>MockDef_Label</Label>
+		<SampleValue1>2</SampleValue1>
 	</Lithium.Defs.Tests.MockDef1>
 
 	<Lithium.Defs.Tests.MockDef3>
-		<key>ThirdDef</key>
-		<label>MockDef_Label</label>
-		<defList>
+		<Key>ThirdDef</Key>
+		<Label>MockDef_Label</Label>
+		<DefList>
 			<li>MockDef</li>
 			<li>SecondDef</li>
-		</defList>
+		</DefList>
 	</Lithium.Defs.Tests.MockDef3>
 </Defs>

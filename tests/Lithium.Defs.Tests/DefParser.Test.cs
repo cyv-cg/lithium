@@ -8,6 +8,7 @@ using Lithium.Core;
 using System.Reflection;
 using Lithium.Core.Attributes;
 using System.ComponentModel;
+using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs.Tests;
 
@@ -35,9 +36,9 @@ public class DefParserTests {
 		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal("MockDef", loadedDef.key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.label);
-		Assert.Equal(1, loadedDef.sampleValue1);
+		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.Label);
+		Assert.Equal(1, loadedDef.SampleValue1);
 	}
 	/// <summary>
 	/// Tests that LoadAll can initialize nested Defs.
@@ -49,13 +50,13 @@ public class DefParserTests {
 		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal("MockDef", loadedDef.key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.label);
+		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.Label);
 
-		Assert.NotNull(loadedDef.subDef);
-		Assert.Equal("SecondDef", loadedDef.subDef.key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.subDef.label);
-		Assert.Equal(2, loadedDef.subDef.sampleValue1);
+		Assert.NotNull(loadedDef.SubDef);
+		Assert.Equal("SecondDef", loadedDef.SubDef.Key);
+		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.SubDef.Label);
+		Assert.Equal(2, loadedDef.SubDef.SampleValue1);
 	}
 
 	/// <summary>
@@ -68,20 +69,20 @@ public class DefParserTests {
 		MockDef3? loadedDef = DefDatabase.Load<MockDef3>("ThirdDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal("ThirdDef", loadedDef.key);
+		Assert.Equal("ThirdDef", loadedDef.Key);
 
-		Assert.NotNull(loadedDef.defList);
-		Assert.NotEmpty(loadedDef.defList);
-		Assert.Collection<Def>(loadedDef.defList,
+		Assert.NotNull(loadedDef.DefList);
+		Assert.NotEmpty(loadedDef.DefList);
+		Assert.Collection<Def>(loadedDef.DefList,
 			d => {
 				Assert.IsType<MockDef2>(d);
-				Assert.Equal("MockDef", d.key);
-				Assert.Equal("SecondDef", ((MockDef2)d).subDef.key);
+				Assert.Equal("MockDef", d.Key);
+				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
 			},
 			d => {
 				Assert.IsType<MockDef1>(d);
-				Assert.Equal("SecondDef", d.key);
-				Assert.Equal(2, ((MockDef1)d).sampleValue1);
+				Assert.Equal("SecondDef", d.Key);
+				Assert.Equal(2, ((MockDef1)d).SampleValue1);
 			}
 		);
 	}
@@ -112,10 +113,10 @@ public class DefParserTests {
 		MockDef9? loadedDef = DefDatabase.Load<MockDef9>("MockDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal(1.2f, loadedDef.primitiveField);
-		Assert.Equal(MockEnum.VALUE2, loadedDef.enumField);
-		Assert.Equal(typeof(System.Int32), loadedDef.typeField);
-		Assert.Equal(5, loadedDef.classField!.value);
+		Assert.Equal(1.2f, loadedDef.PrimitiveField);
+		Assert.Equal(MockEnum.VALUE2, loadedDef.EnumField);
+		Assert.Equal(typeof(System.Int32), loadedDef.TypeField);
+		Assert.Equal(5, loadedDef.ClassField!.Value);
 	}
 	/// <summary>
 	/// Tests that Load throws an exception when trying to load a Def with an invalid enum value.
@@ -155,7 +156,7 @@ public class DefParserTests {
 		MockDef10? loadedDef = DefDatabase.Load<MockDef10>("MockDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal(typeof(System.Int32), loadedDef.typeField);
+		Assert.Equal(typeof(System.Int32), loadedDef.TypeField);
 	}
 	/// <summary>
 	/// Tests that Load throws an exception when trying to load a Def with a type that does not meet the requirements of the EnforceInheritance attribute.
@@ -168,7 +169,7 @@ public class DefParserTests {
 		Exception e = Assert.Throws<Exception>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Prop 'typeField': Type '{typeof(System.Action)}' must inherit from '{typeof(System.IComparable)}'.", e.Message);
+		Assert.Equal($"Prop 'TypeField': Type '{typeof(System.Action)}' must inherit from '{typeof(System.IComparable)}'.", e.Message);
 	}
 	/// <summary>
 	/// Tests that Load throws an exception when trying to load a Def with a property that does not exist on the Def class.
@@ -181,7 +182,19 @@ public class DefParserTests {
 		Exception e = Assert.Throws<WarningException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Property 'propThatDoesNotExist' does not exist on {typeof(MockDef1)}", e.Message);
+		Assert.Equal($"Property 'PropThatDoesNotExist' does not exist on {typeof(MockDef1)}", e.Message);
+	}
+	/// <summary>
+	/// Tests that Load throws an exception when a required field is missing.
+	/// </summary>
+	[Fact]
+	public void LoadTest07() {
+		Init.SetupStrings();
+		DefParser.SetDefRootDirectory(Init.MockDirectory(11));
+
+		Exception e = Assert.Throws<MissingDefPropException>(
+			() => DefParser.LoadAll()
+		);
 	}
 	#endregion
 
@@ -198,7 +211,7 @@ public class DefParserTests {
 		MockDef4? loadedDef = DefDatabase.Load<MockDef4>("MockDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal(15, loadedDef.factoryClass.tenPlus);
+		Assert.Equal(15, loadedDef.FactoryClass.tenPlus);
 	}
 	/// <summary>
 	/// Tests that a Def can be loaded using a constructor marked with the DefConstructor attribute.
@@ -212,7 +225,7 @@ public class DefParserTests {
 		MockDef5? loadedDef = DefDatabase.Load<MockDef5>("MockDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal("test", loadedDef.factoryClass.value);
+		Assert.Equal("test", loadedDef.FactoryClass.value);
 	}
 	/// <summary>
 	/// Tests that an exception is thrown when a class marked with the <see cref="UseOverrideDefInitializer"> attribute does not have a method with the DefFactory attribute or a constructor with the DefConstructor attribute.
@@ -282,10 +295,10 @@ public class DefParserTests {
 		MockDef1? loadedDef2 = DefDatabase.Load<MockDef1>("OtherMockDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal(1, loadedDef.sampleValue1);
+		Assert.Equal(1, loadedDef.SampleValue1);
 
 		Assert.NotNull(loadedDef2);
-		Assert.Equal(1, loadedDef2.sampleValue1);
+		Assert.Equal(1, loadedDef2.SampleValue1);
 	}
 	/// <summary>
 	/// Test that ParseDef throws an exception when a def tries to inherit from itself.

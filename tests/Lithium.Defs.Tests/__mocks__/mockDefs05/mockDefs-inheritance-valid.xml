@@ -1,7 +1,7 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef10>
-		<key>MockDef</key>
-		<label>MockDef_Label</label>
-		<typeField>System.Int32</typeField>
+		<Key>MockDef</Key>
+		<Label>MockDef_Label</Label>
+		<TypeField>System.Int32</TypeField>
 	</Lithium.Defs.Tests.MockDef10>
 </Defs>

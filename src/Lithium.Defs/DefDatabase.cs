@@ -74,7 +74,7 @@ public static class DefDatabase {
 	/// <param name="node">The XML node to extract the key from. Must contain a 'key' child element.</param>
 	/// <returns>The value of the 'key' child element of the provided XML node.</
 	internal static string GetDefKey(XmlNode node) {
-		XmlNode? keyNode = node.SelectSingleNode("key");
+		XmlNode? keyNode = node.SelectSingleNode("Key");
 		if (keyNode == null) {
 			throw new Exception("Def node missing 'key' child element.");
 		}
