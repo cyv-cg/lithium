@@ -1,7 +1,5 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef1>
 		<Key>MockDef</Key>
-		<Label>MockDef_Label</Label>
-		<SampleValue1>1</SampleValue1>
 	</Lithium.Defs.Tests.MockDef1>
 </Defs>

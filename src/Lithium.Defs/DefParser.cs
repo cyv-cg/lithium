@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Attributes;
+using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs;
 
@@ -78,6 +79,9 @@ public static class DefParser {
 		if (defType == null) {
 			throw new Exception($"Could not find def class '{node.Name}'.");
 		}
+		if (!TypeChecker.IsDef(defType)) {
+			throw new DefInheritanceException(defType);
+		}
 
 		string defKey = DefDatabase.GetDefKey(node);
 
@@ -109,7 +113,7 @@ public static class DefParser {
 						// After that, copy properties from the root instance to the new one.
 						// The reason we have to do that in 2 steps is because ParseDef here will return an instance of the root class.
 						// Then when trying to set properties that only exist on the child class, it throws an error because the instance is the wrong type.
-						foreach (FieldInfo prop in rootInstance.GetType().GetFields()) {
+						foreach (PropertyInfo prop in rootInstance.GetType().GetProperties(TypeChecker.DEF_PROP_BINDINGS)) {
 							prop.SetValue(defInstance, prop.GetValue(rootInstance));
 						}
 					}
@@ -124,7 +128,7 @@ public static class DefParser {
 	}
 
 	/// <summary>
-	/// Attempts to load an existing def.
+	/// /// Attempts to load an existing def.
 	/// </summary>
 	/// <param name="defKey">Key of the def to load.</param>
 	/// <param name="defType">Type of the def to load.</param>
@@ -147,18 +151,23 @@ public static class DefParser {
 	/// <param name="type">Type of the class to parse into.</param>
 	/// <param name="instance">Reference to the instance to populate.</param>
 	private static void ParseXmlToClass(XmlNode node, Type type, ref object instance) {
+		// Check if any required fields are not defined in XML.
+		if (!ValidateRequiredFields(node, type, out IEnumerable<PropertyInfo> missingProps)) {
+			throw new MissingDefPropException(DefDatabase.GetDefKey(node), missingProps.ToArray());
+		}
+
 		foreach (XmlNode propNode in node.ChildNodes) {
 			if (propNode.NodeType == XmlNodeType.Comment) {
 				continue;
 			}
 
-			FieldInfo? prop = type.GetField(propNode.Name);
+			PropertyInfo? prop = type.GetProperty(propNode.Name, TypeChecker.DEF_PROP_BINDINGS);
 			if (prop == null) {
 				throw new WarningException($"Property '{propNode.Name}' does not exist on {type}");
 			}
 
 			// Load list elements individually.
-			if (prop.FieldType.IsList(out Type? listType)) {
+			if (prop.PropertyType.IsList(out Type? listType)) {
 				IList typedList = (Activator.CreateInstance(typeof(List<>).MakeGenericType(listType!)) as IList)!;
 				if (propNode.HasChildNodes) {
 					foreach (XmlNode li in propNode.ChildNodes) {
@@ -180,11 +189,11 @@ public static class DefParser {
 			}
 			// Load single values.
 			else {
-				if (prop.FieldType.IsDef()) {
-					SaveDefLink(instance, propNode, prop, prop.FieldType);
+				if (prop.PropertyType.IsDef()) {
+					SaveDefLink(instance, propNode, prop, prop.PropertyType);
 				}
 				else {
-					object? value = Load(propNode, prop, prop.FieldType);
+					object? value = Load(propNode, prop, prop.PropertyType);
 					if (value != null) {
 						prop.SetValue(instance, value);
 					}
@@ -198,14 +207,42 @@ public static class DefParser {
 	}
 
 	/// <summary>
+	/// Validates that all required fields are present in the XML node.
+	/// </summary>
+	/// <param name="defNode">XML node containing the def data.</param>
+	/// <param name="type">Type of the def being loaded.</param>
+	/// <param name="missingProps">Output variable containing any missing required fields.</param>
+	/// <returns>True if all required fields are present, false otherwise.</returns>
+	private static bool ValidateRequiredFields(XmlNode defNode, Type type, out IEnumerable<PropertyInfo> missingProps) {
+		missingProps = new List<PropertyInfo>();
+		// Look at every field on the type.
+		foreach (PropertyInfo prop in type.GetProperties(TypeChecker.DEF_PROP_BINDINGS)) {
+			// Reflections does not supply a way to check if the 'required' modifier is added directly.
+			// When compiled, required types are given the [RequiredMember] attribute, which we can test for instead.
+			// If that attribute isn't there, then it doesn't matter whether that property is defined.
+			if (!Attribute.IsDefined(prop, typeof(System.Runtime.CompilerServices.RequiredMemberAttribute))) {
+				continue;
+			}
+			// Try to grab the matching node from the XML.
+			XmlNode? propNode = defNode.SelectSingleNode(prop.Name);
+			if (propNode == null) {
+				// If the node isn't defined, add it to the list.
+				missingProps = missingProps.Append(prop);
+			}
+		}
+		// If we didn't find any missing nodes, we're good!
+		return !missingProps.Any();
+	}
+
+	/// <summary>
 	/// Saves a nested def reference for later resolution.
 	/// </summary>
 	/// <param name="instance">Instance containing the field.</param>
 	/// <param name="node">XML node containing the def name.</param>
-	/// <param name="prop">FieldInfo of the property being set.</param>
+	/// <param name="prop">PropertyInfo of the property being set.</param>
 	/// <param name="propType">Type of the property being set.</param>
 	/// <param name="parent">Optional parent list if the def is part of a list.</param>
-	private static void SaveDefLink(object instance, XmlNode node, FieldInfo prop, Type propType, IList? parent = null) {
+	private static void SaveDefLink(object instance, XmlNode node, PropertyInfo prop, Type propType, IList? parent = null) {
 		DefLink link = new DefLink(instance, prop, node.InnerText, parent);
 
 		if (defLinks.TryGetValue(propType, out List<DefLink>? links)) {
@@ -221,10 +258,10 @@ public static class DefParser {
 	/// Handles primitive types, enums, lists, and custom classes.
 	/// </summary>
 	/// <param name="node">XML node containing the raw data.</param>
-	/// <param name="prop">FieldInfo of the property being set.</param>
+	/// <param name="prop">PropertyInfo of the property being set.</param>
 	/// <param name="type"><see cref="Type"/> of the data to read as.</param>
 	/// <returns>Data parsed to the given type.</returns>
-	private static object? Load(XmlNode node, FieldInfo prop, Type type) {
+	private static object? Load(XmlNode node, PropertyInfo prop, Type type) {
 		// Load classes with a special constructor.
 		if (type.IsSpecialConstructor(out MethodBase? factory)) {
 			return LoadFactory(node, factory!);
@@ -260,7 +297,7 @@ public static class DefParser {
 			throw new Exception($"Invalid value for enum {type}: '{node.InnerText}'.");
 		}
 	}
-	private static Type? LoadType(XmlNode node, FieldInfo prop, Type type) {
+	private static Type? LoadType(XmlNode node, PropertyInfo prop, Type type) {
 		Type? targetType = TypeChecker.ResolveType(node.InnerText);
 		if (targetType == null) {
 			throw new Exception($"Could not find type '{node.InnerText}'.");

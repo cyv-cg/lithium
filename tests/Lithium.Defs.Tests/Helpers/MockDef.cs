@@ -5,47 +5,47 @@ using Lithium.Defs;
 
 namespace Lithium.Defs.Tests;
 
-public class MockDef1 : Def {
-	public int sampleValue1;
+public record MockDef1 : Def {
+	public int SampleValue1 { get; init; }
 }
 
-public class MockDef2 : Def {
-	public required MockDef1 subDef;
+public record MockDef2 : Def {
+	public required MockDef1 SubDef { get; init; }
 }
 
-public class MockDef3 : Def {
-	public required List<Def> defList;
+public record MockDef3 : Def {
+	public required List<Def> DefList { get; init; }
 }
 
-public class MockDef4 : Def {
-	public required FactoryClass1 factoryClass;
+public record MockDef4 : Def {
+	public required FactoryClass1 FactoryClass { get; init; }
 }
-public class MockDef5 : Def {
-	public required FactoryClass2 factoryClass;
+public record MockDef5 : Def {
+	public required FactoryClass2 FactoryClass { get; init; }
 }
-public class MockDef6 : Def {
-	public required FactoryClass3 factoryClass;
+public record MockDef6 : Def {
+	public required FactoryClass3 FactoryClass { get; init; }
 }
-public class MockDef7 : Def {
-	public required FactoryClass4 factoryClass;
+public record MockDef7 : Def {
+	public required FactoryClass4 FactoryClass { get; init; }
 }
-public class MockDef8 : Def {
-	public required FactoryClass5 factoryClass;
+public record MockDef8 : Def {
+	public required FactoryClass5 FactoryClass { get; init; }
 }
 
-public class MockDef9 : Def {
-	public float primitiveField;
-	public MockEnum enumField;
-	public Type? typeField;
-	public MockDataClass? classField;
-	public List<int>? listField;
+public record MockDef9 : Def {
+	public float PrimitiveField { get; init; }
+	public MockEnum EnumField { get; init; }
+	public Type? TypeField { get; init; }
+	public MockDataClass? ClassField { get; init; }
+	public List<int>? ListField { get; init; }
 }
-public class MockDef10 : Def {
+public record MockDef10 : Def {
 	[EnforceInheritance<System.IComparable>]
-	public required Type typeField;
+	public required Type TypeField { get; init; }
 }
-public class MockDef11 : Def {
-	public Nullable<MockDataStruct> classField;
+public record MockDef11 : Def {
+	public Nullable<MockDataStruct> ClassField { get; init; }
 }
 
 public enum MockEnum {
@@ -54,8 +54,8 @@ public enum MockEnum {
 }
 
 public class MockDataClass {
-	public int value;
+	public int Value { get; set; }
 }
 public struct MockDataStruct {
-	public int value;
+	public int Value { get; set; }
 }

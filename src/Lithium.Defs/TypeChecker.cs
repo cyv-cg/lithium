@@ -9,6 +9,11 @@ namespace Lithium.Defs;
 
 internal static class TypeChecker {
 	/// <summary>
+	/// Binding flags used for reflecting on Def fields. This includes public instance fields and also looks up the inheritance hierarchy to include fields from base classes.
+	/// </summary>
+	internal const BindingFlags DEF_PROP_BINDINGS = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+
+	/// <summary>
 	/// Attempts to resolve a type by its name. First checks for internal types in the Lithium namespace, then checks all loaded assemblies.
 	/// </summary>
 	/// <param name="typeName">Name of the type to resolve.</param>

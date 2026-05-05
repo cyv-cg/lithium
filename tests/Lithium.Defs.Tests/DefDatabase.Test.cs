@@ -22,7 +22,7 @@ public class DefDatabaseTests {
 		Exception e = Assert.Throws<Exception>(
 			() => Init.Setup(9)
 		);
-		Assert.Equal("Def node missing 'key' child element.", e.Message);
+		Assert.Equal("Def node missing 'Key' child element.", e.Message);
 	}
 
 	/// <summary>
