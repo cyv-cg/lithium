@@ -65,7 +65,7 @@ public static class DefDatabase {
 	/// </summary>
 	/// <param name="def">The def to add to the database. Must have a unique 'key' property.</param>
 	internal static void AddToDB(Def def) {
-		ParsedDefinitions.TryAdd(def.key, def);
+		ParsedDefinitions.TryAdd(def.Key, def);
 	}
 
 	/// <summary>
@@ -74,9 +74,9 @@ public static class DefDatabase {
 	/// <param name="node">The XML node to extract the key from. Must contain a 'key' child element.</param>
 	/// <returns>The value of the 'key' child element of the provided XML node.</
 	internal static string GetDefKey(XmlNode node) {
-		XmlNode? keyNode = node.SelectSingleNode("key");
+		XmlNode? keyNode = node.SelectSingleNode("Key");
 		if (keyNode == null) {
-			throw new Exception("Def node missing 'key' child element.");
+			throw new Exception("Def node missing 'Key' child element.");
 		}
 		return keyNode.InnerText;
 	}

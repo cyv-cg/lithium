@@ -1,7 +1,7 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef9>
-		<key>MockDef</key>
-		<label>MockDef_Label</label>
-		<typeField>Type.That.Does.Not.Exist</typeField>
+		<Key>MockDef</Key>
+		<Label>MockDef_Label</Label>
+		<TypeField>Type.That.Does.Not.Exist</TypeField>
 	</Lithium.Defs.Tests.MockDef9>
 </Defs>

@@ -2,7 +2,7 @@ using System;
 
 namespace Lithium.Core.Attributes;
 
-[AttributeUsage(AttributeTargets.Field)]
+[AttributeUsage(AttributeTargets.Property)]
 public class EnforceInheritance<T> : Attribute {
 	public Type ParentType { get; }
 

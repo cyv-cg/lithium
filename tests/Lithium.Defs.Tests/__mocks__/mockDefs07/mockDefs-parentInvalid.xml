@@ -1,12 +1,12 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef9>
-		<key>MockParentDef</key>
-		<label>MockDef_Label</label>
-		<primitiveField>1.0</primitiveField>
+		<Key>MockParentDef</Key>
+		<Label>MockDef_Label</Label>
+		<PrimitiveField>1.0</PrimitiveField>
 	</Lithium.Defs.Tests.MockDef9>
 
 	<Lithium.Defs.Tests.MockDef1 Root="MockParentDef">
-		<key>MockDef</key>
-		<label>MockDef_Label</label>
+		<Key>MockDef</Key>
+		<Label>MockDef_Label</Label>
 	</Lithium.Defs.Tests.MockDef1>
 </Defs>

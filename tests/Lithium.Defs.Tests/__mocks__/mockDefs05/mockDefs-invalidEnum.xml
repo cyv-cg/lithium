@@ -1,7 +1,7 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef9>
-		<key>MockDef</key>
-		<label>MockDef_Label</label>
-		<enumField>VALUE3</enumField>
+		<Key>MockDef</Key>
+		<Label>MockDef_Label</Label>
+		<EnumField>VALUE3</EnumField>
 	</Lithium.Defs.Tests.MockDef9>
 </Defs>

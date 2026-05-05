@@ -1,7 +1,7 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef2>
-		<key>Mock</key>
-		<label>MockDef_Label</label>
-		<subDef>DefThatDoesNotExist</subDef>
+		<Key>Mock</Key>
+		<Label>MockDef_Label</Label>
+		<SubDef>DefThatDoesNotExist</SubDef>
 	</Lithium.Defs.Tests.MockDef2>
 </Defs>
