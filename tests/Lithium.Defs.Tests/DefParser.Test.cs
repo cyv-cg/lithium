@@ -185,7 +185,7 @@ public class DefParserTests {
 		Assert.Equal($"Property 'PropThatDoesNotExist' does not exist on {typeof(MockDef1)}", e.Message);
 	}
 	/// <summary>
-	/// Tests that Load throws an exception when a required field is missing.
+	/// Tests that Load throws a <see cref="MissingDefPropException"/> when a required field is missing.
 	/// </summary>
 	[Fact]
 	public void LoadTest07() {
@@ -193,6 +193,18 @@ public class DefParserTests {
 		DefParser.SetDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
+			() => DefParser.LoadAll()
+		);
+	}
+	/// <summary>
+	/// Tests that Load throws a <see cref="DefInheritanceException"/> when asked to load a class that does not inherit from <see cref="Def"/>.
+	/// </summary>
+	[Fact]
+	public void LoadTest08() {
+		Init.SetupStrings();
+		DefParser.SetDefRootDirectory(Init.MockDirectory(12));
+
+		Exception e = Assert.Throws<DefInheritanceException>(
 			() => DefParser.LoadAll()
 		);
 	}
