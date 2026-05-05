@@ -101,6 +101,71 @@ public class DefParserTests {
 			() => DefParser.LoadAll()
 		);
 	}
+
+	/// <summary>
+	/// Tests that LoadAll can initialize a simple Def with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest06() {
+		Settings.DeferredParsing = true;
+		Init.SetupDefs(1);
+
+		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
+
+		Assert.NotNull(loadedDef);
+		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.Label);
+		Assert.Equal(1, loadedDef.SampleValue1);
+	}
+
+	/// <summary>
+	/// Tests that LoadAll can initialize nested Defs with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest07() {
+		Settings.DeferredParsing = true;
+		Init.SetupDefs(2);
+
+		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
+
+		Assert.NotNull(loadedDef);
+		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.Label);
+
+		Assert.NotNull(loadedDef.SubDef);
+		Assert.Equal("SecondDef", loadedDef.SubDef.Key);
+		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.SubDef.Label);
+		Assert.Equal(2, loadedDef.SubDef.SampleValue1);
+	}
+
+	/// <summary>
+	/// Tests that LoadAll can initialize a nested list of Defs with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest08() {
+		Settings.DeferredParsing = true;
+		Init.SetupDefs(2);
+
+		MockDef3? loadedDef = DefDatabase.Load<MockDef3>("ThirdDef");
+
+		Assert.NotNull(loadedDef);
+		Assert.Equal("ThirdDef", loadedDef.Key);
+
+		Assert.NotNull(loadedDef.DefList);
+		Assert.NotEmpty(loadedDef.DefList);
+		Assert.Collection<Def>(loadedDef.DefList,
+			d => {
+				Assert.IsType<MockDef1>(d);
+				Assert.Equal("SecondDef", d.Key);
+				Assert.Equal(2, ((MockDef1)d).SampleValue1);
+			},
+			d => {
+				Assert.IsType<MockDef2>(d);
+				Assert.Equal("MockDef", d.Key);
+				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
+			}
+		);
+	}
 	#endregion
 
 	#region Load tests

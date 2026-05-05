@@ -119,11 +119,9 @@ public static class DefParser {
 				}
 				else {
 					if (TryLoadDef(rootAttr.Value, defType, out Def? loadedDef)) {
-						// Validate the types match.
-						if (loadedDef!.GetType() != defType) {
-							throw new Exception($"Def '{defKey}' ({defType}) is attempting to inherit from '{rootAttr.Value}' ({loadedDef!.GetType()}).");
+						foreach (PropertyInfo prop in loadedDef!.GetType().GetProperties(TypeChecker.DEF_PROP_BINDINGS)) {
+							prop.SetValue(defInstance, prop.GetValue(loadedDef));
 						}
-						defInstance = loadedDef!;
 					}
 					else {
 						// Validate the types match.
@@ -134,6 +132,7 @@ public static class DefParser {
 						// Load the root instance of the def.
 						XmlNode rootNode = DefDatabase.LoadXml(rootAttr.Value);
 						object rootInstance = ParseDef(rootNode);
+						DefDatabase.AddToDB((Def)rootInstance);
 						// After that, copy properties from the root instance to the new one.
 						// The reason we have to do that in 2 steps is because ParseDef here will return an instance of the root class.
 						// Then when trying to set properties that only exist on the child class, it throws an error because the instance is the wrong type.
