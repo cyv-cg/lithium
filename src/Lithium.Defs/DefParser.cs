@@ -67,7 +67,6 @@ public static class DefParser {
 			// Parse an unloaded def.
 			else {
 				defValue = ParseDef(DefDatabase.LoadXml(link.DefName));
-				DefDatabase.AddToDB(defValue);
 				if (link.ParentList == null) {
 					link.Field.SetValue(link.Instance, defValue);
 				}
@@ -86,7 +85,6 @@ public static class DefParser {
 		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
 		foreach (XmlNode node in defNodes) {
 			Def instance = ParseDef(node);
-			DefDatabase.AddToDB(instance);
 		}
 
 		ResolveDefLinks();
@@ -132,7 +130,6 @@ public static class DefParser {
 						// Load the root instance of the def.
 						XmlNode rootNode = DefDatabase.LoadXml(rootAttr.Value);
 						object rootInstance = ParseDef(rootNode);
-						DefDatabase.AddToDB((Def)rootInstance);
 						// After that, copy properties from the root instance to the new one.
 						// The reason we have to do that in 2 steps is because ParseDef here will return an instance of the root class.
 						// Then when trying to set properties that only exist on the child class, it throws an error because the instance is the wrong type.
@@ -147,6 +144,7 @@ public static class DefParser {
 		// Load def properties.
 		ParseXmlToClass(node, defType, ref defInstance);
 
+		DefDatabase.AddToDB((Def)defInstance);
 		return (Def)defInstance;
 	}
 
