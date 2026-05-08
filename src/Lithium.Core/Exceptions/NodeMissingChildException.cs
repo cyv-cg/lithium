@@ -8,12 +8,5 @@ public class NodeMissingChildException(XmlNode node, string childName) : Excepti
 	private readonly XmlNode node = node;
 	private readonly string childName = childName;
 
-	public override string Message {
-		get {
-			StringBuilder builder = new StringBuilder();
-			builder.Append($"XML node missing '{childName}' child.");
-			builder.AppendLine(node.InnerText);
-			return builder.ToString();
-		}
-	}
+	public override string Message => $"XML node missing '{childName}' child.\n{node.OuterXml}";
 }
