@@ -4,6 +4,7 @@ using Xunit;
 namespace Lithium.Core.Tests;
 
 public class ResourceLoadFailedExceptionTests {
+	[Fact]
 	public void ConstructorTest01() {
 		ResourceLoadFailedException ex = new ResourceLoadFailedException("Key");
 
