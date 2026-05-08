@@ -19,15 +19,12 @@ internal static class TypeChecker {
 	/// <param name="typeName">Name of the type to resolve.</param>
 	/// <returns>The resolved type, or null if it could not be found.</returns>
 	internal static Type? ResolveType(string typeName) {
-		// First assume the type is internal.
-		Type? defType = Type.GetType($"Lithium.{typeName}");
-		// If it couldn't be resolved to an internal type, check all loaded assemblies.
-		if (defType == null) {
-			defType = AppDomain.CurrentDomain
-				.GetAssemblies()
-				.Select(a => a.GetType(typeName))
-				.FirstOrDefault(t => t != null);
-		}
+		// Check all loaded assemblies for the type.
+		Type? defType = AppDomain.CurrentDomain
+			.GetAssemblies()
+			.Select(a => a.GetType(typeName))
+			.FirstOrDefault(t => t != null);
+
 		return defType;
 	}
 
