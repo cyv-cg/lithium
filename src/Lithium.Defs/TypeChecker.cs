@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using Lithium.Core.Attributes;
+using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs;
 
@@ -75,11 +76,11 @@ internal static class TypeChecker {
 
 		// If we still can't find thet factory, give up.
 		if (factory == null) {
-			throw new Exception($"{type} is marked to have an override def initializer but has no constructor with the {typeof(DefConstructor)} attribute or method with the {typeof(DefFactory)} attribute.");
+			throw new DefFactoryMissingException(type);
 		}
 
 		// Verify the factory has the appropriate return type.
-		Type? factoryReturnType = typeof(void);
+		Type? factoryReturnType = null;
 		if (factory is MethodInfo method) {
 			factoryReturnType = method.ReturnType;
 		}
@@ -87,13 +88,13 @@ internal static class TypeChecker {
 			factoryReturnType = ctor.DeclaringType;
 		}
 		if (factoryReturnType != type) {
-			throw new Exception($"Def factory must return {type} but it returns {factoryReturnType}.");
+			throw new DefFactoryReturnTypeException(type, factoryReturnType);
 		}
 
 		// Verify factory parameters match what's expected.
 		Type[] paramTypes = factory.GetParameters().Select(p => p.ParameterType).ToArray();
 		if (paramTypes.Length != 1 || paramTypes[0] != typeof(XmlNode)) {
-			throw new Exception($"Def factory/constructor must take {typeof(XmlNode)} as the sole parameter.");
+			throw new DefFactoryConstructorParamsException(type);
 		}
 
 		return true;
