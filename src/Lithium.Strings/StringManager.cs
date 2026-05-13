@@ -23,14 +23,11 @@ internal static class StringManager {
 	/// Automatically called when changing the locale.
 	/// </remarks>
 	internal static void Reload() {
-		Dictionary<string, List<string>> resources = GetFilesInLocale();
+		Dictionary<string, string> resources = GetFilesInLocale();
 		contexts.Clear();
 		// Construct the contexts for each namespace.
 		foreach (string @namespace in resources.Keys) {
-			if (resources[@namespace].Count == 0) {
-				continue;
-			}
-			contexts[@namespace] = BuildContext(resources[@namespace].ToArray());
+			contexts[@namespace] = BuildContext(resources[@namespace]);
 		}
 	}
 
@@ -40,12 +37,12 @@ internal static class StringManager {
 	/// </summary>
 	/// <returns>A dictionary mapping namespaces to lists of file paths for the Fluent resource files found.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the StringRootDirectories setting is null.</exception>
-	private static Dictionary<string, List<string>> GetFilesInLocale() {
+	private static Dictionary<string, string> GetFilesInLocale() {
 		if (Settings.StringRootDirectories == null) {
 			throw new ArgumentNullException(nameof(Settings.StringRootDirectories));
 		}
 
-		Dictionary<string, List<string>> namespaceFileMap = new Dictionary<string, List<string>>();
+		Dictionary<string, string> namespaceFileMap = new Dictionary<string, string>();
 
 		foreach (string directory in Settings.StringRootDirectories) {
 			// Use directory structure:
@@ -66,17 +63,9 @@ internal static class StringManager {
 
 			foreach (string file in files) {
 				// Categorize string keys into namespaces derived from the file structure.
-				// This will allow multiple root locations to both have a string with the same name while keeping them distinct.
-				// Fluent does not inherently support namespaces, so this is a way of handling them externally.
-				// /root/en-US/path/to/file/strings.ftl -> path.to.file
-				string @namespace = Path.GetRelativePath(localeDirectory, Path.GetDirectoryName(file)!).Replace(Path.DirectorySeparatorChar, '.').TrimStart('.');
-				// Group files by their namespace.
-				if (namespaceFileMap.TryGetValue(@namespace, out List<string>? value)) {
-					namespaceFileMap[@namespace].Add(file);
-				}
-				else {
-					namespaceFileMap[@namespace] = new List<string> { file };
-				}
+				string @namespace = GetNamespace(directory, Settings.Locale.Name, file);
+				// Map files to their namespace.
+				namespaceFileMap[@namespace] = file;
 			}
 		}
 
@@ -90,7 +79,7 @@ internal static class StringManager {
 	/// <param name="files">An array of file paths to Fluent resource files (.ftl) to be loaded into the MessageContext.</param>
 	/// <returns>A MessageContext containing the messages from the provided Fluent resource files.</returns>
 	/// <exception cref="ParseException">Thrown when there is an error parsing any of the provided Fluent resource files.</exception>
-	private static MessageContext BuildContext(params IEnumerable<string> files) {
+	private static MessageContext BuildContext(string file) {
 		// When not using bidi text, the inserted control characters can be a nuisance.
 		// So currently, this will probably not work for bi-directional text.
 		MessageContextOptions options = new MessageContextOptions {
@@ -98,13 +87,11 @@ internal static class StringManager {
 		};
 		MessageContext context = new MessageContext(Settings.Locale.Name, options);
 
-		foreach (string file in files) {
-			StreamReader reader = new StreamReader(file);
+		StreamReader reader = new StreamReader(file);
 
-			List<ParseException> errors = (List<ParseException>)context.AddMessages(reader);
-			foreach (ParseException error in errors) {
-				throw error;
-			}
+		List<ParseException> errors = (List<ParseException>)context.AddMessages(reader);
+		if (errors.Count != 0) {
+			throw errors.First();
 		}
 
 		return context;
@@ -148,5 +135,39 @@ internal static class StringManager {
 		string @namespace = string.Join('.', parts.Take(parts.Length - 1));
 		string key = parts.Last();
 		return (@namespace, key);
+	}
+
+	/// <summary>
+	/// Categorize string keys into namespaces derived from the file structure.
+	/// This will allow multiple root locations to both have a string with the same name while keeping them distinct.
+	/// Fluent does not inherently support namespaces, so this is a way of handling them externally.
+	/// </summary>
+	/// <param name="rootDirectory">The root directory being scanned for Fluent resource files.</param>
+	/// <param name="locale">The current locale code.</param>
+	/// <param name="fileName">The full file path of the Fluent resource file.</param>
+	/// <returns>The namespace derived from the file's relative path within the locale directory as a dot-delimited string (e.g. root.namespace.directory.strings).</returns>
+	/// <example>
+	/// Inputs:
+	/// 	rootDirectory = .../root/
+	/// 	locale = en-US
+	/// 	fileName = /root/en-US/namespace/directory/strings.ftl
+	/// Output:
+	/// 	root.namespace.directory.strings
+	/// </example>
+	private static string GetNamespace(string rootDirectory, string locale, string fileName) {
+		// '.../root/en-US/'
+		string localeDirectory = Path.Combine(rootDirectory, locale);
+		// '.../root/en-US/namespace/directory/'
+		string fileDirectory = Path.GetDirectoryName(fileName)!;
+		// 'root'
+		string rootNamespace = Path.GetFileName(rootDirectory.TrimEnd(Path.DirectorySeparatorChar))!;
+		// '/namespace/directory/'
+		string relativePath = localeDirectory.Equals(fileDirectory) ? string.Empty : Path.GetRelativePath(localeDirectory, fileDirectory);
+		// 'root/namespace/directory/strings'
+		string namespacePath = Path.Combine(rootNamespace, relativePath, Path.GetFileNameWithoutExtension(fileName));
+		// 'root.namespace.directory.strings'
+		string @namespace = namespacePath.Replace(Path.DirectorySeparatorChar, '.').TrimStart('.');
+
+		return @namespace;
 	}
 }
