@@ -11,16 +11,8 @@ internal static class Init {
 		return Path.Combine(defMocksDirectory, $"mockDefs{i.ToString("00")}");
 	}
 
-	internal static void SetupStrings() {
-		StringParser.SetStringRootDirectory(Path.Combine(defMocksDirectory, "strings"));
-		StringParser.LoadAll();
-	}
-	internal static void SetupDefs(byte i) {
+	internal static void Setup(byte i) {
 		DefParser.SetDefRootDirectory(MockDirectory(i));
 		DefParser.LoadAll();
-	}
-	internal static void Setup(byte i) {
-		SetupStrings();
-		SetupDefs(i);
 	}
 }
