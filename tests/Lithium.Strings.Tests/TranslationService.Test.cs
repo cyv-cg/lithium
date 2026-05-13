@@ -1,0 +1,117 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Xunit;
+
+namespace Lithium.Strings.Tests;
+
+public class TranslationServiceTests {
+	private static readonly string mocksDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__mocks__");
+
+	private static void Setup() {
+		Settings.Reset();
+		Settings.SetLocale("en-US");
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings01"));
+	}
+
+	/// <summary>
+	/// Tests that loaded strings translate properly.
+	/// </summary>
+	[Fact]
+	public void TranslateTest01() {
+		Setup();
+		TranslationService.Reload();
+
+		Assert.Equal("test", "strings01.mockStrings01.sample-string".Translate());
+	}
+	/// <summary>
+	/// Tests that strings in a sub-namespace translate properly.
+	/// </summary>
+	[Fact]
+	public void TranslateTest02() {
+		Setup();
+		TranslationService.Reload();
+
+		Assert.Equal("namespace test", "strings01.sub.mockStrings02.sample-string".Translate());
+	}
+	/// <summary>
+	/// Tests that parameters are inserted into translated strings.
+	/// </summary>
+	[Fact]
+	public void TranslateTest03() {
+		Setup();
+		TranslationService.Reload();
+
+		Assert.Equal("value: 5", "strings01.mockStrings01.string-with-one-placeable".Translate(("data", 5)));
+	}
+	/// <summary>
+	/// Tests that multiple parameters are inserted into translated strings.
+	/// </summary>
+	[Fact]
+	public void TranslateTest04() {
+		Setup();
+		TranslationService.Reload();
+
+		Assert.Equal("value1: 5, value2: 6", "strings01.mockStrings01.string-with-two-placeables".Translate(("data1", 5), ("data2", 6)));
+	}
+	/// <summary>
+	/// Tests that a KeyNotFoundException is thrown when trying to translate a string that does not exist.
+	/// </summary>
+	[Fact]
+	public void TranslateTest06() {
+		Setup();
+		TranslationService.Reload();
+
+		Exception? ex = Assert.Throws<KeyNotFoundException>(
+			() => "key-that-does-not-exist".Translate()
+		);
+	}
+	/// <summary>
+	/// Tests that exceptions are thrown when there is an error in loading the translation.
+	/// </summary>
+	[Fact]
+	public void TranslateTest07() {
+		Setup();
+		TranslationService.Reload();
+
+		Exception? ex = Assert.Throws<Exception>(
+			() => "strings01.mockStrings01.string-with-bad-selector".Translate()
+		);
+	}
+	/// <summary>
+	/// Tests that an ArgumentException is thrown when a string parameter key is empty.
+	/// </summary>
+	[Fact]
+	public void TranslateTest08() {
+		Setup();
+		TranslationService.Reload();
+
+		Exception? ex = Assert.Throws<ArgumentException>(
+			() => "strings01.mockStrings01.string-with-one-placeable".Translate(("", 5))
+		);
+	}
+	/// <summary>
+	/// Tests that a KeyNotFoundException is thrown when the namespace exists but the key does not.
+	/// </summary>
+	[Fact]
+	public void TranslateTest09() {
+		Setup();
+		TranslationService.Reload();
+
+		Exception? ex = Assert.Throws<KeyNotFoundException>(
+			() => "strings01.sub.mockStrings02.key-that-does-not-exist".Translate()
+		);
+	}
+	/// <summary>
+	/// Tests that a KeyNotFoundException is thrown when neither the namespace nor the key exists.
+	/// </summary>
+	[Fact]
+	public void TranslateTest10() {
+		Setup();
+		TranslationService.Reload();
+
+		Exception? ex = Assert.Throws<KeyNotFoundException>(
+			() => "namespace.that.does.not.exist.key-that-does-not-exist".Translate()
+		);
+	}
+}
