@@ -1,4 +1,6 @@
 using System;
+using Lithium.Core.Exceptions;
+using Lithium.Exceptions;
 using Xunit;
 
 namespace Lithium.Defs.Tests;
@@ -19,10 +21,9 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void GetDefKeyTest01() {
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<NodeMissingChildException>(
 			() => Init.Setup(9)
 		);
-		Assert.Equal("Def node missing 'Key' child element.", e.Message);
 	}
 
 	/// <summary>
@@ -30,10 +31,9 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadXmlTest01() {
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<DefNotFoundException>(
 			() => Init.Setup(10)
 		);
-		Assert.Equal("No Def was found with the key 'DefThatDoesNotExist'.", e.Message);
 	}
 
 	/// <summary>

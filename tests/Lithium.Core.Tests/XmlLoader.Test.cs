@@ -53,7 +53,7 @@ public class XmlLoaderTests {
 	/// </summary>
 	[Fact]
 	public void GetAllFilesTest03() {
-		Assert.Throws<FileNotFoundException>(
+		Assert.Throws<DirectoryNotFoundException>(
 			() => XmlLoader.GetAllFiles(
 				Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())
 			)
