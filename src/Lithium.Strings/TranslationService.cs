@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Fluent.Net;
 using Fluent.Net.RuntimeAst;
+using Lithium.Strings.Exceptions;
 
 namespace Lithium.Strings;
 
@@ -27,7 +28,8 @@ public static class TranslationService {
 	/// <param name="args">Tuples where the first item is the placeable name and the second is the value.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
 	/// <exception cref="KeyNotFoundException">Thrown when the provided key does not exist in the string database.</exception>
-	/// <exception cref="Exception">Thrown when there is an error during translation or interpolation.</exception>
+	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
+	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
 	public static string Translate(this string key, params StringArgument[] args) {
 		if (!StringManager.TryGetMessage(key, out MessageContext? context, out Message? message)) {
 			throw new KeyNotFoundException(key);
@@ -36,9 +38,9 @@ public static class TranslationService {
 		// Translate and interpolate.
 		List<FluentError> errors = new List<FluentError>();
 		string result = context!.Format(message, FormatArgs(args), errors);
-		// Throw the first oopsie.
+		// Re-throw the errors.
 		if (errors.Count != 0) {
-			throw new Exception(errors.First().Message);
+			throw new StringTranslationException(errors);
 		}
 
 		return result;

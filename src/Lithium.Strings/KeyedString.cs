@@ -3,6 +3,8 @@ using System.Xml;
 using Lithium.Core.Attributes;
 using Lithium.Core;
 using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
+using Lithium.Strings.Exceptions;
 
 namespace Lithium.Strings;
 
@@ -60,6 +62,9 @@ public class KeyedString {
 	/// </summary>
 	/// <param name="values">String parameters.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown when the provided key does not exist in the string database.</exception>
+	/// <exception cref="Exception">Thrown when there is an error during translation or interpolation.</exception>
+	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
 	public string Translate(params StringArgument[] values) {
 		return Address.Translate(values);
 	}
@@ -70,6 +75,8 @@ public class KeyedString {
 	/// <remarks>
 	/// This translates with no parameters. If the string has parameters, call the Translate method directly.
 	/// </remarks>
+	/// <exception cref="KeyNotFoundException">Thrown when the provided key does not exist in the string database.</exception>
+	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
 	public static implicit operator string(KeyedString keyedString) {
 		return keyedString.Translate();
 	}
@@ -97,6 +104,8 @@ public class KeyedString {
 	/// </summary>
 	/// <param name="values">String parameters.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown when the provided key does not exist in the string database.</exception>
+	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
 	public string ToString(params StringArgument[] values) {
 		return Translate(values);
 	}

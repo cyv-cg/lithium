@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Lithium.Strings.Exceptions;
 using Xunit;
 
 namespace Lithium.Strings.Tests;
@@ -74,7 +75,7 @@ public class TranslationServiceTests {
 		Setup();
 		TranslationService.Reload();
 
-		Exception? ex = Assert.Throws<Exception>(
+		Exception? ex = Assert.Throws<StringTranslationException>(
 			() => "strings01.mockStrings01.string-with-bad-selector".Translate()
 		);
 	}
