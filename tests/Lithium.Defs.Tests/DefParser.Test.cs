@@ -10,6 +10,7 @@ using Lithium.Core.Attributes;
 using System.ComponentModel;
 using Lithium.Defs.Exceptions;
 using Lithium.Core.Exceptions;
+using System.Collections.Generic;
 
 namespace Lithium.Defs.Tests;
 
@@ -177,10 +178,9 @@ public class DefParserTests {
 		Init.SetupStrings();
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidProp.xml");
 
-		Exception e = Assert.Throws<WarningException>(
+		Exception e = Assert.Throws<MissingFieldException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Property 'PropThatDoesNotExist' does not exist on {typeof(MockDef1)}", e.Message);
 	}
 	/// <summary>
 	/// Tests that Load throws a <see cref="MissingDefPropException"/> when a required field is missing.

@@ -165,7 +165,7 @@ public static class DefParser {
 
 			PropertyInfo? prop = type.GetProperty(propNode.Name, TypeChecker.DEF_PROP_BINDINGS);
 			if (prop == null) {
-				throw new WarningException($"Property '{propNode.Name}' does not exist on {type}");
+				throw new MissingFieldException(type.ToString(), propNode.Name);
 			}
 
 			// Load list elements individually.
