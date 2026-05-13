@@ -55,6 +55,15 @@ public class KeyedStringTests {
 		Assert.Equal("test", ((KeyedString)"strings01.mockStrings01.sample-string").Translate());
 	}
 	/// <summary>
+	/// Tests that an unloaded KeyedString returns its address when translated.
+	/// </summary>
+	[Fact]
+	public void TranslateTest02() {
+		Setup();
+
+		Assert.Equal("key-that-does-not-exist", ((KeyedString)"key-that-does-not-exist").Translate());
+	}
+	/// <summary>
 	/// Tests that a KeyedString gets implicityly cast to its translated string.
 	/// </summary>
 	[Fact]

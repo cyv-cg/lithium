@@ -59,14 +59,18 @@ public class KeyedString {
 
 	/// <summary>
 	/// Translates the string by replacing parameters with the given values.
+	/// If the string has not been loaded into the context, returns the string address instead.
 	/// </summary>
 	/// <param name="values">String parameters.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
 	/// <exception cref="KeyNotFoundException">Thrown when the provided key does not exist in the string database.</exception>
-	/// <exception cref="Exception">Thrown when there is an error during translation or interpolation.</exception>
+	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
 	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
 	public string Translate(params StringArgument[] values) {
-		return Address.Translate(values);
+		if (IsLoaded()) {
+			return Address.Translate(values);
+		}
+		return Address;
 	}
 
 	/// <summary>
