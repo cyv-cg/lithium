@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lithium.Core.Tests", "tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lithium.Defs.Tests", "tests\Lithium.Defs.Tests\Lithium.Defs.Tests.csproj", "{C3BCD327-8656-4032-A710-7CD31FF24932}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lithium.Strings.Tests", "tests\Lithium.Strings.Tests\Lithium.Strings.Tests.csproj", "{EE53683C-D74D-4279-856E-39E39E82C434}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,18 @@ Global
 		{C3BCD327-8656-4032-A710-7CD31FF24932}.Release|x64.Build.0 = Release|Any CPU
 		{C3BCD327-8656-4032-A710-7CD31FF24932}.Release|x86.ActiveCfg = Release|Any CPU
 		{C3BCD327-8656-4032-A710-7CD31FF24932}.Release|x86.Build.0 = Release|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Debug|x64.Build.0 = Debug|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Debug|x86.Build.0 = Debug|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Release|x64.ActiveCfg = Release|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Release|x64.Build.0 = Release|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Release|x86.ActiveCfg = Release|Any CPU
+		{EE53683C-D74D-4279-856E-39E39E82C434}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -97,5 +111,6 @@ Global
 		{09932199-15A1-4AEC-B892-E1FBF541D1A7} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{6AC607D3-7907-46D1-A9FB-DA1A11F4E96B} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{C3BCD327-8656-4032-A710-7CD31FF24932} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{EE53683C-D74D-4279-856E-39E39E82C434} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal
