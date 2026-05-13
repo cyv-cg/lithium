@@ -7,9 +7,13 @@ namespace Lithium.Strings;
 
 public static class Settings {
 	/// <summary>
+	/// The primary locale to use for string translations. This is the default locale that will be used if no other locale is set.
+	/// </summary>
+	public static CultureInfo PrimaryLocale { get; set; } = new CultureInfo("en-US");
+	/// <summary>
 	/// The current locale used for string translations. This determines which Fluent resource files are loaded and used for translating strings.
 	/// </summary>
-	public static CultureInfo Locale { get; private set; } = new CultureInfo("en-US");
+	public static CultureInfo Locale { get; private set; } = PrimaryLocale;
 	/// <summary>
 	/// A set of root directories to scan for Fluent resource files (.ftl) when loading string contexts.
 	/// </summary>
@@ -47,5 +51,13 @@ public static class Settings {
 		}
 
 		StringRootDirectories.Add(path);
+	}
+
+	/// <summary>
+	/// Resets the settings to their default values.
+	/// </summary>
+	public static void Reset() {
+		Locale = PrimaryLocale;
+		StringRootDirectories = null;
 	}
 }

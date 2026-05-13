@@ -93,14 +93,6 @@ public class KeyedString {
 	}
 
 	/// <summary>
-	/// Returns the translated string.
-	/// This is equivalent to calling the Translate method with no parameters.
-	/// If the string has parameters, call the Translate method directly.
-	/// </summary>
-	public override string ToString() {
-		return (string)this;
-	}
-	/// <summary>
 	/// Translates the string by replacing parameters with the given values.
 	/// </summary>
 	/// <param name="values">String parameters.</param>
@@ -118,7 +110,7 @@ public class KeyedString {
 			return otherKeyedString.GetHashCode() == GetHashCode();
 		}
 		else if (obj is string otherString) {
-			return otherString == Address;
+			return otherString.Equals(Address);
 		}
 
 		return false;
