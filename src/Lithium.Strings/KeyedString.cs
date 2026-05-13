@@ -1,40 +1,49 @@
 using System;
 using System.Xml;
 using Lithium.Core.Attributes;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Runtime.CompilerServices;
-using System.ComponentModel;
 using Lithium.Core;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Lithium.Strings;
 
+using StringArgument = (string key, object value);
+
+/// <summary>
+/// Represents a string that can be translated using the string database.
+/// The string is identified by its namespace and key, which are used to look up the corresponding translation in the string database.
+/// </summary>
+/// <remarks>
+/// This does not automatically ensure that the string it points to exists.
+/// Use the IsLoaded method to check if the string key exists before attempting to translate it.
+/// </remarks>
 [UseDefOverrideInitializer]
-public partial class KeyedString {
+public class KeyedString {
+	/// <summary>
+	/// Namespace of the string, used for lookup in the string context.
+	/// </summary>
+	public required string Namespace { get; init; }
 	/// <summary>
 	/// String key.
 	/// </summary>
-	public string key;
-	/// <summary>
-	/// Raw text for the <see cref="KeyedString"/> as defined in XML.
-	/// </summary>
-	private string? raw;
+	public required string Key { get; init; }
 
 	/// <summary>
-	/// Creates a KeyedString from an XML node.
+	/// The full string address, combining the namespace and key.
+	/// Used for translation lookups in the string context.
 	/// </summary>
-	/// <param name="key">Key of the defined string, used for XML lookup.</param>
-	public KeyedString(string key) {
-		this.key = key;
+	public string Address => string.IsNullOrEmpty(Namespace) ? Key : $"{Namespace}.{Key}";
 
-		XmlNode? stringNode = StringDatabase.LoadXml(key);
-		if (stringNode == null) {
-			throw new WarningException($"String def '{key}' not found.");
-		}
-
-		raw = GetLocaleText(stringNode);
+	/// <summary>
+	/// Creates a KeyedString from a string address.
+	/// </summary>
+	/// <param name="address">String address in the format "root.namespace.category.string-name".</param>
+	[SetsRequiredMembers]
+	private KeyedString(string address) {
+		(string @namespace, string key) = StringManager.ParseAddress(address);
+		Namespace = @namespace;
+		Key = key;
 	}
+
 	/// <summary>
 	/// Creates a KeyedString from an XML node.
 	/// Used when loading defs from XML.
@@ -43,50 +52,7 @@ public partial class KeyedString {
 	/// <returns>Loaded KeyedString value.</returns>
 	[DefFactory]
 	public static KeyedString Factory(XmlNode node) {
-		return StringDatabase.Load(node.InnerText);
-	}
-
-	/// <summary>
-	/// Parses the locale text values from an XML node.
-	/// </summary>
-	/// <param name="node">XML node for the string definition.</param>
-	/// <returns>Map from the locale code to the localized string value.</returns>
-	private static string GetLocaleText(XmlNode node) {
-		string key = StringDatabase.GetStringKey(node);
-		XmlNode? textNode = node.SelectSingleNode("text");
-
-		if (textNode == null) {
-			throw new Exception($"KeyedString '{key}' has no text values.");
-		}
-
-		// Read "noTrim" node value and trim the raw text accordingly.
-		bool noTrim = node.GetChildValue<bool>("noTrim");
-		string? text = null;
-
-		foreach (XmlNode localeText in textNode.ChildNodes) {
-			if (localeText.Name.Equals(StringParser.Locale)) {
-				text = noTrim ? localeText.InnerText : localeText.InnerText.Trim();
-				break;
-			}
-		}
-
-		if (text == null) {
-			throw new Exception($"No text found for string '{key}'.");
-		}
-
-		return text;
-	}
-
-	/// <summary>
-	/// Counts the number of parameters in the raw text.
-	/// Parameters are in the form {0}, {1}, etc.
-	/// </summary>
-	/// <returns>Number of string parameters.</returns>
-	private byte CountParams() {
-		if (string.IsNullOrEmpty(raw)) {
-			return 0;
-		}
-		return (byte)StringParamsPattern().Matches(raw).Count;
+		return new KeyedString(node.InnerText);
 	}
 
 	/// <summary>
@@ -94,57 +60,71 @@ public partial class KeyedString {
 	/// </summary>
 	/// <param name="values">String parameters.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
-	public string Translate(params object[] values) {
-		if (string.IsNullOrEmpty(raw)) {
-			return string.Empty;
-		}
-
-		byte numParams = CountParams();
-		byte numProvidedParams = (byte)(values != null ? values.Length : 0);
-
-		if (numParams != numProvidedParams) {
-			throw new WarningException($"String '{key}' takes in {numParams} parameter(s), but {numProvidedParams} were provided.");
-		}
-
-		string parsed = raw;
-
-		for (byte i = 0; i < Math.Min(numProvidedParams, numParams); i++) {
-			string pattern = @"\{" + i + @"\}";
-			string value = values?[i].ToString() ?? string.Empty;
-			parsed = Regex.Replace(parsed, pattern, value);
-		}
-
-		return parsed;
+	public string Translate(params StringArgument[] values) {
+		return Address.Translate(values);
 	}
 
+	/// <summary>
+	/// Implicitly converts a KeyedString to a string by translating it. This allows you to use a KeyedString directly in places where a string is expected, and it will automatically be translated using the string database.
+	/// </summary>
+	/// <remarks>
+	/// This translates with no parameters. If the string has parameters, call the Translate method directly.
+	/// </remarks>
 	public static implicit operator string(KeyedString keyedString) {
 		return keyedString.Translate();
 	}
+	/// <summary>
+	/// Explicitly converts a string address to a KeyedString.
+	/// This allows you to easily create a KeyedString from a string address when you know the address at compile time.
+	/// </summary>
+	/// <remarks>
+	/// This does not validate that the string address exists in the string database. Use the IsLoaded method to check if the string key exists before attempting to translate it.
+	/// </remarks>
+	public static explicit operator KeyedString(string address) {
+		return new KeyedString(address);
+	}
+
+	/// <summary>
+	/// Checks whether the string key exists.
+	/// </summary>
+	/// <returns>True if the string key; otherwise, false.</returns>
+	public bool IsLoaded() {
+		return StringManager.TryGetMessage(Address, out _, out _);
+	}
+
+	/// <summary>
+	/// Returns the translated string.
+	/// This is equivalent to calling the Translate method with no parameters.
+	/// If the string has parameters, call the Translate method directly.
+	/// </summary>
 	public override string ToString() {
-		return Translate();
+		return (string)this;
+	}
+	/// <summary>
+	/// Translates the string by replacing parameters with the given values.
+	/// </summary>
+	/// <param name="values">String parameters.</param>
+	/// <returns>Translated string with parameters replaced.</returns>
+	public string ToString(params StringArgument[] values) {
+		return Translate(values);
 	}
 
 	public override bool Equals(object? obj) {
-		if (obj == null || obj.GetType() != typeof(KeyedString)) {
+		if (obj == null) {
 			return false;
 		}
 
-		KeyedString? other = obj as KeyedString;
-		if (other == null) {
-			return false;
+		if (obj is KeyedString otherKeyedString) {
+			return otherKeyedString.GetHashCode() == GetHashCode();
+		}
+		else if (obj is string otherString) {
+			return otherString == Address;
 		}
 
-		if (string.IsNullOrEmpty(other.raw)) {
-			return string.IsNullOrEmpty(raw);
-		}
-
-		return other.raw.Equals(raw);
+		return false;
 	}
 
 	public override int GetHashCode() {
-		return HashCode.Combine(key, raw);
+		return HashCode.Combine(Address);
 	}
-
-	[GeneratedRegex(@"\{\d\}")]
-	private static partial Regex StringParamsPattern();
 }
