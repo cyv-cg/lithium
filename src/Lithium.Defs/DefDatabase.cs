@@ -17,6 +17,9 @@ public static class DefDatabase {
 	/// Initializes the DefDatabase by loading all XML files from the defined root directory.
 	/// </summary>
 	/// <param name="defFiles">Absolute paths to the XML files to load.</param>
+	/// <exception cref="FileNotFoundException">Thrown if any supplied file path does not exist.</exception>
+	/// <exception cref="FileLoadException">Thrown if the specified any is not a .xml file.</exception>
+	/// <exception cref="XmlException">Thrown if the any contents cannot be parsed as valid XML.</exception>
 	internal static void Initialize(IEnumerable<string> defFiles) {
 		XmlDefinitions.Clear();
 		ParsedDefinitions.Clear();
@@ -74,7 +77,8 @@ public static class DefDatabase {
 	/// Returns the value of the 'key' child element of the provided XML node. Throws an exception if the node does not contain a 'key' child element.
 	/// </summary>
 	/// <param name="node">The XML node to extract the key from. Must contain a 'key' child element.</param>
-	/// <returns>The value of the 'key' child element of the provided XML node.</
+	/// <returns>The value of the 'key' child element of the provided XML node.</returns>
+	/// <exception cref="NodeMissingChildException">Thrown if the provided XML node does not contain a 'Key' child element.</exception>
 	internal static string GetDefKey(XmlNode node) {
 		XmlNode? keyNode = node.SelectSingleNode(Constants.DEF_KEY_ELEMENT);
 		if (keyNode == null) {
@@ -88,6 +92,7 @@ public static class DefDatabase {
 	/// </summary>
 	/// <param name="key">The key of the XML node to return.</param>
 	/// <returns>The XML node associated with the provided key in the DefDatabase.</returns>
+	/// <exception cref="DefNotFoundException">Thrown if no node with the provided key exists in the XML cache.</exception>
 	internal static XmlNode LoadXml(string key) {
 		if (!XmlDefinitions.TryGetValue(key, out XmlNode? value)) {
 			throw new DefNotFoundException(key);

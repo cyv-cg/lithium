@@ -24,6 +24,7 @@ public static class DefParser {
 	/// <summary>
 	/// Initializes the DefParser by loading all XML files from the defined root directory.
 	/// </summary>
+	/// <exception cref="ResourceRootDirectoryMissingException">Thrown if the root directory for defs has not been set.</exception>
 	public static void LoadAll() {
 		if (string.IsNullOrEmpty(DefRootDirectory)) {
 			throw new ResourceRootDirectoryMissingException("Def");
@@ -45,7 +46,9 @@ public static class DefParser {
 
 		Load();
 	}
-
+	/// <summary>
+	/// Core loading method that parses defs from XML and resolves def links.
+	/// </summary>
 	private static void Load() {
 		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
 		foreach (XmlNode node in defNodes) {
@@ -285,12 +288,25 @@ public static class DefParser {
 		return Convert.ChangeType(node.InnerText, type);
 	}
 
+	/// <summary>
+	/// Loads a class with a special constructor that takes an XmlNode.
+	/// </summary>
+	/// <param name="node">XML node containing the data.</param>
+	/// <param name="factory">Constructor or static factory method to use for loading.</param>
+	/// <returns>Instance of the class created by the factory.</returns>
 	private static object? LoadFactory(XmlNode node, MethodBase factory) {
 		if (factory.IsConstructor) {
 			return ((ConstructorInfo)factory).Invoke(new object[] { node });
 		}
 		return factory.Invoke(null, new object[] { node });
 	}
+	/// <summary>
+	/// Loads an enum value from an XML node.
+	/// </summary>
+	/// <param name="defNode">XML node containing the def data.</param>
+	/// <param name="node">XML node containing the enum value as a string.</param>
+	/// <param name="type">Type of the enum to parse.</param>
+	/// <returns>Parsed enum value.</returns>
 	private static object? LoadEnum(XmlNode defNode, XmlNode node, Type type) {
 		if (Enum.TryParse(type, node.InnerText, out object? value)) {
 			return value;
@@ -299,6 +315,14 @@ public static class DefParser {
 			throw new PropertyLoadException(DefDatabase.GetDefKey(defNode), node.Name, node.InnerText, type);
 		}
 	}
+	/// <summary>
+	/// Loads a System.Type value from an XML node, with inheritance enforcement.
+	/// </summary>
+	/// <param name="defNode">XML node containing the def data.</param>
+	/// <param name="node">XML node containing the type name as a string.</param>
+	/// <param name="prop">PropertyInfo of the property being set.</param>
+	/// <param name="type">Type of the property being set.</param>
+	/// <returns>Parsed System.Type value.</returns>
 	private static Type? LoadType(XmlNode defNode, XmlNode node, PropertyInfo prop, Type type) {
 		Type? targetType = TypeChecker.ResolveType(node.InnerText);
 		if (targetType == null) {
@@ -319,6 +343,12 @@ public static class DefParser {
 		}
 		return targetType;
 	}
+	/// <summary>
+	/// Loads a non-primitive class by recursively parsing its properties from the XML node.
+	/// </summary>
+	/// <param name="node">XML node containing the data.</param>
+	/// <param name="type">Type of the class to parse.</param>
+	/// <returns>Parsed class instance.</returns>
 	private static object LoadClass(XmlNode node, Type type) {
 		object subClass = Activator.CreateInstance(type)!;
 		ParseXmlToClass(node, type, ref subClass);
