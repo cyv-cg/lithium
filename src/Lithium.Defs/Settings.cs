@@ -30,10 +30,8 @@ public static class Settings {
 			throw new DirectoryNotFoundException(path);
 		}
 
-		if (DefRootDirectories == null) {
-			DefRootDirectories = new HashSet<string>();
-		}
+		DefRootDirectories ??= new HashSet<string>();
 
-		DefRootDirectories.Add(path);
+		_ = DefRootDirectories.Add(path);
 	}
 }

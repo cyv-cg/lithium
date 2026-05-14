@@ -31,7 +31,7 @@ public static class DefDatabase {
 				continue;
 			}
 			foreach (XmlNode child in defsNode.ChildNodes) {
-				/// Skip comment nodes.
+				// Skip comment nodes.
 				if (child.NodeType == XmlNodeType.Comment) {
 					continue;
 				}
@@ -111,16 +111,8 @@ public static class DefDatabase {
 	/// <param name="key">The key of the def to return.</param>
 	/// <returns>The def associated with the provided key in the DefDatabase, or null if not available.</returns>
 	public static T? Load<T>(string key) where T : Def {
-		Def? loadedDef;
-
-		if (Settings.DeferredParsing) {
-			loadedDef = LoadDeferred<T>(key);
-		}
-		else {
-			loadedDef = LoadDirect(key) as Def;
-		}
-
-		if (loadedDef == null || loadedDef is not T) {
+		Def? loadedDef = Settings.DeferredParsing ? LoadDeferred<T>(key) : LoadDirect(key) as Def;
+		if (loadedDef is null or not T) {
 			return null;
 		}
 
@@ -138,7 +130,7 @@ public static class DefDatabase {
 			// Store the parsed value.
 			AddToDB(def);
 			// Clean up the XML, which should no longer be needed.
-			XmlDefinitions.Remove(key);
+			_ = XmlDefinitions.Remove(key);
 			return def as T;
 		}
 		return null;

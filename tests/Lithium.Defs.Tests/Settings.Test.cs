@@ -11,7 +11,7 @@ public class SettingsTests {
 	[Fact]
 	public void AddDefRootDirectoryTest01() {
 		string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-		Directory.CreateDirectory(tempDirectory);
+		_ = Directory.CreateDirectory(tempDirectory);
 
 		try {
 			Exception? ex = Record.Exception(() => Settings.AddDefRootDirectory(tempDirectory));

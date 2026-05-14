@@ -1,5 +1,4 @@
 using System;
-using Lithium.Defs;
 
 namespace Lithium.Defs.Exceptions;
 
