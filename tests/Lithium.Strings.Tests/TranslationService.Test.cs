@@ -158,7 +158,7 @@ public class TranslationServiceTests {
 		Assert.Equal(1, rates["en-US"]);
 
 		float epsilon = 1e-10f;
-		Assert.InRange(rates["fr-FR"], 3f / 6 - epsilon, 3f / 6 + epsilon);
+		Assert.InRange(rates["fr-FR"], (3f / 6) - epsilon, (3f / 6) + epsilon);
 	}
 	/// <summary>
 	/// Tests that percentages are calculated for multiple secondary locales.
@@ -198,7 +198,7 @@ public class TranslationServiceTests {
 		Assert.Equal(1, rates["en-US"]);
 
 		float epsilon = 1e-10f;
-		Assert.InRange(rates["fr-FR"], 4f / 7 - epsilon, 4f / 7 + epsilon);
-		Assert.InRange(rates["ja-JP"], 1f / 7 - epsilon, 1f / 7 + epsilon);
+		Assert.InRange(rates["fr-FR"], (4f / 7) - epsilon, (4f / 7) + epsilon);
+		Assert.InRange(rates["ja-JP"], (1f / 7) - epsilon, (1f / 7) + epsilon);
 	}
 }
