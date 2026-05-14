@@ -1,4 +1,4 @@
-using Lithium.Exceptions;
+using Lithium.Defs.Exceptions;
 using Xunit;
 
 namespace Lithium.Defs.Tests;
