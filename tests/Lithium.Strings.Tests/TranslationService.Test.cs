@@ -124,13 +124,13 @@ public class TranslationServiceTests {
 	[Fact]
 	public void TranslateTest11() {
 		Settings.Reset();
-		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings03"));
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings02"));
 
 		Settings.SetLocale("en-US");
-		Assert.Equal("sample", "strings03.mockStrings.test-string".Translate());
+		Assert.Equal("sample", "strings02.mockStrings.test-string".Translate());
 
 		Settings.SetLocale("fr-FR");
-		Assert.Equal("exemple", "strings03.mockStrings.test-string".Translate());
+		Assert.Equal("exemple", "strings02.mockStrings.test-string".Translate());
 	}
 	/// <summary>
 	/// Test that unicode characters in translations are handled properly.
@@ -138,10 +138,10 @@ public class TranslationServiceTests {
 	[Fact]
 	public void TranslateTest12() {
 		Settings.Reset();
-		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings03"));
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings02"));
 
 		Settings.SetLocale("ja-JP");
-		Assert.Equal("サンプル", "strings03.mockStrings.test-string".Translate());
+		Assert.Equal("サンプル", "strings02.mockStrings.test-string".Translate());
 	}
 
 	/// <summary>
@@ -166,7 +166,7 @@ public class TranslationServiceTests {
 	[Fact]
 	public void CalculateTranslationCompletionTest02() {
 		Settings.Reset();
-		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings03"));
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings02"));
 
 		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
 
@@ -191,7 +191,7 @@ public class TranslationServiceTests {
 	[Fact]
 	public void CalculateTranslationCompletionTest04() {
 		Setup();
-		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings03"));
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings02"));
 
 		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
 
