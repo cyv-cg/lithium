@@ -1,6 +1,6 @@
 using System;
 
-namespace Lithium.Exceptions;
+namespace Lithium.Defs.Exceptions;
 
 public class DefNotFoundException(string key) : Exception {
 	private readonly string key = key;
