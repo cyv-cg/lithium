@@ -12,7 +12,10 @@ internal static class Init {
 	}
 
 	internal static void Setup(byte i) {
-		DefParser.SetDefRootDirectory(MockDirectory(i));
+		if (Settings.DefRootDirectories != null) {
+			Settings.DefRootDirectories.Clear();
+		}
+		Settings.AddDefRootDirectory(MockDirectory(i));
 		DefParser.LoadAll();
 	}
 }

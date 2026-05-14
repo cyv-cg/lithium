@@ -15,15 +15,19 @@ using System.Collections.Generic;
 namespace Lithium.Defs.Tests;
 
 public class DefParserTests {
+	public DefParserTests() {
+		Settings.DeferredParsing = false;
+	}
+
 	#region LoadAll tests
 	/// <summary>
-	/// Tests that an Exception is thrown when the def directory has not been set.
+	/// Tests that LoadAll throws an exception when trying to load defs before adding a directory.
 	/// </summary>
 	[Fact]
 	public void LoadAllTest01() {
-		DefParser.SetDefRootDirectory(string.Empty);
+		Settings.DefRootDirectories?.Clear();
 
-		Assert.Throws<ResourceRootDirectoryMissingException>(
+		Exception e = Assert.Throws<ResourceRootDirectoryMissingException>(
 			() => DefParser.LoadAll()
 		);
 	}
@@ -76,14 +80,14 @@ public class DefParserTests {
 		Assert.NotEmpty(loadedDef.DefList);
 		Assert.Collection<Def>(loadedDef.DefList,
 			d => {
-				Assert.IsType<MockDef2>(d);
-				Assert.Equal("MockDef", d.Key);
-				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
-			},
-			d => {
 				Assert.IsType<MockDef1>(d);
 				Assert.Equal("SecondDef", d.Key);
 				Assert.Equal(2, ((MockDef1)d).SampleValue1);
+			},
+			d => {
+				Assert.IsType<MockDef2>(d);
+				Assert.Equal("MockDef", d.Key);
+				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
 			}
 		);
 	}
@@ -92,10 +96,76 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest05() {
-		DefParser.SetDefRootDirectory(Init.MockDirectory(3));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(3));
 
-		Assert.Throws<ResourceLoadFailedException>(
+		Assert.Throws<DefNotFoundException>(
 			() => DefParser.LoadAll()
+		);
+	}
+
+	/// <summary>
+	/// Tests that LoadAll can initialize a simple Def with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest06() {
+		Settings.DeferredParsing = true;
+		Init.Setup(1);
+
+		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
+
+		Assert.NotNull(loadedDef);
+		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal((KeyedString)"MockDef_Label", loadedDef.Label);
+		Assert.Equal(1, loadedDef.SampleValue1);
+	}
+
+	/// <summary>
+	/// Tests that LoadAll can initialize nested Defs with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest07() {
+		Settings.DeferredParsing = true;
+		Init.Setup(2);
+
+		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
+
+		Assert.NotNull(loadedDef);
+		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal((KeyedString)"MockDef_Label", loadedDef.Label);
+
+		Assert.NotNull(loadedDef.SubDef);
+		Assert.Equal("SecondDef", loadedDef.SubDef.Key);
+		Assert.Equal((KeyedString)"MockDef_Label", loadedDef.SubDef.Label);
+		Assert.Equal(2, loadedDef.SubDef.SampleValue1);
+	}
+
+	/// <summary>
+	/// Tests that LoadAll can initialize a nested list of Defs with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest08() {
+		Settings.DeferredParsing = true;
+		Init.Setup(2);
+
+		MockDef3? loadedDef = DefDatabase.Load<MockDef3>("ThirdDef");
+
+		Assert.NotNull(loadedDef);
+		Assert.Equal("ThirdDef", loadedDef.Key);
+
+		Assert.NotNull(loadedDef.DefList);
+		Assert.NotEmpty(loadedDef.DefList);
+		Assert.Collection<Def>(loadedDef.DefList,
+			d => {
+				Assert.IsType<MockDef1>(d);
+				Assert.Equal("SecondDef", d.Key);
+				Assert.Equal(2, ((MockDef1)d).SampleValue1);
+			},
+			d => {
+				Assert.IsType<MockDef2>(d);
+				Assert.Equal("MockDef", d.Key);
+				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
+			}
 		);
 	}
 	#endregion
@@ -179,22 +249,31 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest07() {
-		DefParser.SetDefRootDirectory(Init.MockDirectory(11));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
 			() => DefParser.LoadAll()
 		);
 	}
+
 	/// <summary>
-	/// Tests that Load throws a <see cref="DefInheritanceException"/> when asked to load a class that does not inherit from <see cref="Def"/>.
+	/// Tests that defs can be loaded from multiple roots.
 	/// </summary>
 	[Fact]
 	public void LoadTest08() {
-		DefParser.SetDefRootDirectory(Init.MockDirectory(12));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(1));
+		Settings.AddDefRootDirectory(Init.MockDirectory(2));
+		Settings.DeferredParsing = true;
 
-		Exception e = Assert.Throws<DefInheritanceException>(
-			() => DefParser.LoadAll()
-		);
+		DefParser.LoadAll();
+
+		MockDef1? loadedDef1 = DefDatabase.Load<MockDef1>("MockDef");
+		MockDef3? loadedDef2 = DefDatabase.Load<MockDef3>("ThirdDef");
+
+		Assert.NotNull(loadedDef1);
+		Assert.NotNull(loadedDef2);
 	}
 	#endregion
 
@@ -266,7 +345,8 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest01() {
-		DefParser.SetDefRootDirectory(Init.MockDirectory(6));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(6));
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
 			() => DefParser.LoadAll()
