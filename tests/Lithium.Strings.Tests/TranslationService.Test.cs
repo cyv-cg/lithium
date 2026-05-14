@@ -115,4 +115,29 @@ public class TranslationServiceTests {
 			() => "namespace.that.does.not.exist.key-that-does-not-exist".Translate()
 		);
 	}
+	/// <summary>
+	/// Tests that changing the locale properly reloads the string contexts and allows for translation in the new locale.
+	/// </summary>
+	[Fact]
+	public void TranslateTest11() {
+		Settings.Reset();
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings03"));
+
+		Settings.SetLocale("en-US");
+		Assert.Equal("sample", "strings03.mockStrings.test-string".Translate());
+
+		Settings.SetLocale("fr-FR");
+		Assert.Equal("exemple", "strings03.mockStrings.test-string".Translate());
+	}
+	/// <summary>
+	/// Test that unicode characters in translations are handled properly.
+	/// </summary>
+	[Fact]
+	public void TranslateTest12() {
+		Settings.Reset();
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings03"));
+
+		Settings.SetLocale("ja-JP");
+		Assert.Equal("サンプル", "strings03.mockStrings.test-string".Translate());
+	}
 }
