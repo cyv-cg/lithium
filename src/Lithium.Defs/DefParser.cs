@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
-using Lithium.Core;
 using Lithium.Core.Attributes;
 using Lithium.Core.Exceptions;
 using Lithium.Defs.Exceptions;
@@ -15,44 +14,11 @@ namespace Lithium.Defs;
 /// Utility for loading defs from XML.
 /// Use LoadAll or LoadSingle to parse a def.
 /// </summary>
-public static class DefParser {
+internal static class DefParser {
 	/// <summary>
 	/// Collection of references to nested def properties to be resolved after all top-level defs have been loaded.
 	/// </summary>
-	private static readonly Stack<DefLink> defLinks = new Stack<DefLink>();
-
-	/// <summary>
-	/// Initializes the DefParser by loading all XML files from the defined root directory.
-	/// </summary>
-	/// <exception cref="ResourceRootDirectoryMissingException">Thrown if the root directory for defs has not been set.</exception>
-	public static void LoadAll() {
-		if (Settings.DefRootDirectories.Count == 0) {
-			throw new ResourceRootDirectoryMissingException("Def");
-		}
-		defLinks.Clear();
-
-		IEnumerable<string> defFiles = Settings.DefRootDirectories.Select(XmlLoader.GetAllFiles).SelectMany(f => f);
-		DefDatabase.Initialize(defFiles);
-
-		if (!Settings.DeferredParsing) {
-			Load();
-		}
-	}
-	/// <summary>
-	/// Initializes the DefParser by loading defs from a single XML file.
-	/// </summary>
-	/// <param name="defFile">Absolute path to the XML file to load.</param>
-	public static void LoadSingle(string defFile) {
-		defLinks.Clear();
-		DefDatabase.Initialize(new string[] { defFile });
-
-		if (!Settings.DeferredParsing) {
-			Load();
-		}
-	}
-	/// <summary>
-	/// Core loading method that parses defs from XML and resolves def links.
-	/// </summary>	}
+	internal static readonly Stack<DefLink> defLinks = new Stack<DefLink>();
 
 	/// <summary>
 	/// Parses out nested def references.
@@ -63,40 +29,25 @@ public static class DefParser {
 			DefLink link = defLinks.Pop();
 			Type defType = link.Field.PropertyType.IsList(out Type? listType) ? listType! : link.Field.PropertyType;
 
-			// Fetch value from loaded defs.
-			if (TryLoadDef(link.DefName, defType, out Def? defValue, true)) {
-				if (link.ParentList == null) {
-					link.Field.SetValue(link.Instance, defValue);
-				}
-				else {
-					_ = link.ParentList.Add(defValue);
-				}
-			}
-			// Parse an unloaded def.
-			else {
+			// Either fetch value from loaded defs or load a new one.
+			if (!TryLoadDef(link.DefName, defType, out Def? defValue, true)) {
 				defValue = ParseDef(DefDatabase.LoadXml(link.DefName));
-				if (link.ParentList == null) {
-					link.Field.SetValue(link.Instance, defValue);
-				}
-				else {
-					_ = link.ParentList.Add(defValue);
-				}
 			}
+			ApplyDefLink(link, defValue!);
 		}
 	}
-
 	/// <summary>
-	/// Loads defs from all XML nodes currently stored in the <see cref="DefDatabase"/>.
+	/// Sets the value of a DefLink to an instance.
 	/// </summary>
-	private static void Load() {
-		// Immediately load all XML nodes.
-		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
-		foreach (XmlNode node in defNodes) {
-			_ = ParseDef(node);
+	/// <param name="link">DefLink containing the data.</param>
+	/// <param name="defValue">Def instance to apply the data to.</param>
+	private static void ApplyDefLink(DefLink link, Def defValue) {
+		if (link.ParentList == null) {
+			link.Field.SetValue(link.Instance, defValue);
 		}
-
-		ResolveDefLinks();
-		DefDatabase.PostLoad();
+		else {
+			_ = link.ParentList.Add(defValue);
+		}
 	}
 
 	/// <summary>

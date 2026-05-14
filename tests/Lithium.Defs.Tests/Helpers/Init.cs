@@ -13,6 +13,6 @@ internal static class Init {
 	internal static void Setup(byte i) {
 		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(MockDirectory(i));
-		DefParser.LoadAll();
+		DefDatabase.Initialize();
 	}
 }
