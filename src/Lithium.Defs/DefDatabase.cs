@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
@@ -17,11 +18,22 @@ public static class DefDatabase {
 	/// <summary>
 	/// Initializes the DefDatabase by loading all XML files from the defined root directory.
 	/// </summary>
-	/// <param name="defFiles">Absolute paths to the XML files to load.</param>
+	/// <param name="defFiles">
+	/// Absolute paths to the XML files to load.
+	/// If null, automatically gathers them from the added root directories in <see cref="Settings"/>
+	/// </param>
 	/// <exception cref="FileNotFoundException">Thrown if any supplied file path does not exist.</exception>
 	/// <exception cref="FileLoadException">Thrown if the specified any is not a .xml file.</exception>
 	/// <exception cref="XmlException">Thrown if the any contents cannot be parsed as valid XML.</exception>
-	internal static void Initialize(IEnumerable<string> defFiles) {
+	public static void Initialize(params string[] defFiles) {
+		if (defFiles.Length == 0) {
+			if (Settings.DefRootDirectories.Count == 0) {
+				throw new ResourceRootDirectoryMissingException("Def");
+			}
+			defFiles = Settings.DefRootDirectories.Select(XmlLoader.GetAllFiles).SelectMany(f => f).ToArray();
+		}
+
+		DefParser.defLinks.Clear();
 		XmlDefinitions.Clear();
 		ParsedDefinitions.Clear();
 
@@ -42,13 +54,17 @@ public static class DefDatabase {
 				AddToDB(child);
 			}
 		}
-	}
 
-	/// <summary>
-	/// Performs cleanup after all defs have been loaded.
-	/// </summary>
-	internal static void PostLoad() {
-		XmlDefinitions.Clear();
+		if (!Settings.DeferredParsing) {
+			// Immediately load all XML nodes.
+			IEnumerable<XmlNode> defNodes = GetAllNodes();
+			foreach (XmlNode node in defNodes) {
+				_ = DefParser.ParseDef(node);
+			}
+
+			DefParser.ResolveDefLinks();
+			XmlDefinitions.Clear();
+		}
 	}
 
 	/// <summary>
