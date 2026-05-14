@@ -154,7 +154,7 @@ internal static class StringManager {
 	/// Output:
 	/// 	root.namespace.directory.strings
 	/// </example>
-	private static string GetNamespace(string rootDirectory, string locale, string fileName) {
+	internal static string GetNamespace(string rootDirectory, string locale, string fileName) {
 		// '.../root/en-US/'
 		string localeDirectory = Path.Combine(rootDirectory, locale);
 		// '.../root/en-US/namespace/directory/'

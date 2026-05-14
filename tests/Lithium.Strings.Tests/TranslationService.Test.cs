@@ -140,4 +140,62 @@ public class TranslationServiceTests {
 		Settings.SetLocale("ja-JP");
 		Assert.Equal("サンプル", "strings03.mockStrings.test-string".Translate());
 	}
+
+	/// <summary>
+	/// Tests that:
+	/// 	1) percentages are calculated for multiple locales; and
+	/// 	2) strings that only exist in secondary locales to not contribute to the percentage.
+	/// </summary>
+	[Fact]
+	public void CalculateTranslationCompletionTest01() {
+		Setup();
+
+		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
+
+		Assert.Equal(1, rates["en-US"]);
+
+		float epsilon = 1e-10f;
+		Assert.InRange(rates["fr-FR"], 3f / 6 - epsilon, 3f / 6 + epsilon);
+	}
+	/// <summary>
+	/// Tests that percentages are calculated for multiple secondary locales.
+	/// </summary>
+	[Fact]
+	public void CalculateTranslationCompletionTest02() {
+		Settings.Reset();
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings03"));
+
+		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
+
+		Assert.Equal(1, rates["en-US"]);
+		Assert.Equal(1, rates["fr-FR"]);
+		Assert.Equal(1, rates["ja-JP"]);
+	}
+	/// <summary>
+	/// Tests that when no root directories are set, the primary locale is the only point of data.
+	/// </summary>
+	[Fact]
+	public void CalculateTranslationCompletionTest03() {
+		Settings.Reset();
+		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
+
+		Assert.Single(rates);
+		Assert.Equal(1, rates["en-US"]);
+	}
+	/// <summary>
+	/// Tests that percentages are calculated accurately with multiple root directories.
+	/// </summary>
+	[Fact]
+	public void CalculateTranslationCompletionTest04() {
+		Setup();
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings03"));
+
+		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
+
+		Assert.Equal(1, rates["en-US"]);
+
+		float epsilon = 1e-10f;
+		Assert.InRange(rates["fr-FR"], 4f / 7 - epsilon, 4f / 7 + epsilon);
+		Assert.InRange(rates["ja-JP"], 1f / 7 - epsilon, 1f / 7 + epsilon);
+	}
 }
