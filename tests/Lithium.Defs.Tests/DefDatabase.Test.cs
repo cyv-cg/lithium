@@ -7,8 +7,8 @@ namespace Lithium.Defs.Tests;
 
 public class DefDatabaseTests {
 	public DefDatabaseTests() {
-		Init.SetupStrings();
 		Settings.DeferredParsing = false;
+		Settings.DefRootDirectories.Clear();
 	}
 
 	/// <summary>
@@ -16,7 +16,7 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void InitializeTest01() {
-		Init.SetupDefs(8);
+		Init.Setup(8);
 
 		Assert.Empty(DefDatabase.LoadAll());
 	}
@@ -27,7 +27,7 @@ public class DefDatabaseTests {
 	[Fact]
 	public void GetDefKeyTest01() {
 		Exception e = Assert.Throws<NodeMissingChildException>(
-			() => Init.SetupDefs(9)
+			() => Init.Setup(9)
 		);
 	}
 
@@ -37,7 +37,7 @@ public class DefDatabaseTests {
 	[Fact]
 	public void LoadXmlTest01() {
 		Exception e = Assert.Throws<DefNotFoundException>(
-			() => Init.SetupDefs(10)
+			() => Init.Setup(10)
 		);
 	}
 
@@ -46,7 +46,7 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest01() {
-		Init.SetupDefs(1);
+		Init.Setup(1);
 
 		Def? loadedDef = DefDatabase.Load<MockDef5>("MockDef");
 		Assert.Null(loadedDef);
@@ -57,7 +57,6 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest02() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
 		DefParser.LoadAll();
@@ -66,7 +65,7 @@ public class DefDatabaseTests {
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
-		Assert.Equal("MockDef_Label", loadedDef.Label.key);
+		Assert.Equal("MockDef_Label", loadedDef.Label.Address);
 		Assert.Equal(1, loadedDef.SampleValue1);
 	}
 
@@ -75,7 +74,6 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest03() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
 		DefParser.LoadAll();
@@ -90,7 +88,6 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest04() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
 		DefParser.LoadAll();

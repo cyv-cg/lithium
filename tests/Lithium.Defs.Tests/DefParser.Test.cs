@@ -16,8 +16,8 @@ namespace Lithium.Defs.Tests;
 
 public class DefParserTests {
 	public DefParserTests() {
-		Init.SetupStrings();
 		Settings.DeferredParsing = false;
+		Settings.DefRootDirectories.Clear();
 	}
 
 	#region LoadAll tests
@@ -26,8 +26,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest01() {
-		Settings.DefRootDirectories?.Clear();
-
 		Exception e = Assert.Throws<ResourceRootDirectoryMissingException>(
 			() => DefParser.LoadAll()
 		);
@@ -37,13 +35,13 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest02() {
-		Init.SetupDefs(1);
+		Init.Setup(1);
 
 		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.Label);
+		Assert.True(loadedDef.Label.Equals("MockDef_Label"));
 		Assert.Equal(1, loadedDef.SampleValue1);
 	}
 	/// <summary>
@@ -51,17 +49,17 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest03() {
-		Init.SetupDefs(2);
+		Init.Setup(2);
 
 		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.Label);
+		Assert.True(loadedDef.Label.Equals("MockDef_Label"));
 
 		Assert.NotNull(loadedDef.SubDef);
 		Assert.Equal("SecondDef", loadedDef.SubDef.Key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.SubDef.Label);
+		Assert.True(loadedDef.SubDef.Label.Equals("MockDef_Label"));
 		Assert.Equal(2, loadedDef.SubDef.SampleValue1);
 	}
 
@@ -70,7 +68,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest04() {
-		Init.SetupDefs(2);
+		Init.Setup(2);
 
 		MockDef3? loadedDef = DefDatabase.Load<MockDef3>("ThirdDef");
 
@@ -110,13 +108,13 @@ public class DefParserTests {
 	[Fact]
 	public void LoadAllTest06() {
 		Settings.DeferredParsing = true;
-		Init.SetupDefs(1);
+		Init.Setup(1);
 
 		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.Label);
+		Assert.Equal((KeyedString)"MockDef_Label", loadedDef.Label);
 		Assert.Equal(1, loadedDef.SampleValue1);
 	}
 
@@ -126,17 +124,17 @@ public class DefParserTests {
 	[Fact]
 	public void LoadAllTest07() {
 		Settings.DeferredParsing = true;
-		Init.SetupDefs(2);
+		Init.Setup(2);
 
 		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.Label);
+		Assert.Equal((KeyedString)"MockDef_Label", loadedDef.Label);
 
 		Assert.NotNull(loadedDef.SubDef);
 		Assert.Equal("SecondDef", loadedDef.SubDef.Key);
-		Assert.Equal(new KeyedString("MockDef_Label"), loadedDef.SubDef.Label);
+		Assert.Equal((KeyedString)"MockDef_Label", loadedDef.SubDef.Label);
 		Assert.Equal(2, loadedDef.SubDef.SampleValue1);
 	}
 
@@ -146,7 +144,7 @@ public class DefParserTests {
 	[Fact]
 	public void LoadAllTest08() {
 		Settings.DeferredParsing = true;
-		Init.SetupDefs(2);
+		Init.Setup(2);
 
 		MockDef3? loadedDef = DefDatabase.Load<MockDef3>("ThirdDef");
 
@@ -249,7 +247,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest07() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
@@ -262,7 +259,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest08() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.AddDefRootDirectory(Init.MockDirectory(2));
 		Settings.DeferredParsing = true;
@@ -345,7 +341,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest01() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(6));
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(

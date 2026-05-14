@@ -12,19 +12,17 @@ public class DefTests {
 	/// </summary>
 	[Fact]
 	public void ConstructorTest01() {
-		Init.SetupStrings();
-
 		Def def = new Def {
 			Key = "MockDef",
-			Label = new KeyedString("MockDef_Label")
+			Label = (KeyedString)"MockDef_Label"
 		};
 
 		def = def with {
 			Key = "MockDef",
-			Label = new KeyedString("MockDef_Label")
+			Label = (KeyedString)"MockDef_Label"
 		};
 
 		Assert.Equal("MockDef", def.Key);
-		Assert.Equal("MockDef_Label", def.Label.key);
+		Assert.Equal("MockDef_Label", def.Label.Address);
 	}
 }
