@@ -23,12 +23,12 @@ public static class DefParser {
 	/// </summary>
 	/// <exception cref="ResourceRootDirectoryMissingException">Thrown if the root directory for defs has not been set.</exception>
 	public static void LoadAll() {
-		if (string.IsNullOrEmpty(Settings.DefRootDirectory)) {
+		if (Settings.DefRootDirectories == null || Settings.DefRootDirectories.Count == 0) {
 			throw new ResourceRootDirectoryMissingException("Def");
 		}
 		defLinks.Clear();
 
-		IEnumerable<string> defFiles = XmlLoader.GetAllFiles(Settings.DefRootDirectory);
+		IEnumerable<string> defFiles = Settings.DefRootDirectories.Select(root => XmlLoader.GetAllFiles(root)).SelectMany(f => f);
 		DefDatabase.Initialize(defFiles);
 
 		if (!Settings.DeferredParsing) {

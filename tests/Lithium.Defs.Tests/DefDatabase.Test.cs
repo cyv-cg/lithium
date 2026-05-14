@@ -57,7 +57,8 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest02() {
-		Settings.SetDefRootDirectory(Init.MockDirectory(1));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
 		DefParser.LoadAll();
 
@@ -74,7 +75,8 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest03() {
-		Settings.SetDefRootDirectory(Init.MockDirectory(1));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
 		DefParser.LoadAll();
 
@@ -88,7 +90,8 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest04() {
-		Settings.SetDefRootDirectory(Init.MockDirectory(1));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
 		DefParser.LoadAll();
 

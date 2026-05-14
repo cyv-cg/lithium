@@ -22,13 +22,13 @@ public class DefParserTests {
 
 	#region LoadAll tests
 	/// <summary>
-	/// Tests that an Exception is thrown when the def directory has not been set.
+	/// Tests that LoadAll throws an exception when trying to load defs before adding a directory.
 	/// </summary>
 	[Fact]
 	public void LoadAllTest01() {
-		Settings.SetDefRootDirectory(string.Empty);
+		Settings.DefRootDirectories?.Clear();
 
-		Assert.Throws<ResourceRootDirectoryMissingException>(
+		Exception e = Assert.Throws<ResourceRootDirectoryMissingException>(
 			() => DefParser.LoadAll()
 		);
 	}
@@ -97,7 +97,7 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest05() {
-		Settings.SetDefRootDirectory(Init.MockDirectory(3));
+		Settings.AddDefRootDirectory(Init.MockDirectory(3));
 
 		Assert.Throws<DefNotFoundException>(
 			() => DefParser.LoadAll()
@@ -249,7 +249,8 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest07() {
-		Settings.SetDefRootDirectory(Init.MockDirectory(11));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
 			() => DefParser.LoadAll()
@@ -325,7 +326,8 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest01() {
-		Settings.SetDefRootDirectory(Init.MockDirectory(6));
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(6));
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
 			() => DefParser.LoadAll()
