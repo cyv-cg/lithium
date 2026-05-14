@@ -65,7 +65,7 @@ public class DefDatabaseTests {
 	public void LoadTest02() {
 		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
-		DefParser.LoadAll();
+		DefDatabase.Initialize();
 
 		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
 
@@ -82,7 +82,7 @@ public class DefDatabaseTests {
 	public void LoadTest03() {
 		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
-		DefParser.LoadAll();
+		DefDatabase.Initialize();
 
 		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDefThatDoesNotExist");
 
@@ -96,7 +96,7 @@ public class DefDatabaseTests {
 	public void LoadTest04() {
 		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.DeferredParsing = true;
-		DefParser.LoadAll();
+		DefDatabase.Initialize();
 
 		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
 
