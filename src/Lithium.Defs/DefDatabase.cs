@@ -26,7 +26,7 @@ public static class DefDatabase {
 	/// <exception cref="FileLoadException">Thrown if the specified any is not a .xml file.</exception>
 	/// <exception cref="XmlException">Thrown if the any contents cannot be parsed as valid XML.</exception>
 	public static void Initialize(params string[] defFiles) {
-		if (defFiles == null || defFiles.Length == 0) {
+		if (defFiles.Length == 0) {
 			if (Settings.DefRootDirectories.Count == 0) {
 				throw new ResourceRootDirectoryMissingException("Def");
 			}
