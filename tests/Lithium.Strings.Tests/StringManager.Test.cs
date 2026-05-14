@@ -6,6 +6,9 @@ using Xunit;
 
 namespace Lithium.Strings.Tests;
 
+/// <summary>
+/// Tests for Lithium.Strings.StringManager.cs
+/// </summary>
 public class StringManagerTests {
 	private static readonly string mocksDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__mocks__");
 
@@ -16,7 +19,7 @@ public class StringManagerTests {
 	public void GetFilesInLocaleTest01() {
 		Settings.Reset();
 		Exception? ex = Assert.Throws<ResourceRootDirectoryMissingException>(
-			() => TranslationService.Reload()
+			TranslationService.Reload
 		);
 	}
 	/// <summary>
@@ -27,7 +30,7 @@ public class StringManagerTests {
 		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings02"));
 
 		Exception? ex = Assert.Throws<ParseException>(
-			() => TranslationService.Reload()
+			TranslationService.Reload
 		);
 	}
 }

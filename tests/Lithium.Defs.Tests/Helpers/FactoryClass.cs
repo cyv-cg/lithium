@@ -3,6 +3,8 @@ using Lithium.Core.Attributes;
 
 namespace Lithium.Defs.Tests;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
 [UseDefOverrideInitializer]
 public class FactoryClass1 {
 	public int tenPlus;
@@ -44,3 +46,5 @@ public class FactoryClass5 {
 		return new FactoryClass4();
 	}
 }
+
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

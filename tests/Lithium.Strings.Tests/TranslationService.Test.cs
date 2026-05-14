@@ -6,6 +6,9 @@ using Xunit;
 
 namespace Lithium.Strings.Tests;
 
+/// <summary>
+/// Tests for Lithium.Strings.TranslationService.cs
+/// </summary>
 public class TranslationServiceTests {
 	private static readonly string mocksDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__mocks__");
 

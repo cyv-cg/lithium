@@ -5,7 +5,13 @@ using Xunit;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.DefDatabase.cs
+/// </summary>
 public class DefDatabaseTests {
+	/// <summary>
+	/// Reset values for each test.
+	/// </summary>
 	public DefDatabaseTests() {
 		Settings.DeferredParsing = false;
 	}

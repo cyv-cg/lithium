@@ -4,6 +4,9 @@ using Xunit;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.Settings.cs
+/// </summary>
 public class SettingsTests {
 	/// <summary>
 	/// Tests that adding a valid directory to the def root directories does not throw an exception.

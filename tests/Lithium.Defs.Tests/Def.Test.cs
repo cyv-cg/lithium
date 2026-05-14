@@ -1,9 +1,11 @@
 using Xunit;
-using Lithium.Defs;
 using Lithium.Strings;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.Def.cs
+/// </summary>
 public class DefTests {
 	/// <summary>
 	/// Tests the setters for Def.

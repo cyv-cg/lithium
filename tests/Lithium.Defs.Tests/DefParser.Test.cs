@@ -4,10 +4,17 @@ using System.IO;
 using System;
 using Lithium.Defs.Exceptions;
 using Lithium.Core.Exceptions;
+using Lithium.Core.Attributes;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.DefParser.cs
+/// </summary>
 public class DefParserTests {
+	/// <summary>
+	/// Reset the state for each test.
+	/// </summary>
 	public DefParserTests() {
 		Settings.DeferredParsing = false;
 	}
@@ -298,7 +305,7 @@ public class DefParserTests {
 		Assert.Equal("test", loadedDef.FactoryClass.value);
 	}
 	/// <summary>
-	/// Tests that an exception is thrown when a class marked with the <see cref="UseOverrideDefInitializer"> attribute does not have a method with the DefFactory attribute or a constructor with the DefConstructor attribute.
+	/// Tests that an exception is thrown when a class marked with the <see cref="UseDefOverrideInitializer"/> attribute does not have a method with the DefFactory attribute or a constructor with the DefConstructor attribute.
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest03() {

@@ -4,7 +4,13 @@ using Xunit;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.Exceptions.DefFactoryMissingException.cs
+/// </summary>
 public class DefFactoryMissingExceptionTests {
+	/// <summary>
+	/// Tests that the constructor creates the expected message.
+	/// </summary>
 	[Fact]
 	public void ConstructorTest01() {
 		DefFactoryMissingException ex = new DefFactoryMissingException(typeof(MockDef1));
