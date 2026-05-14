@@ -27,7 +27,7 @@ public class DefParserTests {
 	[Fact]
 	public void LoadAllTest01() {
 		Exception e = Assert.Throws<ResourceRootDirectoryMissingException>(
-			DefParser.LoadAll
+			() => DefDatabase.Initialize()
 		);
 	}
 	/// <summary>
@@ -98,7 +98,7 @@ public class DefParserTests {
 		Settings.AddDefRootDirectory(Init.MockDirectory(3));
 
 		Exception e = Assert.Throws<DefNotFoundException>(
-			DefParser.LoadAll
+			() => DefDatabase.Initialize()
 		);
 	}
 
@@ -175,7 +175,7 @@ public class DefParserTests {
 	[Fact]
 	public void LoadTest01() {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs.xml");
-		DefParser.LoadSingle(mockFile);
+		DefDatabase.Initialize(mockFile);
 
 		MockDef9? loadedDef = DefDatabase.Load<MockDef9>("MockDef");
 
@@ -193,7 +193,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidEnum.xml");
 
 		Exception e = Assert.Throws<PropertyLoadException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	/// <summary>
@@ -204,7 +204,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidType.xml");
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	/// <summary>
@@ -213,7 +213,7 @@ public class DefParserTests {
 	[Fact]
 	public void LoadTest04() {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-inheritance-valid.xml");
-		DefParser.LoadSingle(mockFile);
+		DefDatabase.Initialize(mockFile);
 
 		MockDef10? loadedDef = DefDatabase.Load<MockDef10>("MockDef");
 
@@ -228,7 +228,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-inheritance-invalid.xml");
 
 		Exception e = Assert.Throws<DefInheritanceException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	/// <summary>
@@ -239,7 +239,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidProp.xml");
 
 		Exception e = Assert.Throws<MissingFieldException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	/// <summary>
@@ -250,7 +250,7 @@ public class DefParserTests {
 		Settings.AddDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
-			DefParser.LoadAll
+			() => DefDatabase.Initialize()
 		);
 	}
 
@@ -263,7 +263,7 @@ public class DefParserTests {
 		Settings.AddDefRootDirectory(Init.MockDirectory(2));
 		Settings.DeferredParsing = true;
 
-		DefParser.LoadAll();
+		DefDatabase.Initialize();
 
 		MockDef1? loadedDef1 = DefDatabase.Load<MockDef1>("MockDef");
 		MockDef3? loadedDef2 = DefDatabase.Load<MockDef3>("ThirdDef");
@@ -280,7 +280,7 @@ public class DefParserTests {
 	[Fact]
 	public void LoadFactoryTest01() {
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef1.xml");
-		DefParser.LoadSingle(mockFile);
+		DefDatabase.Initialize(mockFile);
 
 		MockDef4? loadedDef = DefDatabase.Load<MockDef4>("MockDef");
 
@@ -293,7 +293,7 @@ public class DefParserTests {
 	[Fact]
 	public void LoadFactoryTest02() {
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef2.xml");
-		DefParser.LoadSingle(mockFile);
+		DefDatabase.Initialize(mockFile);
 
 		MockDef5? loadedDef = DefDatabase.Load<MockDef5>("MockDef");
 
@@ -308,7 +308,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef3.xml");
 
 		Exception e = Assert.Throws<DefFactoryMissingException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	/// <summary>
@@ -319,7 +319,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef4.xml");
 
 		Exception e = Assert.Throws<DefFactoryConstructorParamsException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	/// <summary>
@@ -330,7 +330,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef5.xml");
 
 		Exception e = Assert.Throws<DefFactoryReturnTypeException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	#endregion
@@ -344,7 +344,7 @@ public class DefParserTests {
 		Settings.AddDefRootDirectory(Init.MockDirectory(6));
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
-			DefParser.LoadAll
+			() => DefDatabase.Initialize()
 		);
 	}
 	/// <summary>
@@ -353,7 +353,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest02() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentValid.xml");
-		DefParser.LoadSingle(mockFile);
+		DefDatabase.Initialize(mockFile);
 
 		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
 		MockDef1? loadedDef2 = DefDatabase.Load<MockDef1>("OtherMockDef");
@@ -372,7 +372,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-selfReference.xml");
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	/// <summary>
@@ -383,7 +383,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentInvalid.xml");
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	/// <summary>
@@ -394,7 +394,7 @@ public class DefParserTests {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentInvalid2.xml");
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
-			() => DefParser.LoadSingle(mockFile)
+			() => DefDatabase.Initialize(mockFile)
 		);
 	}
 	#endregion

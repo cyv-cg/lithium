@@ -25,12 +25,12 @@ public static class DefDatabase {
 	/// <exception cref="FileNotFoundException">Thrown if any supplied file path does not exist.</exception>
 	/// <exception cref="FileLoadException">Thrown if the specified any is not a .xml file.</exception>
 	/// <exception cref="XmlException">Thrown if the any contents cannot be parsed as valid XML.</exception>
-	public static void Initialize(IEnumerable<string>? defFiles = null) {
-		if (defFiles == null) {
+	public static void Initialize(params string[] defFiles) {
+		if (defFiles == null || defFiles.Length == 0) {
 			if (Settings.DefRootDirectories.Count == 0) {
 				throw new ResourceRootDirectoryMissingException("Def");
 			}
-			defFiles = Settings.DefRootDirectories.Select(XmlLoader.GetAllFiles).SelectMany(f => f);
+			defFiles = Settings.DefRootDirectories.Select(XmlLoader.GetAllFiles).SelectMany(f => f).ToArray();
 		}
 
 		DefParser.defLinks.Clear();
