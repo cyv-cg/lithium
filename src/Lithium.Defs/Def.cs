@@ -21,15 +21,6 @@ public record Def {
 	public required KeyedString Label { get; init; }
 
 	/// <summary>
-	/// Translates the label with no parameters.
-	/// If the string has not been loaded into the context, returns the string address instead.
-	/// </summary>
-	/// <returns>Translated string with parameters replaced.</returns>
-	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
-	public override string ToString() {
-		return Label.Translate();
-	}
-	/// <summary>
 	/// Translates the label by replacing parameters with the given values.
 	/// If the string has not been loaded into the context, returns the string address instead.
 	/// </summary>
@@ -39,5 +30,16 @@ public record Def {
 	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
 	public string ToString(params StringArgument[] values) {
 		return Label.Translate(values);
+	}
+
+	/// <summary>
+	/// Implicitly converts a Def to a string by translating its label.
+	/// </summary>
+	/// <remarks>
+	/// This translates with no parameters. If the string has parameters, call the Translate method directly.
+	/// </remarks>
+	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
+	public static implicit operator string(Def def) {
+		return def.ToString();
 	}
 }
