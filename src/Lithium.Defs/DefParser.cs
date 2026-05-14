@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
@@ -12,11 +11,15 @@ using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs;
 
+/// <summary>
+/// Utility for loading defs from XML.
+/// Use LoadAll or LoadSingle to parse a def.
+/// </summary>
 public static class DefParser {
 	/// <summary>
 	/// Collection of references to nested def properties to be resolved after all top-level defs have been loaded.
 	/// </summary>
-	private static Stack<DefLink> defLinks = new Stack<DefLink>();
+	private static readonly Stack<DefLink> defLinks = new Stack<DefLink>();
 
 	/// <summary>
 	/// Initializes the DefParser by loading all XML files from the defined root directory.
@@ -28,7 +31,7 @@ public static class DefParser {
 		}
 		defLinks.Clear();
 
-		IEnumerable<string> defFiles = Settings.DefRootDirectories.Select(root => XmlLoader.GetAllFiles(root)).SelectMany(f => f);
+		IEnumerable<string> defFiles = Settings.DefRootDirectories.Select(XmlLoader.GetAllFiles).SelectMany(f => f);
 		DefDatabase.Initialize(defFiles);
 
 		if (!Settings.DeferredParsing) {
@@ -66,7 +69,7 @@ public static class DefParser {
 					link.Field.SetValue(link.Instance, defValue);
 				}
 				else {
-					link.ParentList.Add(defValue);
+					_ = link.ParentList.Add(defValue);
 				}
 			}
 			// Parse an unloaded def.
@@ -76,7 +79,7 @@ public static class DefParser {
 					link.Field.SetValue(link.Instance, defValue);
 				}
 				else {
-					link.ParentList.Add(defValue);
+					_ = link.ParentList.Add(defValue);
 				}
 			}
 		}
@@ -89,7 +92,7 @@ public static class DefParser {
 		// Immediately load all XML nodes.
 		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
 		foreach (XmlNode node in defNodes) {
-			Def instance = ParseDef(node);
+			_ = ParseDef(node);
 		}
 
 		ResolveDefLinks();
@@ -167,7 +170,6 @@ public static class DefParser {
 		if (direct) {
 			// Only fetch from defs that have already been loaded.
 			result = DefDatabase.LoadDirect(defKey);
-			instance = result as Def;
 		}
 		else {
 			// Complicated but necessary way to grab the DefDatabase.Load<T> function.
@@ -211,12 +213,12 @@ public static class DefParser {
 							continue;
 						}
 						if (listType!.IsDef()) {
-							SaveDefLink(instance, li, prop, listType!, typedList);
+							SaveDefLink(instance, li, prop, typedList);
 						}
 						else {
 							object? entry = Load(node, li, prop, listType!);
 							if (entry != null) {
-								typedList.Add(entry);
+								_ = typedList.Add(entry);
 							}
 						}
 					}
@@ -226,7 +228,7 @@ public static class DefParser {
 			// Load single values.
 			else {
 				if (prop.PropertyType.IsDef()) {
-					SaveDefLink(instance, propNode, prop, prop.PropertyType);
+					SaveDefLink(instance, propNode, prop);
 				}
 				else {
 					object? value = Load(node, propNode, prop, prop.PropertyType);
@@ -272,9 +274,8 @@ public static class DefParser {
 	/// <param name="instance">Instance containing the field.</param>
 	/// <param name="node">XML node containing the def name.</param>
 	/// <param name="prop">PropertyInfo of the property being set.</param>
-	/// <param name="propType">Type of the property being set.</param>
 	/// <param name="parent">Optional parent list if the def is part of a list.</param>
-	private static void SaveDefLink(object instance, XmlNode node, PropertyInfo prop, Type propType, IList? parent = null) {
+	private static void SaveDefLink(object instance, XmlNode node, PropertyInfo prop, IList? parent = null) {
 		defLinks.Push(new DefLink(instance, prop, node.InnerText, parent));
 	}
 
@@ -282,7 +283,8 @@ public static class DefParser {
 	/// Loads a value from an XML node based on its type.
 	/// Handles primitive types, enums, lists, and custom classes.
 	/// </summary>
-	/// <param name="node">XML node containing the raw data.</param>
+	/// <param name="defNode">XML node containing the entire def.</param>
+	/// <param name="node">XML node containing the raw data for the property.</param>
 	/// <param name="prop">PropertyInfo of the property being set.</param>
 	/// <param name="type"><see cref="Type"/> of the data to read as.</param>
 	/// <returns>Data parsed to the given type.</returns>
@@ -297,7 +299,7 @@ public static class DefParser {
 		}
 		// Special case for System.Type.
 		else if (type.IsType()) {
-			return LoadType(defNode, node, prop, type);
+			return LoadType(defNode, node, prop);
 		}
 		// Load sub-classes.
 		else if (type.IsNonPrimitive()) {
@@ -341,9 +343,8 @@ public static class DefParser {
 	/// <param name="defNode">XML node containing the def data.</param>
 	/// <param name="node">XML node containing the type name as a string.</param>
 	/// <param name="prop">PropertyInfo of the property being set.</param>
-	/// <param name="type">Type of the property being set.</param>
 	/// <returns>Parsed System.Type value.</returns>
-	private static Type? LoadType(XmlNode defNode, XmlNode node, PropertyInfo prop, Type type) {
+	private static Type? LoadType(XmlNode defNode, XmlNode node, PropertyInfo prop) {
 		Type? targetType = TypeChecker.ResolveType(node.InnerText);
 		if (targetType == null) {
 			throw new UnresolvedTypeException(node.InnerText);

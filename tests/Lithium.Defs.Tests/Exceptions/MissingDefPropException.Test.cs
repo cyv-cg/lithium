@@ -3,6 +3,9 @@ using Xunit;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.Exceptions.MissingDefPropException.cs
+/// </summary>
 public class MissingDefPropExceptionTests {
 	/// <summary>
 	/// Tests that MissingDefPropException properly enumerates the names of missing properties.

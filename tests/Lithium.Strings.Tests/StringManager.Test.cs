@@ -1,21 +1,23 @@
 using System;
 using System.IO;
 using Fluent.Net;
+using Lithium.Core.Exceptions;
 using Xunit;
 
 namespace Lithium.Strings.Tests;
 
+/// <summary>
+/// Tests for Lithium.Strings.StringManager.cs
+/// </summary>
 public class StringManagerTests {
-	private static readonly string mocksDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__mocks__");
-
 	/// <summary>
-	/// Tests that an ArgumentNullException is thrown when the StringRootDirectories setting is null while trying to reload the string contexts.
+	/// Tests that an ResourceRootDirectoryMissingException is thrown when the StringRootDirectories setting is null while trying to reload the string contexts.
 	/// </summary>
 	[Fact]
 	public void GetFilesInLocaleTest01() {
 		Settings.Reset();
-		Exception? ex = Assert.Throws<ArgumentNullException>(
-			() => TranslationService.Reload()
+		Exception? ex = Assert.Throws<ResourceRootDirectoryMissingException>(
+			TranslationService.Reload
 		);
 	}
 	/// <summary>
@@ -23,10 +25,25 @@ public class StringManagerTests {
 	/// </summary>
 	[Fact]
 	public void BuildContextTest01() {
-		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings02"));
+		// Create a temporary file with syntax errors dynamically so the editor isn't permanently complaining about it.
+		string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+		_ = Directory.CreateDirectory(tempDirectory);
+		_ = Directory.CreateDirectory(Path.Combine(tempDirectory, "en-US"));
 
-		Exception? ex = Assert.Throws<ParseException>(
-			() => TranslationService.Reload()
-		);
+		string filePath = Path.Combine(tempDirectory, "en-US", "mockStrings.ftl");
+		FileStream file = File.Create(filePath);
+		file.Close();
+		File.WriteAllText(filePath, "syntax errors!");
+
+		try {
+			Settings.AddStringRootDirectory(tempDirectory);
+
+			Exception? ex = Assert.Throws<ParseException>(
+				TranslationService.Reload
+			);
+		}
+		finally {
+			Directory.Delete(tempDirectory, true);
+		}
 	}
 }

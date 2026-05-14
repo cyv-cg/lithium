@@ -6,9 +6,15 @@ using Xunit;
 
 namespace Lithium.Core.Tests;
 
+/// <summary>
+/// Tests for Lithium.Core.Exceptions.NodeMissingChildException.cs
+/// </summary>
 public class NodeMissingChildExceptionTests {
 	private static readonly string mockXmlFile1 = Path.Combine(AppContext.BaseDirectory, "__mocks__", "XmlMock01.xml");
 
+	/// <summary>
+	/// Tests that the constructor creates the expected message.
+	/// </summary>
 	[Fact]
 	public void ConstructorTest01() {
 		XmlNode node = XmlLoader.LoadDocument(mockXmlFile1)!.FirstChild!.FirstChild!;

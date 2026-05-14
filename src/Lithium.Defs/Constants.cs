@@ -1,6 +1,6 @@
 namespace Lithium.Defs;
 
-public class Constants {
+internal class Constants {
 	public const string DEFS_ROOT_NODE = "/Defs";
 	public const string DEF_KEY_ELEMENT = "Key";
 

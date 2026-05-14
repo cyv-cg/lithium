@@ -5,6 +5,9 @@ using System.IO;
 
 namespace Lithium.Core;
 
+/// <summary>
+/// Utility class for loading XML documents from files.
+/// </summary>
 public static class XmlLoader {
 	/// <summary>
 	/// Recursively scans the directory and returns all XML files found.

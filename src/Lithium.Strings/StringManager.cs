@@ -4,6 +4,7 @@ using System.IO;
 using Fluent.Net;
 using System.Linq;
 using Fluent.Net.RuntimeAst;
+using Lithium.Core.Exceptions;
 
 namespace Lithium.Strings;
 
@@ -11,9 +12,7 @@ internal static class StringManager {
 	/// <summary>
 	/// A dictionary mapping namespaces to their corresponding Fluent MessageContexts.
 	/// </summary>
-	/// <typeparam name="string">String namespace.</typeparam>
-	/// <typeparam name="MessageContext">Context exclusive to that namespace.</typeparam>
-	private static Dictionary<string, MessageContext> contexts = new Dictionary<string, MessageContext>();
+	private static readonly Dictionary<string, MessageContext> contexts = new Dictionary<string, MessageContext>();
 
 	/// <summary>
 	/// Reloads the string contexts by scanning the root directories for Fluent resource files corresponding to the current locale.
@@ -39,7 +38,7 @@ internal static class StringManager {
 	/// <exception cref="ArgumentNullException">Thrown when the StringRootDirectories setting is null.</exception>
 	private static Dictionary<string, string> GetFilesInLocale() {
 		if (Settings.StringRootDirectories == null) {
-			throw new ArgumentNullException(nameof(Settings.StringRootDirectories));
+			throw new ResourceRootDirectoryMissingException("String");
 		}
 
 		Dictionary<string, string> namespaceFileMap = new Dictionary<string, string>();
@@ -76,7 +75,7 @@ internal static class StringManager {
 	/// Builds a Fluent MessageContext from the provided Fluent resource files.
 	/// Each file is expected to contain messages for the same locale, and the context will be used for translating strings within that locale.
 	/// </summary>
-	/// <param name="files">An array of file paths to Fluent resource files (.ftl) to be loaded into the MessageContext.</param>
+	/// <param name="file">A file path to a Fluent resource file (.ftl) to be loaded into the MessageContext.</param>
 	/// <returns>A MessageContext containing the messages from the provided Fluent resource files.</returns>
 	/// <exception cref="ParseException">Thrown when there is an error parsing any of the provided Fluent resource files.</exception>
 	private static MessageContext BuildContext(string file) {
@@ -105,7 +104,6 @@ internal static class StringManager {
 	/// <param name="message">The Message associated with the string key if found; otherwise, null.</param>
 	/// <returns>Whether both the MessageContext and Message were successfully retrieved.</returns>
 	internal static bool TryGetMessage(string address, out MessageContext? context, out Message? message) {
-		context = null;
 		message = null;
 
 		(string @namespace, string key) = ParseAddress(address);

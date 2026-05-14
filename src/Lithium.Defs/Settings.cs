@@ -4,6 +4,9 @@ using System.IO;
 
 namespace Lithium.Defs;
 
+/// <summary>
+/// Settings for where and how to load Defs.
+/// </summary>
 public static class Settings {
 	/// <summary>
 	/// Root directory from which to start recursively checking for XML definition files.
@@ -30,6 +33,6 @@ public static class Settings {
 			throw new DirectoryNotFoundException(path);
 		}
 
-		DefRootDirectories.Add(path);
+		_ = DefRootDirectories.Add(path);
 	}
 }

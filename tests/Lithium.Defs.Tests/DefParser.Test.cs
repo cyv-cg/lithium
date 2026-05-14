@@ -1,20 +1,20 @@
 ﻿using Xunit;
-using Lithium.Defs;
 using Lithium.Strings;
 using System.IO;
 using System;
-using System.Xml;
-using Lithium.Core;
-using System.Reflection;
-using Lithium.Core.Attributes;
-using System.ComponentModel;
 using Lithium.Defs.Exceptions;
 using Lithium.Core.Exceptions;
-using System.Collections.Generic;
+using Lithium.Core.Attributes;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.DefParser.cs
+/// </summary>
 public class DefParserTests {
+	/// <summary>
+	/// Reset the state for each test.
+	/// </summary>
 	public DefParserTests() {
 		Settings.DeferredParsing = false;
 		Settings.DefRootDirectories.Clear();
@@ -27,7 +27,7 @@ public class DefParserTests {
 	[Fact]
 	public void LoadAllTest01() {
 		Exception e = Assert.Throws<ResourceRootDirectoryMissingException>(
-			() => DefParser.LoadAll()
+			DefParser.LoadAll
 		);
 	}
 	/// <summary>
@@ -77,14 +77,14 @@ public class DefParserTests {
 
 		Assert.NotNull(loadedDef.DefList);
 		Assert.NotEmpty(loadedDef.DefList);
-		Assert.Collection<Def>(loadedDef.DefList,
+		Assert.Collection(loadedDef.DefList,
 			d => {
-				Assert.IsType<MockDef1>(d);
+				_ = Assert.IsType<MockDef1>(d);
 				Assert.Equal("SecondDef", d.Key);
 				Assert.Equal(2, ((MockDef1)d).SampleValue1);
 			},
 			d => {
-				Assert.IsType<MockDef2>(d);
+				_ = Assert.IsType<MockDef2>(d);
 				Assert.Equal("MockDef", d.Key);
 				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
 			}
@@ -97,8 +97,8 @@ public class DefParserTests {
 	public void LoadAllTest05() {
 		Settings.AddDefRootDirectory(Init.MockDirectory(3));
 
-		Assert.Throws<DefNotFoundException>(
-			() => DefParser.LoadAll()
+		Exception e = Assert.Throws<DefNotFoundException>(
+			DefParser.LoadAll
 		);
 	}
 
@@ -153,14 +153,14 @@ public class DefParserTests {
 
 		Assert.NotNull(loadedDef.DefList);
 		Assert.NotEmpty(loadedDef.DefList);
-		Assert.Collection<Def>(loadedDef.DefList,
+		Assert.Collection(loadedDef.DefList,
 			d => {
-				Assert.IsType<MockDef1>(d);
+				_ = Assert.IsType<MockDef1>(d);
 				Assert.Equal("SecondDef", d.Key);
 				Assert.Equal(2, ((MockDef1)d).SampleValue1);
 			},
 			d => {
-				Assert.IsType<MockDef2>(d);
+				_ = Assert.IsType<MockDef2>(d);
 				Assert.Equal("MockDef", d.Key);
 				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
 			}
@@ -182,7 +182,7 @@ public class DefParserTests {
 		Assert.NotNull(loadedDef);
 		Assert.Equal(1.2f, loadedDef.PrimitiveField);
 		Assert.Equal(MockEnum.VALUE2, loadedDef.EnumField);
-		Assert.Equal(typeof(System.Int32), loadedDef.TypeField);
+		Assert.Equal(typeof(int), loadedDef.TypeField);
 		Assert.Equal(5, loadedDef.ClassField!.Value);
 	}
 	/// <summary>
@@ -218,7 +218,7 @@ public class DefParserTests {
 		MockDef10? loadedDef = DefDatabase.Load<MockDef10>("MockDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal(typeof(System.Int32), loadedDef.TypeField);
+		Assert.Equal(typeof(int), loadedDef.TypeField);
 	}
 	/// <summary>
 	/// Tests that Load throws an exception when trying to load a Def with a type that does not meet the requirements of the EnforceInheritance attribute.
@@ -250,7 +250,7 @@ public class DefParserTests {
 		Settings.AddDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
-			() => DefParser.LoadAll()
+			DefParser.LoadAll
 		);
 	}
 
@@ -301,7 +301,7 @@ public class DefParserTests {
 		Assert.Equal("test", loadedDef.FactoryClass.value);
 	}
 	/// <summary>
-	/// Tests that an exception is thrown when a class marked with the <see cref="UseOverrideDefInitializer"> attribute does not have a method with the DefFactory attribute or a constructor with the DefConstructor attribute.
+	/// Tests that an exception is thrown when a class marked with the <see cref="UseDefOverrideInitializer"/> attribute does not have a method with the DefFactory attribute or a constructor with the DefConstructor attribute.
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest03() {
@@ -344,7 +344,7 @@ public class DefParserTests {
 		Settings.AddDefRootDirectory(Init.MockDirectory(6));
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
-			() => DefParser.LoadAll()
+			DefParser.LoadAll
 		);
 	}
 	/// <summary>

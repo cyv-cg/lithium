@@ -4,6 +4,9 @@ using Xunit;
 
 namespace Lithium.Strings.Tests;
 
+/// <summary>
+/// Tests for Lithium.Strings.Settings.cs
+/// </summary>
 public class SettingsTests {
 	/// <summary>
 	/// Tests that setting the locale updates the Locale property.
@@ -21,7 +24,7 @@ public class SettingsTests {
 	[Fact]
 	public void AddStringRootDirectoryTest01() {
 		string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-		Directory.CreateDirectory(tempDirectory);
+		_ = Directory.CreateDirectory(tempDirectory);
 
 		try {
 			Exception? ex = Record.Exception(() => Settings.AddStringRootDirectory(tempDirectory));

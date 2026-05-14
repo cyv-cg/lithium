@@ -1,7 +1,5 @@
 using System.Xml;
 using Xunit;
-using Lithium.Core;
-using System.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +7,9 @@ using System.IO;
 
 namespace Lithium.Core.Tests;
 
+/// <summary>
+/// Tests for Lithium.Core.XmlLoader.cs
+/// </summary>
 public class XmlLoaderTests {
 	private static readonly string mockXmlDirectory = Path.Combine(AppContext.BaseDirectory, "__mocks__");
 	private static readonly string mockXmlFile1 = Path.Combine(AppContext.BaseDirectory, "__mocks__", "XmlMock01.xml");
@@ -53,7 +54,7 @@ public class XmlLoaderTests {
 	/// </summary>
 	[Fact]
 	public void GetAllFilesTest03() {
-		Assert.Throws<DirectoryNotFoundException>(
+		Exception? ex = Assert.Throws<DirectoryNotFoundException>(
 			() => XmlLoader.GetAllFiles(
 				Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())
 			)
@@ -80,7 +81,7 @@ public class XmlLoaderTests {
 	/// </summary>
 	[Fact]
 	public void LoadDocumentTest02() {
-		Assert.Throws<FileNotFoundException>(
+		Exception? ex = Assert.Throws<FileNotFoundException>(
 			() => XmlLoader.LoadDocument(
 				Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), ".xml")
 			)
@@ -91,7 +92,7 @@ public class XmlLoaderTests {
 	/// </summary>
 	[Fact]
 	public void LoadDocumentTest03() {
-		Assert.Throws<FileLoadException>(
+		Exception? ex = Assert.Throws<FileLoadException>(
 			() => XmlLoader.LoadDocument(
 				Path.Combine(mockXmlDirectory, "sub", "b.dat")
 			)
@@ -137,7 +138,7 @@ public class XmlLoaderTests {
 		XmlNode root = doc.DocumentElement!;
 		XmlNode node = root.FirstChild!;
 
-		int? sampleValue = node.GetChildValue<int>("sampleValue1", out XmlNode? child);
+		_ = node.GetChildValue<int>("sampleValue1", out XmlNode? child);
 
 		Assert.NotNull(child);
 		Assert.Equal("1", child.InnerText);

@@ -6,6 +6,9 @@ using Xunit;
 
 namespace Lithium.Strings.Tests;
 
+/// <summary>
+/// Tests for Lithium.Strings.KeyedString.cs
+/// </summary>
 public class KeyedStringTests {
 	private static readonly string mocksDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__mocks__");
 

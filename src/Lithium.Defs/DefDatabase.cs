@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
@@ -9,6 +7,9 @@ using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs;
 
+/// <summary>
+/// Utilities for accessing Def values.
+/// </summary>
 public static class DefDatabase {
 	private static Dictionary<string, XmlNode> XmlDefinitions { get; } = new Dictionary<string, XmlNode>();
 	private static Dictionary<string, Def> ParsedDefinitions { get; } = new Dictionary<string, Def>();
@@ -33,7 +34,7 @@ public static class DefDatabase {
 				continue;
 			}
 			foreach (XmlNode child in defsNode.ChildNodes) {
-				/// Skip comment nodes.
+				// Skip comment nodes.
 				if (child.NodeType == XmlNodeType.Comment) {
 					continue;
 				}
@@ -70,14 +71,14 @@ public static class DefDatabase {
 	/// </summary>
 	/// <param name="node">The XML node to add to the database. Must contain a 'key' child element.</param>
 	private static void AddToDB(XmlNode node) {
-		XmlDefinitions.TryAdd(GetDefKey(node), node);
+		_ = XmlDefinitions.TryAdd(GetDefKey(node), node);
 	}
 	/// <summary>
 	/// Adds a new def to the DefDatabase, using the def's 'key' property as the key in the database.
 	/// </summary>
 	/// <param name="def">The def to add to the database. Must have a unique 'key' property.</param>
 	internal static void AddToDB(Def def) {
-		ParsedDefinitions.TryAdd(def.Key, def);
+		_ = ParsedDefinitions.TryAdd(def.Key, def);
 	}
 
 	/// <summary>
@@ -107,27 +108,26 @@ public static class DefDatabase {
 		return value;
 	}
 	/// <summary>
-	/// Returns the def associated with the provided key in the DefDatabase. Returns null if no def with the provided key exists in the database or if the def associated with the provided key is not of the specified type.
+	/// Returns the def associated with the provided key in the DefDatabase.
+	/// Returns null if no def with the provided key exists in the database or if the def associated with the provided key is not of the specified type.
 	/// </summary>
 	/// <typeparam name="T">The type of the def to return.</typeparam>
 	/// <param name="key">The key of the def to return.</param>
 	/// <returns>The def associated with the provided key in the DefDatabase, or null if not available.</returns>
 	public static T? Load<T>(string key) where T : Def {
-		Def? loadedDef;
-
-		if (Settings.DeferredParsing) {
-			loadedDef = LoadDeferred<T>(key);
-		}
-		else {
-			loadedDef = LoadDirect(key) as Def;
-		}
-
-		if (loadedDef == null || loadedDef is not T) {
+		Def? loadedDef = Settings.DeferredParsing ? LoadDeferred<T>(key) : LoadDirect(key) as Def;
+		if (loadedDef is null or not T) {
 			return null;
 		}
 
 		return loadedDef as T;
 	}
+	/// <summary>
+	/// Dynamically load a def from XML which has not already been loaded.
+	/// </summary>
+	/// <typeparam name="T">The type of the def to return.</typeparam>
+	/// <param name="key">The key of the def to return.</param>
+	/// <returns>The def as loaded from XML, or null if it either has been loaded already or could not be found.</returns>
 	internal static T? LoadDeferred<T>(string key) where T : Def {
 		// Dynamically parse if it hasn't been loaded yet.
 		if (XmlDefinitions.TryGetValue(key, out XmlNode? loadedNode)) {
@@ -140,11 +140,16 @@ public static class DefDatabase {
 			// Store the parsed value.
 			AddToDB(def);
 			// Clean up the XML, which should no longer be needed.
-			XmlDefinitions.Remove(key);
+			_ = XmlDefinitions.Remove(key);
 			return def as T;
 		}
 		return null;
 	}
+	/// <summary>
+	/// Directly load a pre-loaded def.
+	/// </summary>
+	/// <param name="key">The key of the def to return.</param>
+	/// <returns>The def as loaded from the database, or null if it is not loaded.</returns>
 	internal static object? LoadDirect(string key) {
 		if (ParsedDefinitions.TryGetValue(key, out Def? value)) {
 			return value;

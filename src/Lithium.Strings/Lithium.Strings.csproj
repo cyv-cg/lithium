@@ -1,13 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\Lithium.Core\Lithium.Core.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Fluent.Net" Version="1.0.63" />
-  </ItemGroup>
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <RootNamespace>Lithium</RootNamespace>
-  </PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Lithium.Core\Lithium.Core.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Fluent.Net" Version="1.0.63" />
+	</ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<RootNamespace>Lithium</RootNamespace>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisLevel>latest</AnalysisLevel>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
 </Project>

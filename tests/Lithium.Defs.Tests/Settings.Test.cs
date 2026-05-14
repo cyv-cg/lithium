@@ -4,6 +4,9 @@ using Xunit;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.Settings.cs
+/// </summary>
 public class SettingsTests {
 	/// <summary>
 	/// Tests that adding a valid directory to the def root directories does not throw an exception.
@@ -11,7 +14,7 @@ public class SettingsTests {
 	[Fact]
 	public void AddDefRootDirectoryTest01() {
 		string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-		Directory.CreateDirectory(tempDirectory);
+		_ = Directory.CreateDirectory(tempDirectory);
 
 		try {
 			Exception? ex = Record.Exception(() => Settings.AddDefRootDirectory(tempDirectory));

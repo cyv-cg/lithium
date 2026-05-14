@@ -1,14 +1,13 @@
 using System;
 using System.Xml;
 using Lithium.Core.Attributes;
-using Lithium.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using Lithium.Strings.Exceptions;
 
-namespace Lithium.Strings;
-
 using StringArgument = (string key, object value);
+
+namespace Lithium.Strings;
 
 /// <summary>
 /// Represents a string that can be translated using the string database.
@@ -74,7 +73,9 @@ public class KeyedString {
 	}
 
 	/// <summary>
-	/// Implicitly converts a KeyedString to a string by translating it. This allows you to use a KeyedString directly in places where a string is expected, and it will automatically be translated using the string database.
+	/// Implicitly converts a KeyedString to a string by translating it.
+	/// This allows you to use a KeyedString directly in places where a string is expected, and it will automatically be translated using the string database.
+	/// If the string has not been loaded into the context, returns the string address instead.
 	/// </summary>
 	/// <remarks>
 	/// This translates with no parameters. If the string has parameters, call the Translate method directly.
@@ -105,6 +106,7 @@ public class KeyedString {
 
 	/// <summary>
 	/// Translates the string by replacing parameters with the given values.
+	/// If the string has not been loaded into the context, returns the string address instead.
 	/// </summary>
 	/// <param name="values">String parameters.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
@@ -114,6 +116,13 @@ public class KeyedString {
 		return Translate(values);
 	}
 
+	/// <summary>
+	/// Check equivalence of a KeyedString/string pair.
+	/// KeyedStrings are equal if and only if they have the same address.
+	/// A string is equal to a KeyedString if and only if the string is the KeyedString's address.
+	/// </summary>
+	/// <param name="obj">Object to compare.</param>
+	/// <returns>Whether the objects are equivalent.</returns>
 	public override bool Equals(object? obj) {
 		if (obj == null) {
 			return false;
@@ -128,7 +137,10 @@ public class KeyedString {
 
 		return false;
 	}
-
+	/// <summary>
+	/// Computes a hash code based on the address.
+	/// </summary>
+	/// <returns>The computed hash code.</returns>
 	public override int GetHashCode() {
 		return HashCode.Combine(Address);
 	}
