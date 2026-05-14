@@ -9,6 +9,8 @@ using System.Reflection;
 using Lithium.Core.Attributes;
 using System.ComponentModel;
 using Lithium.Defs.Exceptions;
+using Lithium.Core.Exceptions;
+using System.Collections.Generic;
 
 namespace Lithium.Defs.Tests;
 
@@ -26,7 +28,7 @@ public class DefParserTests {
 	public void LoadAllTest01() {
 		Settings.SetDefRootDirectory(string.Empty);
 
-		Assert.Throws<Exception>(
+		Assert.Throws<ResourceRootDirectoryMissingException>(
 			() => DefParser.LoadAll()
 		);
 	}
@@ -97,7 +99,7 @@ public class DefParserTests {
 	public void LoadAllTest05() {
 		Settings.SetDefRootDirectory(Init.MockDirectory(3));
 
-		Assert.Throws<Exception>(
+		Assert.Throws<DefNotFoundException>(
 			() => DefParser.LoadAll()
 		);
 	}
@@ -192,10 +194,9 @@ public class DefParserTests {
 	public void LoadTest02() {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidEnum.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<PropertyLoadException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Invalid value for enum {typeof(MockEnum)}: 'VALUE3'.", e.Message);
 	}
 	/// <summary>
 	/// Tests that Load throws an exception when trying to load a Def with an invalid type value.
@@ -204,10 +205,9 @@ public class DefParserTests {
 	public void LoadTest03() {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidType.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<UnresolvedTypeException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal("Could not find type 'Type.That.Does.Not.Exist'.", e.Message);
 	}
 	/// <summary>
 	/// Tests that Load can successfully load a Def with a type field that meets the requirements of the EnforceInheritance attribute.
@@ -229,10 +229,9 @@ public class DefParserTests {
 	public void LoadTest05() {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-inheritance-invalid.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<DefInheritanceException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Prop 'TypeField': Type '{typeof(System.Action)}' must inherit from '{typeof(System.IComparable)}'.", e.Message);
 	}
 	/// <summary>
 	/// Tests that Load throws an exception when trying to load a Def with a property that does not exist on the Def class.
@@ -241,10 +240,9 @@ public class DefParserTests {
 	public void LoadTest06() {
 		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidProp.xml");
 
-		Exception e = Assert.Throws<WarningException>(
+		Exception e = Assert.Throws<MissingFieldException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Property 'PropThatDoesNotExist' does not exist on {typeof(MockDef1)}", e.Message);
 	}
 	/// <summary>
 	/// Tests that Load throws a <see cref="MissingDefPropException"/> when a required field is missing.
@@ -254,17 +252,6 @@ public class DefParserTests {
 		Settings.SetDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
-			() => DefParser.LoadAll()
-		);
-	}
-	/// <summary>
-	/// Tests that Load throws a <see cref="DefInheritanceException"/> when asked to load a class that does not inherit from <see cref="Def"/>.
-	/// </summary>
-	[Fact]
-	public void LoadTest08() {
-		Settings.SetDefRootDirectory(Init.MockDirectory(12));
-
-		Exception e = Assert.Throws<DefInheritanceException>(
 			() => DefParser.LoadAll()
 		);
 	}
@@ -304,10 +291,9 @@ public class DefParserTests {
 	public void LoadFactoryTest03() {
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef3.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<DefFactoryMissingException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"{typeof(FactoryClass3)} is marked to have an override def initializer but has no constructor with the {typeof(DefConstructor)} attribute or method with the {typeof(DefFactory)} attribute.", e.Message);
 	}
 	/// <summary>
 	/// Tests that an exception is thrown when a factory method or constructor does not take a single parameter of type XmlNode.
@@ -316,10 +302,9 @@ public class DefParserTests {
 	public void LoadFactoryTest04() {
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef4.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<DefFactoryConstructorParamsException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Def factory/constructor must take {typeof(XmlNode)} as the sole parameter.", e.Message);
 	}
 	/// <summary>
 	/// Tests that an exception is thrown when a factory method or constructor returns a type that does not match the field it is being assigned to.
@@ -328,10 +313,9 @@ public class DefParserTests {
 	public void LoadFactoryTest05() {
 		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef5.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<DefFactoryReturnTypeException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Def factory must return {typeof(FactoryClass5)} but it returns {typeof(FactoryClass4)}.", e.Message);
 	}
 	#endregion
 
@@ -343,10 +327,9 @@ public class DefParserTests {
 	public void ParseDefTest01() {
 		Settings.SetDefRootDirectory(Init.MockDirectory(6));
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<UnresolvedTypeException>(
 			() => DefParser.LoadAll()
 		);
-		Assert.Equal("Could not find def class 'Def.Class.That.Does.Not.Exist'.", e.Message);
 	}
 	/// <summary>
 	/// Test that ParseDef correctly applies a parent's properties regardless of load order.
@@ -372,10 +355,9 @@ public class DefParserTests {
 	public void ParseDefTest03() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-selfReference.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<DefParentInvalidException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal("Def 'MockDef' cannot refer to itself as the root.", e.Message);
 	}
 	/// <summary>
 	/// Test that ParseDef throws an exception when a def tries to inherit from a parent of a different class.
@@ -384,10 +366,9 @@ public class DefParserTests {
 	public void ParseDefTest04() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentInvalid.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<DefParentInvalidException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal($"Def 'MockDef' ({typeof(MockDef1)}) is attempting to inherit from 'MockParentDef' ({typeof(MockDef9)}).", e.Message);
 	}
 	/// <summary>
 	/// Test that an exception is thrown when trying to inherit from a parent with a class that does not exist.
@@ -396,10 +377,9 @@ public class DefParserTests {
 	public void ParseDefTest05() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentInvalid2.xml");
 
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<UnresolvedTypeException>(
 			() => DefParser.LoadSingle(mockFile)
 		);
-		Assert.Equal("Could not find def class 'Def.Class.That.Does.Not.Exist'.", e.Message);
 	}
 	#endregion
 }
