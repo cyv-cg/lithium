@@ -1,0 +1,19 @@
+name: Require commits to exist in develop
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commits against develop
+        run: ./utils/check-commits-against-develop.sh
