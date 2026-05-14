@@ -256,6 +256,25 @@ public class DefParserTests {
 			() => DefParser.LoadAll()
 		);
 	}
+
+	/// <summary>
+	/// Tests that defs can be loaded from multiple roots.
+	/// </summary>
+	[Fact]
+	public void LoadTest08() {
+		Settings.DefRootDirectories?.Clear();
+		Settings.AddDefRootDirectory(Init.MockDirectory(1));
+		Settings.AddDefRootDirectory(Init.MockDirectory(2));
+		Settings.DeferredParsing = true;
+
+		DefParser.LoadAll();
+
+		MockDef1? loadedDef1 = DefDatabase.Load<MockDef1>("MockDef");
+		MockDef3? loadedDef2 = DefDatabase.Load<MockDef3>("ThirdDef");
+
+		Assert.NotNull(loadedDef1);
+		Assert.NotNull(loadedDef2);
+	}
 	#endregion
 
 	#region LoadFactory tests
