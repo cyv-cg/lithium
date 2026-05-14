@@ -211,7 +211,7 @@ When creating a def in XML, you can use one of these string addresses as the lab
 </Defs>
 ```
 ```ini
-# C:\Documents\project\strings\root2\en-US\area1\yet-more-strings.ftl
+# C:\Documents\project\strings\root1\en-US\area2\yet-more-strings.ftl
 my-def-name = My Def name
 ```
 ```ini
