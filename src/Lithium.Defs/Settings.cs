@@ -11,7 +11,7 @@ public static class Settings {
 	/// <summary>
 	/// Root directory from which to start recursively checking for XML definition files.
 	/// </summary>
-	public static HashSet<string>? DefRootDirectories { get; private set; }
+	public static HashSet<string> DefRootDirectories { get; private set; } = new HashSet<string>();
 	/// <summary>
 	/// Deferred Parsing will wait for a def to be used before parsing it from XML.
 	/// Non-Deferred Parsing will immediately parse all defs at startup.
@@ -32,8 +32,6 @@ public static class Settings {
 		if (!Directory.Exists(path)) {
 			throw new DirectoryNotFoundException(path);
 		}
-
-		DefRootDirectories ??= new HashSet<string>();
 
 		_ = DefRootDirectories.Add(path);
 	}

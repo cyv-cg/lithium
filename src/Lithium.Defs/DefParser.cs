@@ -26,7 +26,7 @@ public static class DefParser {
 	/// </summary>
 	/// <exception cref="ResourceRootDirectoryMissingException">Thrown if the root directory for defs has not been set.</exception>
 	public static void LoadAll() {
-		if (Settings.DefRootDirectories == null || Settings.DefRootDirectories.Count == 0) {
+		if (Settings.DefRootDirectories.Count == 0) {
 			throw new ResourceRootDirectoryMissingException("Def");
 		}
 		defLinks.Clear();
