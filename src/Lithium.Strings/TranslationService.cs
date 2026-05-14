@@ -6,9 +6,9 @@ using Fluent.Net;
 using Fluent.Net.RuntimeAst;
 using Lithium.Strings.Exceptions;
 
-namespace Lithium.Strings;
-
 using StringArgument = (string key, object value);
+
+namespace Lithium.Strings;
 
 public static class TranslationService {
 	/// <summary>
@@ -71,8 +71,9 @@ public static class TranslationService {
 	/// </summary>
 	/// <returns>A dictionary mapping locale names to their corresponding translation completion rates (between 0 and 1).</returns>
 	public static Dictionary<string, float> CalculateTranslationCompletion() {
-		Dictionary<string, float> rates = new Dictionary<string, float>();
-		rates[Settings.PrimaryLocale.Name] = 1f;
+		Dictionary<string, float> rates = new Dictionary<string, float> {
+			[Settings.PrimaryLocale.Name] = 1f
+		};
 
 		if (Settings.StringRootDirectories == null || Settings.StringRootDirectories.Count == 0) {
 			return rates;
@@ -82,7 +83,7 @@ public static class TranslationService {
 
 		foreach (string root in Settings.StringRootDirectories) {
 			// Get the name of every available locale from the directory names.
-			string[] locales = Directory.GetDirectories(root).Select(d => Path.GetFileName(d)).ToArray()!;
+			string[] locales = Directory.GetDirectories(root).Select(d => Path.GetFileName(d)).ToArray();
 
 			foreach (string locale in locales) {
 				// The primary locale is always assumed to be complete, so skip counting it.
@@ -93,7 +94,7 @@ public static class TranslationService {
 				IEnumerable<string> localeStrings = GetAllKeysForLocale(locale);
 				// Count the number of strings from the primary locale which are also defined for the secondary locale.
 				// This explicitly does not count strings defined in the secondary locale but not in the primary.
-				uint numerator = (uint)primaryLocaleStrings.Where(k => localeStrings.Contains(k)).Count();
+				uint numerator = (uint)primaryLocaleStrings.Count(k => localeStrings.Contains(k));
 				rates[locale] = (float)numerator / primaryLocaleStrings.Length;
 			}
 		}

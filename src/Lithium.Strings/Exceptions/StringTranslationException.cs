@@ -9,7 +9,7 @@ namespace Lithium.Strings.Exceptions;
 /// Exception thrown when there is an error during string translation.
 /// </summary>
 public class StringTranslationException : Exception {
-	private List<FluentError> errors;
+	private readonly List<FluentError> errors;
 
 	public override string Message => string.Join('\n', errors.Select(e => e.Message));
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
@@ -15,7 +14,7 @@ namespace Lithium.Defs;
 public static class DefParser {
 	private static string? DefRootDirectory { get; set; }
 
-	private static Dictionary<Type, List<DefLink>> defLinks = new Dictionary<Type, List<DefLink>>();
+	private static readonly Dictionary<Type, List<DefLink>> defLinks = new Dictionary<Type, List<DefLink>>();
 
 	public static void SetDefRootDirectory(string path) {
 		DefRootDirectory = path;
@@ -52,7 +51,7 @@ public static class DefParser {
 	private static void Load() {
 		IEnumerable<XmlNode> defNodes = DefDatabase.GetAllNodes();
 		foreach (XmlNode node in defNodes) {
-			ParseDef(node);
+			_ = ParseDef(node);
 		}
 
 		foreach (Type def in defLinks.Keys) {
@@ -63,7 +62,7 @@ public static class DefParser {
 						link.Field.SetValue(link.Instance, defValue);
 					}
 					else {
-						link.ParentList.Add(defValue);
+						_ = link.ParentList.Add(defValue);
 					}
 				}
 				else {
@@ -185,7 +184,7 @@ public static class DefParser {
 						else {
 							object? entry = Load(node, li, prop, listType!);
 							if (entry != null) {
-								typedList.Add(entry);
+								_ = typedList.Add(entry);
 							}
 						}
 					}
@@ -262,7 +261,8 @@ public static class DefParser {
 	/// Loads a value from an XML node based on its type.
 	/// Handles primitive types, enums, lists, and custom classes.
 	/// </summary>
-	/// <param name="node">XML node containing the raw data.</param>
+	/// <param name="defNode">XML node containing the entire def.</param>
+	/// <param name="node">XML node containing the raw data for the property.</param>
 	/// <param name="prop">PropertyInfo of the property being set.</param>
 	/// <param name="type"><see cref="Type"/> of the data to read as.</param>
 	/// <returns>Data parsed to the given type.</returns>
@@ -277,7 +277,7 @@ public static class DefParser {
 		}
 		// Special case for System.Type.
 		else if (type.IsType()) {
-			return LoadType(defNode, node, prop, type);
+			return LoadType(defNode, node, prop);
 		}
 		// Load sub-classes.
 		else if (type.IsNonPrimitive()) {
@@ -321,9 +321,8 @@ public static class DefParser {
 	/// <param name="defNode">XML node containing the def data.</param>
 	/// <param name="node">XML node containing the type name as a string.</param>
 	/// <param name="prop">PropertyInfo of the property being set.</param>
-	/// <param name="type">Type of the property being set.</param>
 	/// <returns>Parsed System.Type value.</returns>
-	private static Type? LoadType(XmlNode defNode, XmlNode node, PropertyInfo prop, Type type) {
+	private static Type? LoadType(XmlNode defNode, XmlNode node, PropertyInfo prop) {
 		Type? targetType = TypeChecker.ResolveType(node.InnerText);
 		if (targetType == null) {
 			throw new UnresolvedTypeException(node.InnerText);

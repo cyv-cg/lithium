@@ -46,11 +46,9 @@ public static class Settings {
 			throw new DirectoryNotFoundException(path);
 		}
 
-		if (StringRootDirectories == null) {
-			StringRootDirectories = new HashSet<string>();
-		}
+		StringRootDirectories ??= new HashSet<string>();
 
-		StringRootDirectories.Add(path);
+		_ = StringRootDirectories.Add(path);
 	}
 
 	/// <summary>

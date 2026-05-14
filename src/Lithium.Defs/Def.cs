@@ -1,4 +1,3 @@
-using System;
 using Lithium.Strings;
 
 namespace Lithium.Defs;

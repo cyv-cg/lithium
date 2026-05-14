@@ -179,7 +179,7 @@ public class TranslationServiceTests {
 		Settings.Reset();
 		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
 
-		Assert.Single(rates);
+		_ = Assert.Single(rates);
 		Assert.Equal(1, rates["en-US"]);
 	}
 	/// <summary>

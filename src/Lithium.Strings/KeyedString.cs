@@ -1,14 +1,13 @@
 using System;
 using System.Xml;
 using Lithium.Core.Attributes;
-using Lithium.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using Lithium.Strings.Exceptions;
 
-namespace Lithium.Strings;
-
 using StringArgument = (string key, object value);
+
+namespace Lithium.Strings;
 
 /// <summary>
 /// Represents a string that can be translated using the string database.

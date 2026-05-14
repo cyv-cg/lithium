@@ -4,10 +4,31 @@ root = true
 charset = utf-8
 
 [*.cs]
-dotnet_analyzer_diagnostic.category-Style.severity = none
+dotnet_analyzer_diagnostic.category-Style.severity = warning
+
 csharp_new_line_before_open_brace = none
 csharp_new_line_before_else = true
 csharp_new_line_before_catch = true
 csharp_new_line_before_finally = true
 trim_trailing_whitespace = true
 insert_final_newline = true
+
+csharp_style_namespace_declarations = file_scoped
+dotnet_style_prefer_collection_expression = false
+
+# Use explicit type instead of var
+dotnet_diagnostic.IDE0008.severity = error
+
+# Simplify new expression
+dotnet_diagnostic.IDE0090.severity = none
+dotnet_diagnostic.IDE0160.severity = none
+dotnet_diagnostic.IDE0130.severity = none
+dotnet_diagnostic.IDE0305.severity = none
+dotnet_diagnostic.IDE0046.severity = none
+dotnet_diagnostic.IDE0048.severity = none
+dotnet_diagnostic.IDE0270.severity = none
+# Remove unnecessary import
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0290.severity = none
+
+dotnet_diagnostic.IDE0055.severity = none

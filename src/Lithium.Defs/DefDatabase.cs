@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
@@ -63,14 +61,14 @@ public static class DefDatabase {
 	/// </summary>
 	/// <param name="node">The XML node to add to the database. Must contain a 'key' child element.</param>
 	private static void AddToDB(XmlNode node) {
-		XmlDefinitions.TryAdd(GetDefKey(node), node);
+		_ = XmlDefinitions.TryAdd(GetDefKey(node), node);
 	}
 	/// <summary>
 	/// Adds a new def to the DefDatabase, using the def's 'key' property as the key in the database.
 	/// </summary>
 	/// <param name="def">The def to add to the database. Must have a unique 'key' property.</param>
 	internal static void AddToDB(Def def) {
-		ParsedDefinitions.TryAdd(def.Key, def);
+		_ = ParsedDefinitions.TryAdd(def.Key, def);
 	}
 
 	/// <summary>
