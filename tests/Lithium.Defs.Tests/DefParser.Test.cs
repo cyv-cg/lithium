@@ -17,6 +17,7 @@ namespace Lithium.Defs.Tests;
 public class DefParserTests {
 	public DefParserTests() {
 		Settings.DeferredParsing = false;
+		Settings.DefRootDirectories.Clear();
 	}
 
 	#region LoadAll tests
@@ -25,8 +26,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest01() {
-		Settings.DefRootDirectories?.Clear();
-
 		Exception e = Assert.Throws<ResourceRootDirectoryMissingException>(
 			() => DefParser.LoadAll()
 		);
@@ -96,7 +95,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest05() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(3));
 
 		Assert.Throws<DefNotFoundException>(
@@ -249,7 +247,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest07() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(11));
 
 		Exception e = Assert.Throws<MissingDefPropException>(
@@ -262,7 +259,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest08() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(1));
 		Settings.AddDefRootDirectory(Init.MockDirectory(2));
 		Settings.DeferredParsing = true;
@@ -345,7 +341,6 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest01() {
-		Settings.DefRootDirectories?.Clear();
 		Settings.AddDefRootDirectory(Init.MockDirectory(6));
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
