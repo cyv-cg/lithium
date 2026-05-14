@@ -12,5 +12,8 @@ public class MissingDefPropException(string defKey, params PropertyInfo[] missin
 	private readonly string defKey = defKey;
 	private readonly IEnumerable<PropertyInfo> missingFields = missingProps;
 
+	/// <summary>
+	/// Message describing the error.
+	/// </summary>
 	public override string Message => $"Missing fields in def '{defKey}': {string.Join(", ", missingFields.Select(f => f.Name))}";
 }

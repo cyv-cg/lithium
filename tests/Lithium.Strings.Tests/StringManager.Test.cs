@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Fluent.Net;
+using Lithium.Core.Exceptions;
 using Xunit;
 
 namespace Lithium.Strings.Tests;
@@ -9,12 +10,12 @@ public class StringManagerTests {
 	private static readonly string mocksDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__mocks__");
 
 	/// <summary>
-	/// Tests that an ArgumentNullException is thrown when the StringRootDirectories setting is null while trying to reload the string contexts.
+	/// Tests that an ResourceRootDirectoryMissingException is thrown when the StringRootDirectories setting is null while trying to reload the string contexts.
 	/// </summary>
 	[Fact]
 	public void GetFilesInLocaleTest01() {
 		Settings.Reset();
-		Exception? ex = Assert.Throws<ArgumentNullException>(
+		Exception? ex = Assert.Throws<ResourceRootDirectoryMissingException>(
 			() => TranslationService.Reload()
 		);
 	}

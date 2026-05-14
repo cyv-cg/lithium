@@ -4,6 +4,7 @@ using System.IO;
 using Fluent.Net;
 using System.Linq;
 using Fluent.Net.RuntimeAst;
+using Lithium.Core.Exceptions;
 
 namespace Lithium.Strings;
 
@@ -37,7 +38,7 @@ internal static class StringManager {
 	/// <exception cref="ArgumentNullException">Thrown when the StringRootDirectories setting is null.</exception>
 	private static Dictionary<string, string> GetFilesInLocale() {
 		if (Settings.StringRootDirectories == null) {
-			throw new ArgumentNullException(nameof(Settings.StringRootDirectories));
+			throw new ResourceRootDirectoryMissingException("String");
 		}
 
 		Dictionary<string, string> namespaceFileMap = new Dictionary<string, string>();

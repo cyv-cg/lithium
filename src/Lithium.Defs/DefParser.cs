@@ -11,6 +11,10 @@ using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs;
 
+/// <summary>
+/// Utility for loading defs from XML.
+/// Use LoadAll or LoadSingle to parse a def.
+/// </summary>
 public static class DefParser {
 	/// <summary>
 	/// Collection of references to nested def properties to be resolved after all top-level defs have been loaded.

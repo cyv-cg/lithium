@@ -5,6 +5,9 @@ using System.IO;
 
 namespace Lithium.Strings;
 
+/// <summary>
+/// Settings used to determine from where and which strings to load.
+/// </summary>
 public static class Settings {
 	/// <summary>
 	/// The primary locale to use for string translations. This is the default locale that will be used if no other locale is set.

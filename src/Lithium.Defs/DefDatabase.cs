@@ -7,6 +7,9 @@ using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs;
 
+/// <summary>
+/// Utilities for accessing Def values.
+/// </summary>
 public static class DefDatabase {
 	private static Dictionary<string, XmlNode> XmlDefinitions { get; } = new Dictionary<string, XmlNode>();
 	private static Dictionary<string, Def> ParsedDefinitions { get; } = new Dictionary<string, Def>();
@@ -105,7 +108,8 @@ public static class DefDatabase {
 		return value;
 	}
 	/// <summary>
-	/// Returns the def associated with the provided key in the DefDatabase. Returns null if no def with the provided key exists in the database or if the def associated with the provided key is not of the specified type.
+	/// Returns the def associated with the provided key in the DefDatabase.
+	/// Returns null if no def with the provided key exists in the database or if the def associated with the provided key is not of the specified type.
 	/// </summary>
 	/// <typeparam name="T">The type of the def to return.</typeparam>
 	/// <param name="key">The key of the def to return.</param>
@@ -118,6 +122,12 @@ public static class DefDatabase {
 
 		return loadedDef as T;
 	}
+	/// <summary>
+	/// Dynamically load a def from XML which has not already been loaded.
+	/// </summary>
+	/// <typeparam name="T">The type of the def to return.</typeparam>
+	/// <param name="key">The key of the def to return.</param>
+	/// <returns>The def as loaded from XML, or null if it either has been loaded already or could not be found.</returns>
 	internal static T? LoadDeferred<T>(string key) where T : Def {
 		// Dynamically parse if it hasn't been loaded yet.
 		if (XmlDefinitions.TryGetValue(key, out XmlNode? loadedNode)) {
@@ -135,6 +145,11 @@ public static class DefDatabase {
 		}
 		return null;
 	}
+	/// <summary>
+	/// Directly load a pre-loaded def.
+	/// </summary>
+	/// <param name="key">The key of the def to return.</param>
+	/// <returns>The def as loaded from the database, or null if it is not loaded.</returns>
 	internal static object? LoadDirect(string key) {
 		if (ParsedDefinitions.TryGetValue(key, out Def? value)) {
 			return value;

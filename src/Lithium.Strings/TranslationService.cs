@@ -10,6 +10,9 @@ using StringArgument = (string key, object value);
 
 namespace Lithium.Strings;
 
+/// <summary>
+/// Utilities for translating strings to the current locale.
+/// </summary>
 public static class TranslationService {
 	/// <summary>
 	/// Reloads the string contexts by scanning the root directories for Fluent resource files corresponding to the current locale.
