@@ -80,7 +80,7 @@ public class Program {
 		// Adds "C:\Documents\project\defs" as a source for def XML files.
 		Settings.AddDefRootDirectory("C:\Documents\project\defs");
 		// Initialize defs from every discovered file.
-		DefParser.LoadAll();
+		DefDatabase.Initialize();
 
 		MyCustomDef? myDef = DefDatabase.Load<MyCustomDef>("My_Def_Key");
 		Console.WriteLine(myDef); // "My Def name"
@@ -227,7 +227,7 @@ namespace MyNamespace;
 public class Program {
 	public static void Main(string[] args) {
 		Defs.Settings.AddDefRootDirectory("C:\Documents\project\defs");
-		DefParser.LoadAll();
+		DefDatabase.Initialize();
 		Strings.Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
 
 		MyCustomDef? myDef = DefDatabase.Load<MyCustomDef>("My_Def_Key");
