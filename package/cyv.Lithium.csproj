@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<ProjectReference Include="../src/Lithium.Core/Lithium.Core.csproj">
+			<PrivateAssets>all</PrivateAssets>
+		</ProjectReference>
+		<ProjectReference Include="../src/Lithium.Defs/Lithium.Defs.csproj">
+			<PrivateAssets>all</PrivateAssets>
+		</ProjectReference>
+		<ProjectReference Include="../src/Lithium.Strings/Lithium.Strings.csproj">
+			<PrivateAssets>all</PrivateAssets>
+		</ProjectReference>
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Fluent.Net" Version="1.0.63" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFramework>net9.0</TargetFramework>
+
+		<PackageId>cyv.Lithium</PackageId>
+		<Authors>Chris Grassi</Authors>
+		<Description>Library for dynamically loading resources from XML at runtime.</Description>
+
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+</Project>

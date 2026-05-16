@@ -11,9 +11,5 @@
 		<AnalysisLevel>latest</AnalysisLevel>
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<PackageId>cyv.Lithium</PackageId>
-		<Version>0.1.0</Version>
-		<Authors>Chris Grassi</Authors>
-		<Description>Library for dynamically loading resources from XML at runtime.</Description>
 	</PropertyGroup>
 </Project>
