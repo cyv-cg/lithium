@@ -179,6 +179,9 @@ jobs:
           prerelease: ${{ github.ref != 'refs/heads/main' }}
           files: artifacts/cyv.Lithium.Strings.*.nupkg
 
+      - name: Add artifacts as local package source
+        run: dotnet nuget add source "artifacts" --name local
+
       - name: Pack meta package
         run: |
           dotnet pack package/cyv.Lithium.sln -c Release -o artifacts/meta \
