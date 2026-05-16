@@ -86,10 +86,10 @@ public class Program {
 		Console.WriteLine(myDef); // "My Def name"
 		Console.WriteLine(myDef.MyInteger); // "1"
 
-		MyCustomDef2? myDef = DefDatabase.Load<MyCustomDef2>("My_Second_Def_Key");
-		Console.WriteLine(myDef); // "My other Def name"
-		Console.WriteLine(myDef.MyInteger); // "2"
-		Console.WriteLine(myDef.MyDouble); // "2.5"
+		MyCustomDef2? myDef2 = DefDatabase.Load<MyCustomDef2>("My_Second_Def_Key");
+		Console.WriteLine(myDef2); // "My other Def name"
+		Console.WriteLine(myDef2.MyInteger); // "2"
+		Console.WriteLine(myDef2.MyDouble); // "2.5"
 	}
 }
 ```
@@ -226,17 +226,17 @@ namespace MyNamespace;
 
 public class Program {
 	public static void Main(string[] args) {
-		Defs.Settings.AddDefRootDirectory("C:\Documents\project\defs");
+		Lithium.Defs.Settings.AddDefRootDirectory("C:\Documents\project\defs");
 		DefDatabase.Initialize();
-		Strings.Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
+		Lithium.Strings.Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
 
 		MyCustomDef? myDef = DefDatabase.Load<MyCustomDef>("My_Def_Key");
 		Console.WriteLine(myDef.Label.Address); // "root1.area2.yet-more-strings.my-def-name"
 
-		Strings.Settings.SetLocale("en-US");
+		Lithium.Strings.Settings.SetLocale("en-US");
 		Console.WriteLine(myDef); // "My Def name"
 
-		Strings.Settings.SetLocale("fr-FR");
+		Lithium.Strings.Settings.SetLocale("fr-FR");
 		Console.WriteLine(myDef); // "Le nom de ma déf"
 	}
 }
