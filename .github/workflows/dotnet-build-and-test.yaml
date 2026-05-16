@@ -97,17 +97,11 @@ jobs:
 
       - name: Pack NuGet package (pre-release)
         if: ${{ github.ref == 'refs/heads/develop' }}
-        run: |
-          dotnet pack "src/Lithium.Core/Lithium.Core.csproj" -p:PublicRelease=false --no-build -c Release -o artifacts
-          dotnet pack "src/Lithium.Defs/Lithium.Defs.csproj" -p:PublicRelease=false --no-build -c Release -o artifacts
-          dotnet pack "src/Lithium.Strings/Lithium.Strings.csproj" -p:PublicRelease=false --no-build -c Release -o artifacts
+        run: dotnet pack "Lithium.sln" -p:PublicRelease=false --no-build -c Release -o artifacts
 
       - name: Pack NuGet package (release)
         if: ${{ github.ref == 'refs/heads/main' }}
-        run: |
-          dotnet pack "src/Lithium.Core/Lithium.Core.csproj" -p:PublicRelease=true --no-build -c Release -o artifacts
-          dotnet pack "src/Lithium.Defs/Lithium.Defs.csproj" -p:PublicRelease=true --no-build -c Release -o artifacts
-          dotnet pack "src/Lithium.Strings/Lithium.Strings.csproj" -p:PublicRelease=true --no-build -c Release -o artifacts
+        run: dotnet pack "Lithium.sln" -p:PublicRelease=true --no-build -c Release -o artifacts
 
       - name: Upload NuGet package artifact
         uses: actions/upload-artifact@v4
@@ -187,7 +181,7 @@ jobs:
 
       - name: Pack meta package
         run: |
-          dotnet pack package/cyv.Lithium.csproj -c Release -o artifacts/meta \
+          dotnet pack package/cyv.Lithium.sln -c Release -o artifacts/meta \
             -p:CoreVersion=${{ steps.version.outputs.core-version }} \
             -p:DefsVersion=${{ steps.version.outputs.defs-version }} \
             -p:StringsVersion=${{ steps.version.outputs.strings-version }}
