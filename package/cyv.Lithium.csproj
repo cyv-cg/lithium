@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
-		<PackageReference Include="cyv.Lithium.Core" Version="0.1.6-gc4c787bde5" />
-		<PackageReference Include="cyv.Lithium.Defs" Version="0.1.6-gc4c787bde5" />
-		<PackageReference Include="cyv.Lithium.Strings" Version="0.1.6-gc4c787bde5" />
+		<PackageReference Include="cyv.Lithium.Core" Version="$(CoreVersion)" />
+		<PackageReference Include="cyv.Lithium.Defs" Version="$(DefsVersion)" />
+		<PackageReference Include="cyv.Lithium.Strings" Version="$(StringsVersion)" />
 
 		<PackageReference Include="Fluent.Net" Version="1.0.63" />
 	</ItemGroup>
