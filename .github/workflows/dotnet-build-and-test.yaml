@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
@@ -68,7 +70,7 @@ jobs:
 
   pack-and-upload:
     needs: test
-    if: ${{ needs.test.result == 'success' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.test.result == 'success' && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -76,11 +78,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: "9.0.x"
+
+      - name: Install NBGV
+        run: dotnet tool install -g nbgv
 
       - name: Restore dependencies
         run: dotnet restore "Lithium.sln"
@@ -88,11 +95,64 @@ jobs:
       - name: Build Release configuration
         run: dotnet build "Lithium.sln" --no-restore --configuration Release
 
-      - name: Pack NuGet package
-        run: dotnet pack "Lithium.sln" --no-build --configuration Release --output artifacts
+      - name: Pack NuGet package (pre-release)
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        run: dotnet pack "package/cyv.Lithium.csproj" -p:PublicRelease=false --no-build --configuration Release --output artifacts
+
+      - name: Pack NuGet package (release)
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: dotnet pack "package/cyv.Lithium.csproj" -p:PublicRelease=true --no-build --configuration Release --output artifacts
 
       - name: Upload NuGet package artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
-          path: artifacts/*.nupkg
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+
+  create-github-release:
+    needs: pack-and-upload
+    if: ${{ needs.pack-and-upload.result == 'success' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Install NBGV
+        run: dotnet tool install -g nbgv
+
+      - name: Get version
+        id: version
+        run: echo "version=$(nbgv get-version -v NuGetPackageVersion)" >> $GITHUB_OUTPUT
+
+      - name: Create version tag
+        run: |
+          git tag -f v${{ steps.version.outputs.version }}
+          git push origin v${{ steps.version.outputs.version }} --force
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
+          files: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
