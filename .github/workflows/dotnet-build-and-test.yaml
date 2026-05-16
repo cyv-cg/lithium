@@ -97,19 +97,17 @@ jobs:
 
       - name: Pack NuGet package (pre-release)
         if: ${{ github.ref == 'refs/heads/develop' }}
-        run: dotnet pack "package/cyv.Lithium.csproj" -p:PublicRelease=false --no-build --configuration Release --output artifacts
+        run: dotnet pack "Lithium.sln" -p:PublicRelease=false --no-build -c Release -o artifacts
 
       - name: Pack NuGet package (release)
         if: ${{ github.ref == 'refs/heads/main' }}
-        run: dotnet pack "package/cyv.Lithium.csproj" -p:PublicRelease=true --no-build --configuration Release --output artifacts
+        run: dotnet pack "Lithium.sln" -p:PublicRelease=true --no-build -c Release -o artifacts
 
       - name: Upload NuGet package artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
-          path: |
-            artifacts/*.nupkg
-            artifacts/*.snupkg
+          path: artifacts/*.nupkg
 
   create-github-release:
     needs: pack-and-upload
@@ -132,14 +130,24 @@ jobs:
       - name: Install NBGV
         run: dotnet tool install -g nbgv
 
-      - name: Get version
+      - name: Get versions
         id: version
-        run: echo "version=$(nbgv get-version -v NuGetPackageVersion)" >> $GITHUB_OUTPUT
-
-      - name: Create version tag
         run: |
-          git tag -f v${{ steps.version.outputs.version }}
-          git push origin v${{ steps.version.outputs.version }} --force
+          echo "meta-version=$(nbgv get-version -v NuGetPackageVersion package)" >> $GITHUB_OUTPUT
+          echo "core-version=$(nbgv get-version -v NuGetPackageVersion src/Lithium.Core)" >> $GITHUB_OUTPUT
+          echo "defs-version=$(nbgv get-version -v NuGetPackageVersion src/Lithium.Defs)" >> $GITHUB_OUTPUT
+          echo "strings-version=$(nbgv get-version -v NuGetPackageVersion src/Lithium.Strings)" >> $GITHUB_OUTPUT
+
+      - name: Create version tags
+        run: |
+          git tag -f cyv.Lithium-v${{ steps.version.outputs.meta-version }}
+          git push origin cyv.Lithium-v${{ steps.version.outputs.meta-version }} --force
+          git tag -f cyv.Lithium.Core-v${{ steps.version.outputs.core-version }}
+          git push origin cyv.Lithium.Core-v${{ steps.version.outputs.core-version }} --force
+          git tag -f cyv.Lithium.Defs-v${{ steps.version.outputs.defs-version }}
+          git push origin cyv.Lithium.Defs-v${{ steps.version.outputs.defs-version }} --force
+          git tag -f cyv.Lithium.Strings-v${{ steps.version.outputs.strings-version }}
+          git push origin cyv.Lithium.Strings-v${{ steps.version.outputs.strings-version }} --force
 
       - name: Download package artifacts
         uses: actions/download-artifact@v4
@@ -147,12 +155,41 @@ jobs:
           name: nuget-packages
           path: artifacts
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (Core)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
+          tag_name: v${{ steps.version.outputs.core-version }}
+          name: v${{ steps.version.outputs.core-version }}
           prerelease: ${{ github.ref != 'refs/heads/main' }}
-          files: |
-            artifacts/*.nupkg
-            artifacts/*.snupkg
+          files: artifacts/cyv.Lithium.Core.*.nupkg
+
+      - name: Create GitHub Release (Defs)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.defs-version }}
+          name: v${{ steps.version.outputs.defs-version }}
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
+          files: artifacts/cyv.Lithium.Defs.*.nupkg
+
+      - name: Create GitHub Release (Strings)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.strings-version }}
+          name: v${{ steps.version.outputs.strings-version }}
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
+          files: artifacts/cyv.Lithium.Strings.*.nupkg
+
+      - name: Pack meta package
+        run: |
+          dotnet pack package/cyv.Lithium.sln -c Release -o artifacts/meta \
+            -p:CoreVersion=${{ steps.version.outputs.core-version }} \
+            -p:DefsVersion=${{ steps.version.outputs.defs-version }} \
+            -p:StringsVersion=${{ steps.version.outputs.strings-version }}
+
+      - name: Create GitHub Release (meta)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.meta-version }}
+          name: v${{ steps.version.outputs.meta-version }}
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
+          files: artifacts/meta/*.nupkg

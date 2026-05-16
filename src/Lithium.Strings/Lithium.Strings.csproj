@@ -6,7 +6,11 @@
 		<PackageReference Include="Fluent.Net" Version="1.0.63" />
 	</ItemGroup>
 	<PropertyGroup>
+		<OutputType>Library</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
+		<PackageId>cyv.Lithium.Strings</PackageId>
+		<Authors>Chris Grassi</Authors>
+
 		<Nullable>enable</Nullable>
 		<RootNamespace>Lithium</RootNamespace>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>

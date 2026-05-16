@@ -1,18 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
-		<ProjectReference Include="../src/Lithium.Core/Lithium.Core.csproj">
-			<PrivateAssets>all</PrivateAssets>
-		</ProjectReference>
-		<ProjectReference Include="../src/Lithium.Defs/Lithium.Defs.csproj">
-			<PrivateAssets>all</PrivateAssets>
-		</ProjectReference>
-		<ProjectReference Include="../src/Lithium.Strings/Lithium.Strings.csproj">
-			<PrivateAssets>all</PrivateAssets>
-		</ProjectReference>
+		<PackageReference Include="cyv.Lithium.Core" Version="$(CoreVersion)" />
+		<PackageReference Include="cyv.Lithium.Defs" Version="$(DefsVersion)" />
+		<PackageReference Include="cyv.Lithium.Strings" Version="$(StringsVersion)" />
 
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Fluent.Net" Version="1.0.63" />
 	</ItemGroup>
 

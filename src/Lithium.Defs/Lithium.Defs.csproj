@@ -4,7 +4,11 @@
 		<ProjectReference Include="..\Lithium.Core\Lithium.Core.csproj" />
 	</ItemGroup>
 	<PropertyGroup>
+		<OutputType>Library</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
+		<PackageId>cyv.Lithium.Defs</PackageId>
+		<Authors>Chris Grassi</Authors>
+
 		<Nullable>enable</Nullable>
 		<RootNamespace>Lithium</RootNamespace>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
