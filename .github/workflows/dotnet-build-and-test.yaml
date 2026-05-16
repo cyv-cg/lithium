@@ -133,10 +133,10 @@ jobs:
       - name: Get versions
         id: version
         run: |
-          echo "meta-version=$(nbgv get-version -v NuGetPackageVersion package)" >> $GITHUB_OUTPUT
-          echo "core-version=$(nbgv get-version -v NuGetPackageVersion src/Lithium.Core)" >> $GITHUB_OUTPUT
-          echo "defs-version=$(nbgv get-version -v NuGetPackageVersion src/Lithium.Defs)" >> $GITHUB_OUTPUT
-          echo "strings-version=$(nbgv get-version -v NuGetPackageVersion src/Lithium.Strings)" >> $GITHUB_OUTPUT
+          echo "meta-version=$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
+          echo "core-version=$(nbgv get-version -v NuGetPackageVersion -p src/Lithium.Core)" >> $GITHUB_OUTPUT
+          echo "defs-version=$(nbgv get-version -v NuGetPackageVersion -p src/Lithium.Defs)" >> $GITHUB_OUTPUT
+          echo "strings-version=$(nbgv get-version -v NuGetPackageVersion -p src/Lithium.Strings)" >> $GITHUB_OUTPUT
 
       - name: Create version tags
         run: |
@@ -182,9 +182,9 @@ jobs:
       - name: Pack meta package
         run: |
           dotnet pack package/cyv.Lithium.sln -c Release -o artifacts/meta \
-            -p:CoreVersion=${{ steps.version.outputs.core-version }} \
-            -p:DefsVersion=${{ steps.version.outputs.defs-version }} \
-            -p:StringsVersion=${{ steps.version.outputs.strings-version }}
+            -p:CoreVersion="${{ steps.version.outputs.core-version }}" \
+            -p:DefsVersion="${{ steps.version.outputs.defs-version }}" \
+            -p:StringsVersion="${{ steps.version.outputs.strings-version }}"
 
       - name: Create GitHub Release (meta)
         uses: softprops/action-gh-release@v2
