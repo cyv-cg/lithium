@@ -16,7 +16,6 @@
 		<Description>Library for dynamically loading resources from XML at runtime.</Description>
 
 		<IsPackable>true</IsPackable>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
 	</PropertyGroup>
 </Project>
