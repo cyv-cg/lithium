@@ -183,7 +183,7 @@ jobs:
         run: |
           dotnet nuget add source "$GITHUB_WORKSPACE/artifacts" --name local
           dotnet nuget locals all --clear
-          dotnet restore --no-cache"
+          dotnet restore --no-cache
 
       - name: Pack meta package
         run: |
