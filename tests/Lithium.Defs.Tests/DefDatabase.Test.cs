@@ -1,9 +1,22 @@
 using System;
+using Lithium.Core.Exceptions;
+using Lithium.Defs.Exceptions;
 using Xunit;
 
 namespace Lithium.Defs.Tests;
 
+/// <summary>
+/// Tests for Lithium.Defs.DefDatabase.cs
+/// </summary>
 public class DefDatabaseTests {
+	/// <summary>
+	/// Reset values for each test.
+	/// </summary>
+	public DefDatabaseTests() {
+		Settings.DeferredParsing = false;
+		Settings.DefRootDirectories.Clear();
+	}
+
 	/// <summary>
 	/// Tests that the DefDatabase is properly initialized and that no defs are loaded when the files contain no defs.
 	/// </summary>
@@ -19,10 +32,9 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void GetDefKeyTest01() {
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<NodeMissingChildException>(
 			() => Init.Setup(9)
 		);
-		Assert.Equal("Def node missing 'Key' child element.", e.Message);
 	}
 
 	/// <summary>
@@ -30,10 +42,9 @@ public class DefDatabaseTests {
 	/// </summary>
 	[Fact]
 	public void LoadXmlTest01() {
-		Exception e = Assert.Throws<Exception>(
+		Exception e = Assert.Throws<DefNotFoundException>(
 			() => Init.Setup(10)
 		);
-		Assert.Equal("No Def was found with the key 'DefThatDoesNotExist'.", e.Message);
 	}
 
 	/// <summary>
@@ -44,6 +55,51 @@ public class DefDatabaseTests {
 		Init.Setup(1);
 
 		Def? loadedDef = DefDatabase.Load<MockDef5>("MockDef");
+		Assert.Null(loadedDef);
+	}
+
+	/// <summary>
+	/// Tests that Load returns the def properly with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadTest02() {
+		Settings.AddDefRootDirectory(Init.MockDirectory(1));
+		Settings.DeferredParsing = true;
+		DefDatabase.Initialize();
+
+		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
+
+		Assert.NotNull(loadedDef);
+		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal("MockDef_Label", loadedDef.Label.Address);
+		Assert.Equal(1, loadedDef.SampleValue1);
+	}
+
+	/// <summary>
+	/// Tests that Load returns null when given a key that does not exist with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadTest03() {
+		Settings.AddDefRootDirectory(Init.MockDirectory(1));
+		Settings.DeferredParsing = true;
+		DefDatabase.Initialize();
+
+		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDefThatDoesNotExist");
+
+		Assert.Null(loadedDef);
+	}
+
+	/// <summary>
+	/// Tests that Load returns null when the provided type does not match the actual type with deferred loading.
+	/// </summary>
+	[Fact]
+	public void LoadTest04() {
+		Settings.AddDefRootDirectory(Init.MockDirectory(1));
+		Settings.DeferredParsing = true;
+		DefDatabase.Initialize();
+
+		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
+
 		Assert.Null(loadedDef);
 	}
 }

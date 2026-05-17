@@ -5,15 +5,19 @@ using System.IO;
 
 namespace Lithium.Core;
 
+/// <summary>
+/// Utility class for loading XML documents from files.
+/// </summary>
 public static class XmlLoader {
 	/// <summary>
 	/// Recursively scans the directory and returns all XML files found.
 	/// </summary>
 	/// <param name="root">Root directory to start scanning from.</param>
 	/// <returns>Collection of file paths for all XML files found.</returns>
+	/// <exception cref="DirectoryNotFoundException">Thrown if the specified root directory does not exist.</exception>
 	public static IEnumerable<string> GetAllFiles(string root) {
 		if (!Directory.Exists(root)) {
-			throw new FileNotFoundException($"Directory '{root}' does not exist.");
+			throw new DirectoryNotFoundException($"Directory '{root}' does not exist.");
 		}
 
 		return Directory.GetFiles(root, "*.xml", SearchOption.AllDirectories);
@@ -24,6 +28,9 @@ public static class XmlLoader {
 	/// </summary>
 	/// <param name="fileName">The path to the XML file to load.</param>
 	/// <returns>The loaded <see cref="XmlDocument"/>.</returns>
+	/// <exception cref="FileNotFoundException">Thrown if the specified file does not exist.</exception>
+	/// <exception cref="FileLoadException">Thrown if the specified file is not a .xml file.</exception>
+	/// <exception cref="XmlException">Thrown if the file contents cannot be parsed as valid XML.</exception>
 	public static XmlDocument LoadDocument(string fileName) {
 		if (!File.Exists(fileName)) {
 			throw new FileNotFoundException($"File '{fileName}' does not exist.");

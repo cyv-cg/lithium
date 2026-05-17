@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Lithium.Core.Attributes;
-using Lithium.Defs;
 
 namespace Lithium.Defs.Tests;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 public record MockDef1 : Def {
 	public int SampleValue1 { get; init; }
 }
@@ -41,11 +41,11 @@ public record MockDef9 : Def {
 	public List<int>? ListField { get; init; }
 }
 public record MockDef10 : Def {
-	[EnforceInheritance<System.IComparable>]
+	[EnforceInheritance<IComparable>]
 	public required Type TypeField { get; init; }
 }
 public record MockDef11 : Def {
-	public Nullable<MockDataStruct> ClassField { get; init; }
+	public MockDataStruct? ClassField { get; init; }
 }
 
 public enum MockEnum {
@@ -59,3 +59,5 @@ public class MockDataClass {
 public struct MockDataStruct {
 	public int Value { get; set; }
 }
+
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

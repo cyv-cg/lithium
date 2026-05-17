@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using Lithium.Core.Attributes;
+using Lithium.Defs.Exceptions;
 
 namespace Lithium.Defs;
 
@@ -19,15 +20,12 @@ internal static class TypeChecker {
 	/// <param name="typeName">Name of the type to resolve.</param>
 	/// <returns>The resolved type, or null if it could not be found.</returns>
 	internal static Type? ResolveType(string typeName) {
-		// First assume the type is internal.
-		Type? defType = Type.GetType($"Lithium.{typeName}");
-		// If it couldn't be resolved to an internal type, check all loaded assemblies.
-		if (defType == null) {
-			defType = AppDomain.CurrentDomain
-				.GetAssemblies()
-				.Select(a => a.GetType(typeName))
-				.FirstOrDefault(t => t != null);
-		}
+		// Check all loaded assemblies for the type.
+		Type? defType = AppDomain.CurrentDomain
+			.GetAssemblies()
+			.Select(a => a.GetType(typeName))
+			.FirstOrDefault(t => t != null);
+
 		return defType;
 	}
 
@@ -78,11 +76,11 @@ internal static class TypeChecker {
 
 		// If we still can't find thet factory, give up.
 		if (factory == null) {
-			throw new Exception($"{type} is marked to have an override def initializer but has no constructor with the {typeof(DefConstructor)} attribute or method with the {typeof(DefFactory)} attribute.");
+			throw new DefFactoryMissingException(type);
 		}
 
 		// Verify the factory has the appropriate return type.
-		Type? factoryReturnType = typeof(void);
+		Type? factoryReturnType = null;
 		if (factory is MethodInfo method) {
 			factoryReturnType = method.ReturnType;
 		}
@@ -90,13 +88,13 @@ internal static class TypeChecker {
 			factoryReturnType = ctor.DeclaringType;
 		}
 		if (factoryReturnType != type) {
-			throw new Exception($"Def factory must return {type} but it returns {factoryReturnType}.");
+			throw new DefFactoryReturnTypeException(type, factoryReturnType);
 		}
 
 		// Verify factory parameters match what's expected.
 		Type[] paramTypes = factory.GetParameters().Select(p => p.ParameterType).ToArray();
 		if (paramTypes.Length != 1 || paramTypes[0] != typeof(XmlNode)) {
-			throw new Exception($"Def factory/constructor must take {typeof(XmlNode)} as the sole parameter.");
+			throw new DefFactoryConstructorParamsException(type);
 		}
 
 		return true;
