@@ -180,11 +180,14 @@ jobs:
           files: artifacts/cyv.Lithium.Strings.*.nupkg
 
       - name: Add artifacts as local package source
-        run: dotnet nuget add source "artifacts" --name local
+        run: |
+          dotnet nuget add source "$GITHUB_WORKSPACE/artifacts" --name local
+          dotnet nuget locals all --clear
+          dotnet restore --no-cache"
 
       - name: Pack meta package
         run: |
-          dotnet pack package/cyv.Lithium.sln -c Release -o artifacts/meta \
+          dotnet pack package/src/cyv.Lithium.csproj -c Release -o artifacts/meta \
             -p:CoreVersion="${{ steps.version.outputs.core-version }}" \
             -p:DefsVersion="${{ steps.version.outputs.defs-version }}" \
             -p:StringsVersion="${{ steps.version.outputs.strings-version }}"
