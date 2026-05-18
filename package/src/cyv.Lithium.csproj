@@ -17,5 +17,6 @@
 
 		<IsPackable>true</IsPackable>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<NoPackageAnalysis>true</NoPackageAnalysis>
 	</PropertyGroup>
 </Project>
