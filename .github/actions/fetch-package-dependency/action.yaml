@@ -4,10 +4,10 @@ description: Finds a dependency either in artifacts or releases
 inputs:
   package-name:
     required: true
-    description: Name and version of the package, e.g. cyv.Lithium.Core-v1.2.3
-  github-token:
+    description: Name of the package, e.g. cyv.Lithium.Core
+  package-version:
     required: true
-    description: GitHub access token
+    description: Package version number, e.g. 1.2.3
 
 runs:
   using: "composite"
@@ -28,7 +28,7 @@ runs:
       shell: bash
       run: |
         PACKAGE="${{ inputs.package-name }}"
-        FILE_PATH=$(find artifacts -name "$PACKAGE" -type f | head -n 1)
+        FILE_PATH=$(ls | grep "$PACKAGE" || true)
 
         if [[ -n "$FILE_PATH" ]]; then
           echo "source=artifacts" >> $GITHUB_OUTPUT
@@ -40,7 +40,7 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh release download ${{ inputs.package-name }} \
+        gh release download "${{ inputs.package-name }}-v${{ inputs.package-version }}" \
           --repo ${{ github.repository }} \
           --pattern "*.nupkg" \
           --dir downloads
@@ -49,5 +49,5 @@ runs:
       if: steps.find.outputs.source != 'artifacts'
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.package-name }}
+        name: "${{ inputs.package-name }}-v${{ inputs.package-version }}"
         path: downloads/*.nupkg
