@@ -1,6 +1,12 @@
 name: Get All Package Versions
 description: Gets the new(est) version of every included package
 
+inputs:
+  publish-tag:
+    required: false
+    description: Whether to create and push a tag for the package release
+    default: "false"
+
 outputs:
   core-version:
     description: Lithium.Core package version
@@ -26,15 +32,18 @@ runs:
       uses: ./.github/actions/get-package-version
       with:
         package: Lithium.Core
+        publish-tag: ${{ inputs.publish-tag }}
 
     - name: Defs
       id: defs
       uses: ./.github/actions/get-package-version
       with:
         package: Lithium.Defs
+        publish-tag: ${{ inputs.publish-tag }}
 
     - name: Strings
       id: strings
       uses: ./.github/actions/get-package-version
       with:
         package: Lithium.Strings
+        publish-tag: ${{ inputs.publish-tag }}

@@ -146,6 +146,8 @@ jobs:
       - name: Get package versions
         id: versions
         uses: ./.github/actions/get-all-package-versions
+        with:
+          publish-tag: true
 
       - name: Download package artifacts
         uses: actions/download-artifact@v4

@@ -36,17 +36,17 @@ runs:
     - name: Identify Core dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
-        package-name: ${{ inputs.core-version }}
+        package-name: "cyv.Lithium.Core-v${{ inputs.core-version }}"
 
     - name: Identify Defs dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
-        package-name: ${{ inputs.defs-version }}
+        package-name: "cyv.Lithium.Defs-v${{ inputs.defs-version }}"
 
     - name: Identify Strings dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
-        package-name: ${{ inputs.strings-version }}
+        package-name: "cyv.Lithium.Strings-v${{ inputs.strings-version }}"
 
     - name: Download package artifacts
       uses: actions/download-artifact@v4
@@ -57,7 +57,7 @@ runs:
     - name: Add artifacts as local package source
       shell: "bash"
       run: |
-        dotnet nuget add source artifacts --name local
+        dotnet nuget add source "$GITHUB_WORKSPACE/artifacts" --name local
         dotnet nuget locals all --clear
         dotnet restore --no-cache
 
@@ -89,9 +89,9 @@ runs:
         prerelease: true
         files: |
           package/*.nupkg
-          artifacts/${{ inputs.core-version }}.nupkg
-          artifacts/${{ inputs.defs-version }}.nupkg
-          artifacts/${{ inputs.strings-version }}.nupkg
+          "artifacts/cyv.Lithium.Core-v${{ inputs.core-version }}.nupkg"
+          "artifacts/cyv.Lithium.Defs-v${{ inputs.defs-version }}.nupkg"
+          "artifacts/cyv.Lithium.Strings-v${{ inputs.strings-version }}.nupkg"
 
     - name: Create GitHub Release
       if: ${{ inputs.prerelease == 'false' }}
