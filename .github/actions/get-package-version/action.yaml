@@ -1,0 +1,65 @@
+name: Get Package Version
+description: Gets the new(est) version of the package being published
+
+inputs:
+  package:
+    required: true
+    description: Name of the package to check, e.g. Lithium.Core
+
+outputs:
+  version:
+    description: Package version
+    value: ${{ steps.get-version.outputs.version }}
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: get-calculated-version
+      id: long-version
+      shell: "bash"
+      run: |
+        PACKAGE="${{ inputs.package }}"
+        echo "calculated_version=$(nbgv get-version -v NuGetPackageVersion -p /src/$PACKAGE/)" >> $GITHUB_OUTPUT
+
+    - name: get-base-version
+      id: short-version
+      shell: "bash"
+      run: |
+        PACKAGE="${{ inputs.package }}"
+        CALCULATED_VERSION=${{ steps.long-version.outputs.calculated_version }}
+        if [[ "$CALCULATED_VERSION" =~ ([0-9]+\.[0-9]+\.[0-9]+).* ]]; then
+          echo "tag=$(echo "cyv.${PACKAGE}-v${BASH_REMATCH[1]}") >> $GITHUB_OUTPUT
+        fi
+
+    - name: find-existing-tag
+      id: final-version
+      shell: "bash"
+      run: |
+        TAG=${{ steps.short-version.outputs.tag }}
+
+        TAG_FOUND=$(git ls-remote --tags --refs origin \
+        | awk '{print $2}' \
+        | sed 's#refs/tags/##' \
+        | grep -E "^${TAG}$|^${TAG}-" \
+        | sort \
+        | head -n1)
+
+        if [ -n "$TAG_FOUND" ]; then
+          echo "version=${TAG_FOUND}" >> $GITHUB_OUTPUT
+          echo "new_tag=true" >> $GITHUB_OUTPUT
+        else
+          echo "version=cyv.${{ inputs.package }}-v${{ steps.long-version.outputs.calculated_version }}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: push-tag
+      if: ${{ steps.final-version.outputs.new_tag == 'true' }}
+      shell: "bash"
+      run: |
+        git tag ${{ steps.final-version.outputs.version }}
+        git push origin ${{ steps.final-version.outputs.version }}
