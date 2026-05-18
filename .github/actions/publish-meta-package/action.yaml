@@ -73,8 +73,9 @@ runs:
           if [[ "$CALCULATED_VERSION" =~ ([0-9]+\.[0-9]+\.[0-9]+).* ]]; then
             BASE_VERSION=${BASH_REMATCH[1]}
           fi
-
-          if [[ $(git ls-remote --tags --refs origin) =~ cyv\.Lithium-v${BASE_VERSION}-pre([0-9]+) ]]; then
+          
+          TAG=$(git ls-remote --tags --refs origin | awk '{print $2}' | sed 's#refs/tags/##' | (grep "cyv.Lithium-v${BASE_VERSION}" || true) | sort -V | tail -n1)
+          if [[ $TAG =~ cyv\.Lithium-v${BASE_VERSION}-pre([0-9]+) ]]; then
             PRERELEASE_VERSION=${BASH_REMATCH[1]}
           else
             PRERELEASE_VERSION=0
