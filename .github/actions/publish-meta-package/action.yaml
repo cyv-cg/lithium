@@ -36,17 +36,17 @@ runs:
     - name: Identify Core dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
-        package-name: "cyv.Lithium.Core-v${{ inputs.core-version }}"
+        package-name: "cyv.Lithium.Core.v${{ inputs.core-version }}"
 
     - name: Identify Defs dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
-        package-name: "cyv.Lithium.Defs-v${{ inputs.defs-version }}"
+        package-name: "cyv.Lithium.Defs.v${{ inputs.defs-version }}"
 
     - name: Identify Strings dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
-        package-name: "cyv.Lithium.Strings-v${{ inputs.strings-version }}"
+        package-name: "cyv.Lithium.Strings.v${{ inputs.strings-version }}"
 
     - name: Download package artifacts
       uses: actions/download-artifact@v4
