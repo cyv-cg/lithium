@@ -5,6 +5,9 @@ inputs:
   package-name:
     required: true
     description: Name and version of the package, e.g. cyv.Lithium.Core-v1.2.3
+  github-token:
+    required: true
+    description: GitHub access token
 
 runs:
   using: "composite"
@@ -31,12 +34,12 @@ runs:
           echo "source=artifacts" >> $GITHUB_OUTPUT
           echo "path=$FILE_PATH" >> $GITHUB_OUTPUT
         fi
-    
+
     - name: Download release asset
       if: steps.find.outputs.source != 'artifacts'
       shell: "bash"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ inputs.github-token }}
       run: |
         gh release download ${{ inputs.package-name }} \
           --repo ${{ github.repository }} \
