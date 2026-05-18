@@ -54,7 +54,7 @@ runs:
         TAG_FOUND=$(git ls-remote --tags --refs origin \
         | awk '{print $2}' \
         | sed 's#refs/tags/##' \
-        | grep -E "^${TAG}$|^${TAG}-" \
+        | grep -E "^${TAG}$|^${TAG}-" || true \
         | sort \
         | head -n1)
 
