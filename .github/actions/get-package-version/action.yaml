@@ -55,13 +55,14 @@ runs:
         | head -n1)
 
         if [ -n "$TAG_FOUND" ]; then
-          echo "version=${TAG_FOUND}" >> $GITHUB_OUTPUT
+          VERSION="${TAG_FOUND}"
           echo "new_tag=false" >> $GITHUB_OUTPUT
         else
-          echo "version=cyv.${{ inputs.package }}-v${{ steps.long-version.outputs.calculated_version }}" >> $GITHUB_OUTPUT
+          VERSION="cyv.${{ inputs.package }}-v${{ steps.long-version.outputs.calculated_version }}" >> $GITHUB_OUTPUT
           echo "new_tag=true" >> $GITHUB_OUTPUT
         fi
-        echo "Using package version: ${version}"
+        echo "Using package version: ${VERSION}"
+        echo "${VERSION}" >> $GITHUB_OUTPUT
 
     - name: push-tag
       if: ${{ steps.final-version.outputs.new_tag == 'true' }}
