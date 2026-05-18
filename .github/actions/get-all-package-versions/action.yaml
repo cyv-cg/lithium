@@ -1,0 +1,40 @@
+name: Get All Package Versions
+description: Gets the new(est) version of every included package
+
+outputs:
+  core-version:
+    description: Lithium.Core package version
+    value: ${{ steps.core.outputs.version }}
+  defs-version:
+    description: Lithium.Defs package version
+    value: ${{ steps.defs.outputs.version }}
+  strings-version:
+    description: Lithium.Strings package version
+    value: ${{ steps.strings.outputs.version }}
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Core
+      id: core
+      uses: ./.github/actions/get-package-version
+      with:
+        package: Lithium.Core
+
+    - name: Defs
+      id: defs
+      uses: ./.github/actions/get-package-version
+      with:
+        package: Lithium.Defs
+
+    - name: Strings
+      id: strings
+      uses: ./.github/actions/get-package-version
+      with:
+        package: Lithium.Strings

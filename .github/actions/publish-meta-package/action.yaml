@@ -1,0 +1,86 @@
+name: Publish Meta Package
+description: Releases the meta package
+
+inputs:
+  core-version:
+    required: true
+    description: Version of cyv.Lithium.Core
+  defs-version:
+    required: true
+    description: Version of cyv.Lithium.Defs
+  strings-version:
+    required: true
+    description: Version of cyv.Lithium.Strings
+  prerelease:
+    required: true
+    description: Whether this is a pre-release version of cyv.Lithium
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: "9.0.x"
+
+    - name: Install NBGV
+      shell: "bash"
+      run: dotnet tool install -g nbgv
+
+    - name: Get meta version
+      id: meta-version
+      shell: "bash"
+      run: echo "version=$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
+
+    - name: Create version tags
+      shell: "bash"
+      run: |
+        git tag cyv.Lithium-v${{ steps.meta-version.outputs.version }}
+        git push origin cyv.Lithium-v${{ steps.meta-version.outputs.version }}
+
+    - name: Download package artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: artifacts
+
+    - name: Add artifacts as local package source
+      shell: "bash"
+      run: |
+        dotnet nuget add source "$GITHUB_WORKSPACE/artifacts" --name local
+        dotnet nuget locals all --clear
+        dotnet restore --no-cache
+
+    - name: Pack meta package
+      shell: "bash"
+      run: |
+        dotnet pack package/src/cyv.Lithium.csproj -c Release -o artifacts/meta \
+          -p:CoreVersion="${{ inputs.core-version }}" \
+          -p:DefsVersion="${{ inputs.defs-version }}" \
+          -p:StringsVersion="${{ inputs.strings-version }}"
+
+    - name: Create GitHub Pre-Release
+      if: ${{ inputs.prerelease == 'true' }}
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: cyv.Lithium-v${{ steps.meta-version.outputs.version }}
+        name: cyv.Lithium-v${{ steps.meta-version.outputs.version }}
+        prerelease: true
+        files: |
+          artifacts/meta/*.nupkg
+          artifacts/*.nupkg
+
+    - name: Create GitHub Release
+      if: ${{ inputs.prerelease == 'false' }}
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: cyv.Lithium-v${{ steps.meta-version.outputs.version }}
+        name: cyv.Lithium-v${{ steps.meta-version.outputs.version }}
+        prerelease: false
+        files: artifacts/meta/*.nupkg
