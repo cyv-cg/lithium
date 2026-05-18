@@ -64,7 +64,23 @@ runs:
     - name: Get meta version
       id: meta-version
       shell: "bash"
-      run: echo "version=$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
+      run: |
+        if [[ ${{ inputs.prerelease == 'true' }} ]]; then
+          CALCULATED_VERSION=$(nbgv get-version -v NuGetPackageVersion -p package)
+          if [[ "$CALCULATED_VERSION" =~ ([0-9]+\.[0-9]+\.[0-9]+).* ]]; then
+            BASE_VERSION=${BASH_REMATCH[1]}
+          fi
+
+          if [[ $(git ls-remote --tags --refs origin) =~ cyv\.Lithium-v${BASE_VERSION}-pre([0-9]+) ]]; then
+            PRERELEASE_VERSION=${BASH_REMATCH[1]}
+          else
+            PRERELEASE_VERSION=0
+          fi
+
+          echo "version=cyv.Lithium-v${BASE_VERSION}-pre$(($PRERELEASE_VERSION + 1))" >> $GITHUB_OUTPUT
+        else
+          echo "version=$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
+        fi
 
     - name: Create version tags
       shell: "bash"
