@@ -44,4 +44,11 @@ runs:
         gh release download ${{ inputs.package-name }} \
           --repo ${{ github.repository }} \
           --pattern "*.nupkg" \
-          --dir artifacts
+          --dir downloads
+
+    - name: Upload NuGet package artifact
+      if: steps.find.outputs.source != 'artifacts'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.package-name }}
+        path: downloads/*.nupkg
