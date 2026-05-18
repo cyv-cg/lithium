@@ -25,16 +25,20 @@ runs:
       shell: "bash"
       run: |
         PACKAGE="${{ inputs.package }}"
-        echo "calculated_version=$(nbgv get-version -v NuGetPackageVersion -p /src/$PACKAGE/)" >> $GITHUB_OUTPUT
+        CALCULATED_VERSION=$(nbgv get-version -v NuGetPackageVersion -p "src/$PACKAGE/")
+        if [[ -z "$CALCULATED_VERSION" ]]; then
+            exit 1
+        fi
+        echo "calculated_version=$CALCULATED_VERSION" >> $GITHUB_OUTPUT
 
     - name: get-base-version
       id: short-version
       shell: "bash"
       run: |
         PACKAGE="${{ inputs.package }}"
-        CALCULATED_VERSION=${{ steps.long-version.outputs.calculated_version }}
+        CALCULATED_VERSION="${{ steps.long-version.outputs.calculated_version }}"
         if [[ "$CALCULATED_VERSION" =~ ([0-9]+\.[0-9]+\.[0-9]+).* ]]; then
-          echo "tag=$(echo "cyv.${PACKAGE}-v${BASH_REMATCH[1]}") >> $GITHUB_OUTPUT
+          echo "tag=cyv.${PACKAGE}-v${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
         fi
 
     - name: find-existing-tag
@@ -56,7 +60,7 @@ runs:
         else
           echo "version=cyv.${{ inputs.package }}-v${{ steps.long-version.outputs.calculated_version }}" >> $GITHUB_OUTPUT
         fi
-    
+
     - name: push-tag
       if: ${{ steps.final-version.outputs.new_tag == 'true' }}
       shell: "bash"
