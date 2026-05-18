@@ -66,5 +66,5 @@ runs:
       if: ${{ steps.final-version.outputs.new_tag == 'true' }}
       shell: "bash"
       run: |
-        git tag ${{ steps.final-version.outputs.version }}
-        git push origin ${{ steps.final-version.outputs.version }}
+        git tag "${{ steps.final-version.outputs.version }}"
+        git push origin "${{ steps.final-version.outputs.version }}"

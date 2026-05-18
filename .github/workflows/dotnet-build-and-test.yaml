@@ -127,9 +127,9 @@ jobs:
       - name: Create GitHub Release
         uses: ./.github/actions/publish-meta-package
         with:
-          core-version: ${{ steps.versions.outputs.core }}
-          defs-version: ${{ steps.versions.outputs.defs }}
-          strings-version: ${{ steps.versions.outputs.strings }}
+          core-version: ${{ steps.versions.outputs.core-version }}
+          defs-version: ${{ steps.versions.outputs.defs-version }}
+          strings-version: ${{ steps.versions.outputs.strings-version }}
           prerelease: true
 
   create-github-release:
