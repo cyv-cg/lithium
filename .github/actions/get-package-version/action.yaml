@@ -61,6 +61,7 @@ runs:
           echo "version=cyv.${{ inputs.package }}-v${{ steps.long-version.outputs.calculated_version }}" >> $GITHUB_OUTPUT
           echo "new_tag=true" >> $GITHUB_OUTPUT
         fi
+        echo "Using package version: ${version}"
 
     - name: push-tag
       if: ${{ steps.final-version.outputs.new_tag == 'true' }}
