@@ -109,9 +109,72 @@ jobs:
           name: nuget-packages
           path: artifacts/*.nupkg
 
+  create-github-pre-release:
+    needs: pack-and-upload
+    if: ${{ needs.pack-and-upload.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Install NBGV
+        run: dotnet tool install -g nbgv
+
+      - name: Get versions
+        id: version
+        run: |
+          echo "meta-version=$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
+          echo "core-version=$(nbgv get-version -v NuGetPackageVersion -p src/Lithium.Core)" >> $GITHUB_OUTPUT
+          echo "defs-version=$(nbgv get-version -v NuGetPackageVersion -p src/Lithium.Defs)" >> $GITHUB_OUTPUT
+          echo "strings-version=$(nbgv get-version -v NuGetPackageVersion -p src/Lithium.Strings)" >> $GITHUB_OUTPUT
+
+      - name: Create version tag
+        run: |
+          git tag v${{ steps.version.outputs.meta-version }}
+          git push origin v${{ steps.version.outputs.meta-version }}
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts
+
+      - name: Add artifacts as local package source
+        run: |
+          dotnet nuget add source "$GITHUB_WORKSPACE/artifacts" --name local
+          dotnet nuget locals all --clear
+          dotnet restore --no-cache
+
+      - name: Pack meta package
+        run: |
+          dotnet pack package/src/cyv.Lithium.csproj -c Release -o artifacts/meta \
+            -p:CoreVersion="${{ steps.version.outputs.core-version }}" \
+            -p:DefsVersion="${{ steps.version.outputs.defs-version }}" \
+            -p:StringsVersion="${{ steps.version.outputs.strings-version }}"
+
+      - name: Create GitHub Pre-Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.meta-version }}
+          name: v${{ steps.version.outputs.meta-version }}
+          prerelease: true
+          files: |
+            artifacts/meta/*.nupkg
+            artifacts/*.nupkg
+
   create-github-release:
     needs: pack-and-upload
-    if: ${{ needs.pack-and-upload.result == 'success' && github.event_name == 'push' }}
+    if: ${{ needs.pack-and-upload.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -160,7 +223,6 @@ jobs:
         with:
           tag_name: cyv.Lithium.Core-v${{ steps.version.outputs.core-version }}
           name: cyv.Lithium.Core-v${{ steps.version.outputs.core-version }}
-          prerelease: ${{ github.ref != 'refs/heads/main' }}
           files: artifacts/cyv.Lithium.Core.*.nupkg
 
       - name: Create GitHub Release (Defs)
@@ -168,7 +230,6 @@ jobs:
         with:
           tag_name: cyv.Lithium.Defs-v${{ steps.version.outputs.defs-version }}
           name: cyv.Lithium.Defs-v${{ steps.version.outputs.defs-version }}
-          prerelease: ${{ github.ref != 'refs/heads/main' }}
           files: artifacts/cyv.Lithium.Defs.*.nupkg
 
       - name: Create GitHub Release (Strings)
@@ -176,7 +237,6 @@ jobs:
         with:
           tag_name: cyv.Lithium.Strings-v${{ steps.version.outputs.strings-version }}
           name: cyv.Lithium.Strings-v${{ steps.version.outputs.strings-version }}
-          prerelease: ${{ github.ref != 'refs/heads/main' }}
           files: artifacts/cyv.Lithium.Strings.*.nupkg
 
       - name: Add artifacts as local package source
@@ -197,5 +257,4 @@ jobs:
         with:
           tag_name: cyv.Lithium-v${{ steps.version.outputs.meta-version }}
           name: cyv.Lithium-v${{ steps.version.outputs.meta-version }}
-          prerelease: ${{ github.ref != 'refs/heads/main' }}
           files: artifacts/meta/*.nupkg
