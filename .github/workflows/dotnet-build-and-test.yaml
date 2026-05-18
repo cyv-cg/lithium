@@ -131,7 +131,7 @@ jobs:
           defs-version: ${{ steps.versions.outputs.defs-version }}
           strings-version: ${{ steps.versions.outputs.strings-version }}
           prerelease: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ github.token }}
 
   create-github-release:
     needs: pack-and-upload
