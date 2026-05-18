@@ -44,6 +44,21 @@ runs:
         git tag cyv.Lithium-v${{ steps.meta-version.outputs.version }}
         git push origin cyv.Lithium-v${{ steps.meta-version.outputs.version }}
 
+    - name: Identify Core dependency
+      uses: ./.github/actions/fetch-package-dependency
+      with:
+        package-name: ${{ inputs.core-version }}
+
+    - name: Identify Defs dependency
+      uses: ./.github/actions/fetch-package-dependency
+      with:
+        package-name: ${{ inputs.defs-version }}
+
+    - name: Identify Strings dependency
+      uses: ./.github/actions/fetch-package-dependency
+      with:
+        package-name: ${{ inputs.strings-version }}
+
     - name: Download package artifacts
       uses: actions/download-artifact@v4
       with:
@@ -60,7 +75,7 @@ runs:
     - name: Pack meta package
       shell: "bash"
       run: |
-        dotnet pack package/src/cyv.Lithium.csproj -c Release -o artifacts/meta \
+        dotnet pack package/src/cyv.Lithium.csproj -c Release -o package \
           -p:CoreVersion="${{ inputs.core-version }}" \
           -p:DefsVersion="${{ inputs.defs-version }}" \
           -p:StringsVersion="${{ inputs.strings-version }}"
@@ -73,8 +88,10 @@ runs:
         name: cyv.Lithium-v${{ steps.meta-version.outputs.version }}
         prerelease: true
         files: |
-          artifacts/meta/*.nupkg
-          artifacts/*.nupkg
+          package/*.nupkg
+          artifacts/${{ inputs.core-version }}.nupkg
+          artifacts/${{ inputs.defs-version }}.nupkg
+          artifacts/${{ inputs.strings-version }}.nupkg
 
     - name: Create GitHub Release
       if: ${{ inputs.prerelease == 'false' }}
@@ -83,4 +100,4 @@ runs:
         tag_name: cyv.Lithium-v${{ steps.meta-version.outputs.version }}
         name: cyv.Lithium-v${{ steps.meta-version.outputs.version }}
         prerelease: false
-        files: artifacts/meta/*.nupkg
+        files: package/*.nupkg
