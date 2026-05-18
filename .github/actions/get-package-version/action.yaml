@@ -5,10 +5,14 @@ inputs:
   package:
     required: true
     description: Name of the package to check, e.g. Lithium.Core
+  publish-tag:
+    required: false
+    description: Whether to create and push a tag for the package release
+    default: "false"
 
 outputs:
   version:
-    description: Package version
+    description: Package tag, e.g. cyv.Lithium.Core-v1.2.3
     value: ${{ steps.final-version.outputs.version }}
 
 runs:
@@ -62,11 +66,14 @@ runs:
           echo "new_tag=true" >> $GITHUB_OUTPUT
         fi
         echo "Using package version: ${VERSION}"
-        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+        if [[ "$VERSION" =~ ([0-9]+\.[0-9]+\.[0-9]+.*) ]]; then
+          echo "version=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+        fi
 
     - name: push-tag
-      if: ${{ steps.final-version.outputs.new_tag == 'true' }}
+      if: ${{ steps.final-version.outputs.new_tag == 'true' && inputs.publish-tag == 'true' }}
       shell: "bash"
       run: |
-        git tag "${{ steps.final-version.outputs.version }}"
-        git push origin "${{ steps.final-version.outputs.version }}"
+        git tag "cyv.${{ inputs.package }}-v${{ steps.final-version.outputs.version }}"
+        git push origin "cyv.${{ inputs.package }}-v${{ steps.final-version.outputs.version }}"
