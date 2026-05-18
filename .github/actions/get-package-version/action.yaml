@@ -56,9 +56,10 @@ runs:
 
         if [ -n "$TAG_FOUND" ]; then
           echo "version=${TAG_FOUND}" >> $GITHUB_OUTPUT
-          echo "new_tag=true" >> $GITHUB_OUTPUT
+          echo "new_tag=false" >> $GITHUB_OUTPUT
         else
           echo "version=cyv.${{ inputs.package }}-v${{ steps.long-version.outputs.calculated_version }}" >> $GITHUB_OUTPUT
+          echo "new_tag=true" >> $GITHUB_OUTPUT
         fi
 
     - name: push-tag
