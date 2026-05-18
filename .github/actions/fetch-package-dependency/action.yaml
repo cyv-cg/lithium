@@ -39,7 +39,7 @@ runs:
       if: steps.find.outputs.source != 'artifacts'
       shell: "bash"
       env:
-        GH_TOKEN: ${{ inputs.github-token }}
+        GH_TOKEN: ${{ github.token }}
       run: |
         gh release download ${{ inputs.package-name }} \
           --repo ${{ github.repository }} \

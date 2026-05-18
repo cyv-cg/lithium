@@ -14,9 +14,6 @@ inputs:
   prerelease:
     required: true
     description: Whether this is a pre-release version of cyv.Lithium
-  github-token:
-    required: true
-    description: GitHub access token
 
 runs:
   using: "composite"
@@ -40,19 +37,16 @@ runs:
       uses: ./.github/actions/fetch-package-dependency
       with:
         package-name: ${{ inputs.core-version }}
-        gh-token: ${{ inputs.github-token }}
 
     - name: Identify Defs dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
         package-name: ${{ inputs.defs-version }}
-        gh-token: ${{ inputs.github-token }}
 
     - name: Identify Strings dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
         package-name: ${{ inputs.strings-version }}
-        gh-token: ${{ inputs.github-token }}
 
     - name: Download package artifacts
       uses: actions/download-artifact@v4
