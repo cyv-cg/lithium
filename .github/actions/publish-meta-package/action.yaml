@@ -36,17 +36,6 @@ runs:
       shell: "bash"
       run: dotnet tool install -g nbgv
 
-    - name: Get meta version
-      id: meta-version
-      shell: "bash"
-      run: echo "version=$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
-
-    - name: Create version tags
-      shell: "bash"
-      run: |
-        git tag cyv.Lithium-v${{ steps.meta-version.outputs.version }}
-        git push origin cyv.Lithium-v${{ steps.meta-version.outputs.version }}
-
     - name: Identify Core dependency
       uses: ./.github/actions/fetch-package-dependency
       with:
@@ -77,6 +66,17 @@ runs:
         dotnet nuget add source "$GITHUB_WORKSPACE/artifacts" --name local
         dotnet nuget locals all --clear
         dotnet restore --no-cache
+
+    - name: Get meta version
+      id: meta-version
+      shell: "bash"
+      run: echo "version=$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
+
+    - name: Create version tags
+      shell: "bash"
+      run: |
+        git tag cyv.Lithium-v${{ steps.meta-version.outputs.version }}
+        git push origin cyv.Lithium-v${{ steps.meta-version.outputs.version }}
 
     - name: Pack meta package
       shell: "bash"
