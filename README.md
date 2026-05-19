@@ -7,6 +7,30 @@ Think of it like an ORM but for a filesystem instead of a database.
 cyv.Lithium aims to be a simple and extensible method of defining instance objects outside of source code in a way that new objects can be added and loading without requiring a recompile.
 To this end, objects are defined in XML definitions ("defs") to be parsed and loaded at runtime.
 
+## Installation
+
+### Manual
+
+See the [releases](https://github.com/cyv-cg/lithium/releases) page on GitHub.
+Individual packages can be installed by downloading the `.nupkg` to a [local NuGet package feed](https://learn.microsoft.com/en-us/nuget/hosting-packages/local-feeds).
+
+```
+LocalNuGet/
+├── cyv.Lithium.Core.x.y.z.nupkg
+├── cyv.Lithium.Defs.x.y.z.nupkg
+└── cyv.Lithium.Strings.x.y.z.nupkg
+```
+```XML
+<!-- C:\Documents\project\MyProject.csproj -->
+<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<PackageReference Include="cyv.Lithium.Core" Version="x.y.z" />
+		<PackageReference Include="cyv.Lithium.Defs" Version="x.y.z" />
+		<PackageReference Include="cyv.Lithium.Strings" Version="x.y.z" />
+	</ItemGroup>
+</Project>
+```
+
 ## Getting started
 
 ### Basic syntax
