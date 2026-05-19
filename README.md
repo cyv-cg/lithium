@@ -15,16 +15,15 @@ See the [releases](https://github.com/cyv-cg/lithium/releases) page on GitHub.
 Individual packages can be installed by downloading the `.nupkg` to a [local NuGet package feed](https://learn.microsoft.com/en-us/nuget/hosting-packages/local-feeds).
 
 ```
-LocalNuGet/
+C:\LocalNuGet
 └── cyv.Lithium.Core.x.y.z.nupkg
 ```
-```XML
-<!-- C:\Documents\project\MyProject.csproj -->
-<Project Sdk="Microsoft.NET.Sdk">
-	<ItemGroup>
-		<PackageReference Include="cyv.Lithium.Core" Version="x.y.z" />
-	</ItemGroup>
-</Project>
+
+```bash
+dotnet nuget add source C:\LocalNuget --name local \
+dotnet nuget locals all --clear \
+dotnet restore --no-cache \
+dotnet package add cyv.Lithium.Core -v x.y.z --project MyProject.csproj
 ```
 
 ## Getting started
