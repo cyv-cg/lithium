@@ -16,17 +16,13 @@ Individual packages can be installed by downloading the `.nupkg` to a [local NuG
 
 ```
 LocalNuGet/
-├── cyv.Lithium.Core.x.y.z.nupkg
-├── cyv.Lithium.Defs.x.y.z.nupkg
-└── cyv.Lithium.Strings.x.y.z.nupkg
+└── cyv.Lithium.Core.x.y.z.nupkg
 ```
 ```XML
 <!-- C:\Documents\project\MyProject.csproj -->
 <Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
 		<PackageReference Include="cyv.Lithium.Core" Version="x.y.z" />
-		<PackageReference Include="cyv.Lithium.Defs" Version="x.y.z" />
-		<PackageReference Include="cyv.Lithium.Strings" Version="x.y.z" />
 	</ItemGroup>
 </Project>
 ```
