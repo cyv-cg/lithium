@@ -23,5 +23,5 @@ runs:
         if [[ -n "${FOUND}" ]]; then
           echo "exists=true" >> $GITHUB_OUTPUT
         else
-          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "tag-exists=false" >> $GITHUB_OUTPUT
         fi
