@@ -68,8 +68,8 @@ runs:
       id: meta-version
       shell: "bash"
       run: |
-        if [[ ${{ inputs.prerelease == 'true' }} ]]; then
-          CALCULATED_VERSION=$(nbgv get-version -v NuGetPackageVersion -p package)
+        CALCULATED_VERSION=$(nbgv get-version -v NuGetPackageVersion -p package)
+        if ${{ inputs.prerelease == 'true' }}; then
           if [[ "$CALCULATED_VERSION" =~ ([0-9]+\.[0-9]+\.[0-9]+).* ]]; then
             BASE_VERSION=${BASH_REMATCH[1]}
           fi
@@ -83,7 +83,7 @@ runs:
 
           echo "version=cyv.Lithium-v${BASE_VERSION}-pre$(($PRERELEASE_VERSION + 1))" >> $GITHUB_OUTPUT
         else
-          echo "version=cyv.Lithium-v$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
+          echo "version=cyv.Lithium-v${CALCULATED_VERSION}" >> $GITHUB_OUTPUT
         fi
 
     - name: Create version tags
