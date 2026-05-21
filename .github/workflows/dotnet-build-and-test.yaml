@@ -144,6 +144,7 @@ jobs:
       defs-version: ${{ steps.versions.outputs.defs-version }}
       strings-version: ${{ steps.versions.outputs.strings-version }}
       meta-version: ${{ steps.release-meta.outputs.meta-version }}
+      any-new-versions: ${{ steps.validate-core.outputs.tag-exists == 'false' || steps.validate-defs.outputs.tag-exists == 'false' || steps.validate-strings.outputs.tag-exists == 'false' || steps.release-meta.outputs.published }}
 
     steps:
       - name: Checkout repository
@@ -217,7 +218,7 @@ jobs:
 
   publish-nuget-package:
     needs: create-github-release
-    if: ${{ needs.create-github-release.result == 'success' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.create-github-release.result == 'success' && github.ref == 'refs/heads/main' && needs.create-github-release.outputs.any-new-versions == 'true' }}
     runs-on: "ubuntu-latest"
     env:
       GH_TOKEN: ${{ github.token }}
@@ -251,7 +252,7 @@ jobs:
 
       - name: Download Meta release
         run: |
-          gh release download "cyv.Lithium-v${{ needs.create-github-release.outputs.meta-version }}" \
+          gh release download "${{ needs.create-github-release.outputs.meta-version }}" \
           --repo ${{ github.repository }} \
           --pattern "*.nupkg" \
           --dir releases
