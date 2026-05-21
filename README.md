@@ -9,6 +9,14 @@ To this end, objects are defined in XML definitions ("defs") to be parsed and lo
 
 ## Installation
 
+### NuGet
+
+See on the [NuGet Gallery](https://www.nuget.org/packages/cyv.Lithium).
+
+```bash
+dotnet add package cyv.Lithium --version x.y.z
+```
+
 ### Manual
 
 See the [releases](https://github.com/cyv-cg/lithium/releases) page on GitHub.
@@ -23,7 +31,7 @@ C:\LocalNuGet
 dotnet nuget add source C:\LocalNuget --name local \
 dotnet nuget locals all --clear \
 dotnet restore --no-cache \
-dotnet package add cyv.Lithium.Core -v x.y.z --project MyProject.csproj
+dotnet package add cyv.Lithium.Core --version x.y.z --project MyProject.csproj
 ```
 
 ## Getting started
