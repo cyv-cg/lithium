@@ -8,6 +8,15 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<PackageId>cyv.Lithium.Defs</PackageId>
 		<Authors>Chris Grassi</Authors>
+		<Description>Library for dynamically loading XML into objects at runtime.</Description>
+
+		<RepositoryUrl>https://github.com/cyv-cg/lithium</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/cyv-cg/lithium</PackageProjectUrl>
+		<RespositoryType>git</RespositoryType>
+		<Copyright>Copyright (c) Chris Grassi 2026</Copyright>
+		<RepositoryBranch>main</RepositoryBranch>
+		<PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 
 		<Nullable>enable</Nullable>
 		<RootNamespace>Lithium</RootNamespace>
@@ -16,4 +25,8 @@
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="../../README.md" Pack="true" PackagePath="/" />
+	</ItemGroup>
 </Project>

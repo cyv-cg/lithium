@@ -1,15 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
 		<ProjectReference Include="..\Lithium.Core\Lithium.Core.csproj" />
-	</ItemGroup>
-	<ItemGroup>
+
 		<PackageReference Include="Fluent.Net" Version="1.0.63" />
 	</ItemGroup>
+
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
 		<PackageId>cyv.Lithium.Strings</PackageId>
 		<Authors>Chris Grassi</Authors>
+		<Description>Library for organizing and loading text and translation using Mozilla Fluent.</Description>
+
+		<RepositoryUrl>https://github.com/cyv-cg/lithium</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/cyv-cg/lithium</PackageProjectUrl>
+		<RespositoryType>git</RespositoryType>
+		<Copyright>Copyright (c) Chris Grassi 2026</Copyright>
+		<RepositoryBranch>main</RepositoryBranch>
+		<PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 
 		<Nullable>enable</Nullable>
 		<RootNamespace>Lithium</RootNamespace>
@@ -18,4 +27,8 @@
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="../../README.md" Pack="true" PackagePath="/" />
+	</ItemGroup>
 </Project>

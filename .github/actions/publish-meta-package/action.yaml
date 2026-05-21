@@ -1,0 +1,123 @@
+name: Publish Meta Package
+description: Releases the meta package
+
+inputs:
+  core-version:
+    required: true
+    description: Version of cyv.Lithium.Core
+  defs-version:
+    required: true
+    description: Version of cyv.Lithium.Defs
+  strings-version:
+    required: true
+    description: Version of cyv.Lithium.Strings
+  prerelease:
+    required: true
+    description: Whether this is a pre-release version of cyv.Lithium
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: "9.0.x"
+
+    - name: Install NBGV
+      shell: "bash"
+      run: dotnet tool install -g nbgv
+
+    - name: Identify Core dependency
+      uses: ./.github/actions/fetch-package-dependency
+      with:
+        package-name: "cyv.Lithium.Core"
+        package-version: ${{ inputs.core-version }}
+
+    - name: Identify Defs dependency
+      uses: ./.github/actions/fetch-package-dependency
+      with:
+        package-name: "cyv.Lithium.Defs"
+        package-version: ${{ inputs.defs-version }}
+
+    - name: Identify Strings dependency
+      uses: ./.github/actions/fetch-package-dependency
+      with:
+        package-name: "cyv.Lithium.Strings"
+        package-version: ${{ inputs.strings-version }}
+
+    - name: Download package artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        merge-multiple: true
+
+    - name: Add artifacts as local package source
+      shell: "bash"
+      run: |
+        dotnet nuget add source "$GITHUB_WORKSPACE/artifacts" --name local
+        dotnet nuget locals all --clear
+        dotnet restore --no-cache
+
+    - name: Get meta version
+      id: meta-version
+      shell: "bash"
+      run: |
+        if [[ ${{ inputs.prerelease == 'true' }} ]]; then
+          CALCULATED_VERSION=$(nbgv get-version -v NuGetPackageVersion -p package)
+          if [[ "$CALCULATED_VERSION" =~ ([0-9]+\.[0-9]+\.[0-9]+).* ]]; then
+            BASE_VERSION=${BASH_REMATCH[1]}
+          fi
+          
+          TAG=$(git ls-remote --tags --refs origin | awk '{print $2}' | sed 's#refs/tags/##' | (grep "cyv.Lithium-v${BASE_VERSION}" || true) | sort -V | tail -n1)
+          if [[ $TAG =~ cyv\.Lithium-v${BASE_VERSION}-pre([0-9]+) ]]; then
+            PRERELEASE_VERSION=${BASH_REMATCH[1]}
+          else
+            PRERELEASE_VERSION=0
+          fi
+
+          echo "version=cyv.Lithium-v${BASE_VERSION}-pre$(($PRERELEASE_VERSION + 1))" >> $GITHUB_OUTPUT
+        else
+          echo "version=cyv.Lithium-v$(nbgv get-version -v NuGetPackageVersion -p package)" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create version tags
+      shell: "bash"
+      run: |
+        git tag ${{ steps.meta-version.outputs.version }}
+        git push origin ${{ steps.meta-version.outputs.version }}
+
+    - name: Pack meta package
+      shell: "bash"
+      run: |
+        dotnet pack package/src/cyv.Lithium.csproj -c Release -o package \
+          -p:CoreVersion="${{ inputs.core-version }}" \
+          -p:DefsVersion="${{ inputs.defs-version }}" \
+          -p:StringsVersion="${{ inputs.strings-version }}"
+
+    - name: Create GitHub Pre-Release
+      if: ${{ inputs.prerelease == 'true' }}
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.meta-version.outputs.version }}
+        name: ${{ steps.meta-version.outputs.version }}
+        prerelease: true
+        files: |
+          package/*.nupkg
+          artifacts/cyv.Lithium.Core.${{ inputs.core-version }}.nupkg
+          artifacts/cyv.Lithium.Defs.${{ inputs.defs-version }}.nupkg
+          artifacts/cyv.Lithium.Strings.${{ inputs.strings-version }}.nupkg
+
+    - name: Create GitHub Release
+      if: ${{ inputs.prerelease == 'false' }}
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.meta-version.outputs.version }}
+        name: ${{ steps.meta-version.outputs.version }}
+        prerelease: false
+        files: package/*.nupkg
