@@ -139,6 +139,12 @@ jobs:
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
 
+    outputs:
+      core-version: ${{ steps.versions.outputs.core-version }}
+      defs-version: ${{ steps.versions.outputs.defs-version }}
+      strings-version: ${{ steps.versions.outputs.strings-version }}
+      meta-version: ${{ steps.release-meta.outputs.meta-version }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -155,7 +161,14 @@ jobs:
           name: nuget-packages
           path: artifacts
 
+      - name: Validate Core release
+        id: validate-core
+        uses: "./.github/actions/check-tag"
+        with:
+          tag-name: cyv.Lithium.Core-v${{ steps.versions.outputs.core-version }}
+
       - name: Create GitHub Release (Core)
+        if: ${{ steps.validate-core.outputs.tag-exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Core-v${{ steps.versions.outputs.core-version }}
@@ -163,7 +176,14 @@ jobs:
           files: artifacts/cyv.Lithium.Core.*.nupkg
           prerelease: false
 
+      - name: Validate Core release
+        id: validate-defs
+        uses: "./.github/actions/check-tag"
+        with:
+          tag-name: cyv.Lithium.Defs-v${{ steps.versions.outputs.defs-version }}
+
       - name: Create GitHub Release (Defs)
+        if: ${{ steps.validate-defs.outputs.tag-exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Defs-v${{ steps.versions.outputs.defs-version }}
@@ -171,7 +191,14 @@ jobs:
           files: artifacts/cyv.Lithium.Defs.*.nupkg
           prerelease: false
 
+      - name: Validate Strings release
+        id: validate-strings
+        uses: "./.github/actions/check-tag"
+        with:
+          tag-name: cyv.Lithium.Strings-v${{ steps.versions.outputs.strings-version }}
+
       - name: Create GitHub Release (Strings)
+        if: ${{ steps.validate-strings.outputs.tag-exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Strings-v${{ steps.versions.outputs.strings-version }}
@@ -180,9 +207,59 @@ jobs:
           prerelease: false
 
       - name: Create GitHub Release (meta)
+        id: release-meta
         uses: ./.github/actions/publish-meta-package
         with:
           core-version: ${{ steps.versions.outputs.core-version }}
           defs-version: ${{ steps.versions.outputs.defs-version }}
           strings-version: ${{ steps.versions.outputs.strings-version }}
           prerelease: false
+
+  publish-nuget-package:
+    needs: create-github-release
+    if: ${{ needs.create-github-release.result == 'success' && github.ref == 'refs/heads/main' }}
+    runs-on: "ubuntu-latest"
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Download Core release
+        run: |
+          gh release download "cyv.Lithium.Core-v${{ needs.create-github-release.outputs.core-version }}" \
+          --repo ${{ github.repository }} \
+          --pattern "*.nupkg" \
+          --dir releases
+
+      - name: Download Defs release
+        run: |
+          gh release download "cyv.Lithium.Defs-v${{ needs.create-github-release.outputs.defs-version }}" \
+          --repo ${{ github.repository }} \
+          --pattern "*.nupkg" \
+          --dir releases
+
+      - name: Download Strings release
+        run: |
+          gh release download "cyv.Lithium.Strings-v${{ needs.create-github-release.outputs.strings-version }}" \
+          --repo ${{ github.repository }} \
+          --pattern "*.nupkg" \
+          --dir releases
+
+      - name: Download Meta release
+        run: |
+          gh release download "cyv.Lithium-v${{ needs.create-github-release.outputs.meta-version }}" \
+          --repo ${{ github.repository }} \
+          --pattern "*.nupkg" \
+          --dir releases
+
+      - name: Publish packages to NuGet
+        run: |
+          dotnet nuget push "./releases/*.nupkg" \
+            --api-key ${{ secrets.NUGET_UPDATE_LITHIUM_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate \
+            --no-symbols

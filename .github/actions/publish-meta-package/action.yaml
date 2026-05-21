@@ -15,6 +15,11 @@ inputs:
     required: true
     description: Whether this is a pre-release version of cyv.Lithium
 
+outputs:
+  meta-version:
+    description: The version number used for cyv.Lithium
+    value: ${{ steps.meta-version.outputs.version }}
+
 runs:
   using: "composite"
 
@@ -73,7 +78,7 @@ runs:
           if [[ "$CALCULATED_VERSION" =~ ([0-9]+\.[0-9]+\.[0-9]+).* ]]; then
             BASE_VERSION=${BASH_REMATCH[1]}
           fi
-          
+
           TAG=$(git ls-remote --tags --refs origin | awk '{print $2}' | sed 's#refs/tags/##' | (grep "cyv.Lithium-v${BASE_VERSION}" || true) | sort -V | tail -n1)
           if [[ $TAG =~ cyv\.Lithium-v${BASE_VERSION}-pre([0-9]+) ]]; then
             PRERELEASE_VERSION=${BASH_REMATCH[1]}
@@ -86,13 +91,21 @@ runs:
           echo "version=cyv.Lithium-v${CALCULATED_VERSION}" >> $GITHUB_OUTPUT
         fi
 
+    - name: Validate Meta release
+      id: validate
+      uses: "./.github/actions/check-tag"
+      with:
+        tag-name: ${{ steps.meta-version.outputs.version }}
+
     - name: Create version tags
+      if: ${{ steps.validate.outputs.tag-exists == 'false' }}
       shell: "bash"
       run: |
         git tag ${{ steps.meta-version.outputs.version }}
         git push origin ${{ steps.meta-version.outputs.version }}
 
     - name: Pack meta package
+      if: ${{ steps.validate.outputs.tag-exists == 'false' }}
       shell: "bash"
       run: |
         dotnet pack package/src/cyv.Lithium.csproj -c Release -o package \
@@ -101,7 +114,7 @@ runs:
           -p:StringsVersion="${{ inputs.strings-version }}"
 
     - name: Create GitHub Pre-Release
-      if: ${{ inputs.prerelease == 'true' }}
+      if: ${{ inputs.prerelease == 'true' && steps.validate.outputs.tag-exists == 'false' }}
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.meta-version.outputs.version }}
@@ -114,7 +127,7 @@ runs:
           artifacts/cyv.Lithium.Strings.${{ inputs.strings-version }}.nupkg
 
     - name: Create GitHub Release
-      if: ${{ inputs.prerelease == 'false' }}
+      if: ${{ inputs.prerelease == 'false' && steps.validate.outputs.tag-exists == 'false' }}
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.meta-version.outputs.version }}
