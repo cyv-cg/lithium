@@ -168,7 +168,7 @@ jobs:
           tag-name: cyv.Lithium.Core-v${{ steps.versions.outputs.core-version }}
 
       - name: Create GitHub Release (Core)
-        if: ${{ steps.validate-core.outputs.exists == 'false' }}
+        if: ${{ steps.validate-core.outputs.tag-exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Core-v${{ steps.versions.outputs.core-version }}
@@ -183,7 +183,7 @@ jobs:
           tag-name: cyv.Lithium.Defs-v${{ steps.versions.outputs.defs-version }}
 
       - name: Create GitHub Release (Defs)
-        if: ${{ steps.validate-defs.outputs.exists == 'false' }}
+        if: ${{ steps.validate-defs.outputs.tag-exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Defs-v${{ steps.versions.outputs.defs-version }}
@@ -198,7 +198,7 @@ jobs:
           tag-name: cyv.Lithium.Strings-v${{ steps.versions.outputs.strings-version }}
 
       - name: Create GitHub Release (Strings)
-        if: ${{ steps.validate-strings.outputs.exists == 'false' }}
+        if: ${{ steps.validate-strings.outputs.tag-exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Strings-v${{ steps.versions.outputs.strings-version }}

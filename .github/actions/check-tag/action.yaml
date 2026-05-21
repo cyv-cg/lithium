@@ -9,7 +9,7 @@ inputs:
 outputs:
   tag-exists:
     description: Returns true if the tag exists, false if it does not
-    value: ${{ steps.validate.outputs.exists }}
+    value: ${{ steps.validate.outputs.tag-exists }}
 
 runs:
   using: "composite"
@@ -19,7 +19,7 @@ runs:
       id: validate
       shell: "bash"
       run: |
-        FOUND=$(git ls-remote --tags --refs origin "refs/tags/${{ inputs.tag-name }}" | grep "${{ inputs.tag-name }}" || true)
+        FOUND=$(git ls-remote --tags --refs origin "refs/tags/${{ inputs.tag-name }}")
         if [[ -n "${FOUND}" ]]; then
           echo "exists=true" >> $GITHUB_OUTPUT
         else
