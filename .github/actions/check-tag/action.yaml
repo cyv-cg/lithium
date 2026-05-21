@@ -1,0 +1,26 @@
+name: Check Tag
+description: Checks if a given tag already exists on the remote
+
+inputs:
+  tag-name:
+    required: true
+    description: Name of the tag to look for
+
+outputs:
+  tag-exists:
+    description: Returns true if the tag exists, false if it does not
+    value: ${{ steps.validate.outputs.exists }}
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: validate
+      id: validate
+      shell: "bash"
+      run: |
+        if [[ git ls-remote --tags origin "refs/tags/${{ inputs.tag-name }}" | grep -q "${{ inputs.tag-name }}" ]]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
