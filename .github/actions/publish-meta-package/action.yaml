@@ -19,6 +19,9 @@ outputs:
   meta-version:
     description: The version number used for cyv.Lithium
     value: ${{ steps.meta-version.outputs.version }}
+  published:
+    description: Returns true if the package was pushed as a release
+    value: ${{ steps.validate.outputs.tag-exists == 'false' }}
 
 runs:
   using: "composite"
