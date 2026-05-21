@@ -28,9 +28,10 @@ runs:
       shell: bash
       run: |
         PACKAGE="${{ inputs.package-name }}"
-        FILE_PATH=$(ls artifacts | grep "$PACKAGE" || true)
+        FILE_PATH=$(ls artifacts | grep "$PACKAGE.${{ inputs.package-version }}.nupkg" || true)
 
         if [[ -n "$FILE_PATH" ]]; then
+          echo "Found package artifact $FILE_PATH"
           echo "source=artifacts" >> $GITHUB_OUTPUT
         fi
 
@@ -40,6 +41,7 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
+        echo "Downloading release package ${{ inputs.package-name }}-v${{ inputs.package-version }}"
         gh release download "${{ inputs.package-name }}-v${{ inputs.package-version }}" \
           --repo ${{ github.repository }} \
           --pattern "*.nupkg" \
