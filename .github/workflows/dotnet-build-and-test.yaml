@@ -158,29 +158,31 @@ jobs:
       - name: Create GitHub Release (Core)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.versions.outputs.core }}
-          name: ${{ steps.versions.outputs.core }}
+          tag_name: cyv.Lithium.Core-v${{ steps.versions.outputs.core-version }}
+          name: cyv.Lithium.Core-v${{ steps.versions.outputs.core-version }}
           files: artifacts/cyv.Lithium.Core.*.nupkg
+          prerelease: false
 
       - name: Create GitHub Release (Defs)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.versions.outputs.defs }}
-          name: ${{ steps.versions.outputs.defs }}
+          tag_name: cyv.Lithium.Defs-v${{ steps.versions.outputs.defs-version }}
+          name: cyv.Lithium.Defs-v${{ steps.versions.outputs.defs-version }}
           files: artifacts/cyv.Lithium.Defs.*.nupkg
+          prerelease: false
 
       - name: Create GitHub Release (Strings)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.versions.outputs.strings }}
-          name: ${{ steps.versions.outputs.strings }}
+          tag_name: cyv.Lithium.Strings-v${{ steps.versions.outputs.strings-version }}
+          name: cyv.Lithium.Strings-v${{ steps.versions.outputs.strings-version }}
           files: artifacts/cyv.Lithium.Strings.*.nupkg
+          prerelease: false
 
       - name: Create GitHub Release (meta)
         uses: ./.github/actions/publish-meta-package
         with:
-          core-version: ${{ steps.versions.outputs.core }}
-          defs-version: ${{ steps.versions.outputs.defs }}
-          strings-version: ${{ steps.versions.outputs.strings }}
+          core-version: ${{ steps.versions.outputs.core-version }}
+          defs-version: ${{ steps.versions.outputs.defs-version }}
+          strings-version: ${{ steps.versions.outputs.strings-version }}
           prerelease: false
-          github-token: ${{ secrets.GITHUB_TOKEN }}
