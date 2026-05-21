@@ -10,3 +10,6 @@
 coverage/
 **/TestResults/
 releases/
+
+.env
+/*.sh
