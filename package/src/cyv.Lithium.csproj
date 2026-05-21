@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
-		<ProjectReference Include="..\Lithium.Core\Lithium.Core.csproj" />
+		<PackageReference Include="cyv.Lithium.Core" Version="$(CoreVersion)" />
+		<PackageReference Include="cyv.Lithium.Defs" Version="$(DefsVersion)" />
+		<PackageReference Include="cyv.Lithium.Strings" Version="$(StringsVersion)" />
 
 		<PackageReference Include="Fluent.Net" Version="1.0.63" />
 	</ItemGroup>
@@ -8,9 +10,10 @@
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
-		<PackageId>cyv.Lithium.Strings</PackageId>
+
+		<PackageId>cyv.Lithium</PackageId>
 		<Authors>Chris Grassi</Authors>
-		<Description>Library for organizing and loading text and translation using Mozilla Fluent.</Description>
+		<Description>Library for dynamically loading XML into objects at runtime.</Description>
 
 		<RepositoryUrl>https://github.com/cyv-cg/lithium</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/cyv-cg/lithium</PackageProjectUrl>
@@ -20,12 +23,9 @@
 		<PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 
-		<Nullable>enable</Nullable>
-		<RootNamespace>Lithium</RootNamespace>
-		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<AnalysisLevel>latest</AnalysisLevel>
-		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<IsPackable>true</IsPackable>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<NoPackageAnalysis>true</NoPackageAnalysis>
 	</PropertyGroup>
 
 	<ItemGroup>

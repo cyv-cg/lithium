@@ -1,0 +1,53 @@
+name: Fetch Package Dependency
+description: Finds a dependency either in artifacts or releases
+
+inputs:
+  package-name:
+    required: true
+    description: Name of the package, e.g. cyv.Lithium.Core
+  package-version:
+    required: true
+    description: Package version number, e.g. 1.2.3
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download package artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: artifacts
+      continue-on-error: true
+
+    - name: Find package in artifacts
+      id: find
+      shell: bash
+      run: |
+        PACKAGE="${{ inputs.package-name }}"
+        FILE_PATH=$(ls artifacts | grep "$PACKAGE" || true)
+
+        if [[ -n "$FILE_PATH" ]]; then
+          echo "source=artifacts" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Download release asset
+      if: ${{ steps.find.outputs.source != 'artifacts' }}
+      shell: "bash"
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release download "${{ inputs.package-name }}-v${{ inputs.package-version }}" \
+          --repo ${{ github.repository }} \
+          --pattern "*.nupkg" \
+          --dir downloads
+
+    - name: Upload NuGet package artifact
+      if: ${{ steps.find.outputs.source != 'artifacts' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{ inputs.package-name }}-v${{ inputs.package-version }}"
+        path: downloads/*.nupkg

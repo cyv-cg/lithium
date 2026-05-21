@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
@@ -68,7 +70,48 @@ jobs:
 
   pack-and-upload:
     needs: test
-    if: ${{ needs.test.result == 'success' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.test.result == 'success' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Install NBGV
+        run: dotnet tool install -g nbgv
+
+      - name: Restore dependencies
+        run: dotnet restore "Lithium.sln"
+
+      - name: Build Release configuration
+        run: dotnet build "Lithium.sln" --no-restore --configuration Release
+
+      - name: Pack NuGet package (pre-release)
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        run: dotnet pack "Lithium.sln" -p:PublicRelease=false --no-build -c Release -o artifacts
+
+      - name: Pack NuGet package (release)
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: dotnet pack "Lithium.sln" -p:PublicRelease=true --no-build -c Release -o artifacts
+
+      - name: Upload NuGet package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts/*.nupkg
+
+  create-github-prerelease:
+    needs: pack-and-upload
+    if: ${{ needs.pack-and-upload.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
     runs-on: ubuntu-latest
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -77,22 +120,67 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup dotnet
-        uses: actions/setup-dotnet@v3
+      - name: Get package versions
+        id: versions
+        uses: ./.github/actions/get-all-package-versions
+
+      - name: Create GitHub Release
+        uses: ./.github/actions/publish-meta-package
         with:
-          dotnet-version: "9.0.x"
+          core-version: ${{ steps.versions.outputs.core-version }}
+          defs-version: ${{ steps.versions.outputs.defs-version }}
+          strings-version: ${{ steps.versions.outputs.strings-version }}
+          prerelease: true
 
-      - name: Restore dependencies
-        run: dotnet restore "Lithium.sln"
+  create-github-release:
+    needs: pack-and-upload
+    if: ${{ needs.pack-and-upload.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
 
-      - name: Build Release configuration
-        run: dotnet build "Lithium.sln" --no-restore --configuration Release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Pack NuGet package
-        run: dotnet pack "Lithium.sln" --no-build --configuration Release --output artifacts
+      - name: Get package versions
+        id: versions
+        uses: ./.github/actions/get-all-package-versions
+        with:
+          publish-tag: true
 
-      - name: Upload NuGet package artifact
-        uses: actions/upload-artifact@v4
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
         with:
           name: nuget-packages
-          path: artifacts/*.nupkg
+          path: artifacts
+
+      - name: Create GitHub Release (Core)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.versions.outputs.core }}
+          name: ${{ steps.versions.outputs.core }}
+          files: artifacts/cyv.Lithium.Core.*.nupkg
+
+      - name: Create GitHub Release (Defs)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.versions.outputs.defs }}
+          name: ${{ steps.versions.outputs.defs }}
+          files: artifacts/cyv.Lithium.Defs.*.nupkg
+
+      - name: Create GitHub Release (Strings)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.versions.outputs.strings }}
+          name: ${{ steps.versions.outputs.strings }}
+          files: artifacts/cyv.Lithium.Strings.*.nupkg
+
+      - name: Create GitHub Release (meta)
+        uses: ./.github/actions/publish-meta-package
+        with:
+          core-version: ${{ steps.versions.outputs.core }}
+          defs-version: ${{ steps.versions.outputs.defs }}
+          strings-version: ${{ steps.versions.outputs.strings }}
+          prerelease: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
