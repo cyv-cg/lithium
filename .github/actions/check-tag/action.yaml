@@ -19,7 +19,8 @@ runs:
       id: validate
       shell: "bash"
       run: |
-        if [[ -n $((git ls-remote --tags origin "refs/tags/${{ inputs.tag-name }}" | grep -q "${{ inputs.tag-name }}" || true)) ]]; then
+        FOUND=$(git ls-remote --tags --refs origin "refs/tags/${{ inputs.tag-name }}" | grep "${{ inputs.tag-name }}" || true)
+        if [[ -n "${FOUND}" ]]; then
           echo "exists=true" >> $GITHUB_OUTPUT
         else
           echo "exists=false" >> $GITHUB_OUTPUT
