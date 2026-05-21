@@ -155,7 +155,14 @@ jobs:
           name: nuget-packages
           path: artifacts
 
+      - name: Validate Core release
+        id: validate-core
+        uses: "./.github/actions/check-tag"
+        with:
+          tag-name: cyv.Lithium.Core-v${{ steps.versions.outputs.core-version }}
+
       - name: Create GitHub Release (Core)
+        if: ${{ steps.validate-core.outputs.exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Core-v${{ steps.versions.outputs.core-version }}
@@ -163,7 +170,14 @@ jobs:
           files: artifacts/cyv.Lithium.Core.*.nupkg
           prerelease: false
 
+      - name: Validate Core release
+        id: validate-defs
+        uses: "./.github/actions/check-tag"
+        with:
+          tag-name: cyv.Lithium.Defs-v${{ steps.versions.outputs.defs-version }}
+
       - name: Create GitHub Release (Defs)
+        if: ${{ steps.validate-defs.outputs.exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Defs-v${{ steps.versions.outputs.defs-version }}
@@ -171,7 +185,14 @@ jobs:
           files: artifacts/cyv.Lithium.Defs.*.nupkg
           prerelease: false
 
+      - name: Validate Strings release
+        id: validate-strings
+        uses: "./.github/actions/check-tag"
+        with:
+          tag-name: cyv.Lithium.Strings-v${{ steps.versions.outputs.strings-version }}
+
       - name: Create GitHub Release (Strings)
+        if: ${{ steps.validate-strings.outputs.exists == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: cyv.Lithium.Strings-v${{ steps.versions.outputs.strings-version }}
