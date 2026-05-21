@@ -98,14 +98,14 @@ runs:
         tag-name: ${{ steps.meta-version.outputs.version }}
 
     - name: Create version tags
-      if: ${{ steps.validate.outputs.exists == 'false' }}
+      if: ${{ steps.validate.outputs.tag-exists == 'false' }}
       shell: "bash"
       run: |
         git tag ${{ steps.meta-version.outputs.version }}
         git push origin ${{ steps.meta-version.outputs.version }}
 
     - name: Pack meta package
-      if: ${{ steps.validate.outputs.exists == 'false' }}
+      if: ${{ steps.validate.outputs.tag-exists == 'false' }}
       shell: "bash"
       run: |
         dotnet pack package/src/cyv.Lithium.csproj -c Release -o package \
@@ -114,7 +114,7 @@ runs:
           -p:StringsVersion="${{ inputs.strings-version }}"
 
     - name: Create GitHub Pre-Release
-      if: ${{ inputs.prerelease == 'true' && steps.validate.outputs.exists == 'false' }}
+      if: ${{ inputs.prerelease == 'true' && steps.validate.outputs.tag-exists == 'false' }}
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.meta-version.outputs.version }}
@@ -127,7 +127,7 @@ runs:
           artifacts/cyv.Lithium.Strings.${{ inputs.strings-version }}.nupkg
 
     - name: Create GitHub Release
-      if: ${{ inputs.prerelease == 'false' && steps.validate.outputs.exists == 'false' }}
+      if: ${{ inputs.prerelease == 'false' && steps.validate.outputs.tag-exists == 'false' }}
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.meta-version.outputs.version }}

@@ -20,7 +20,7 @@ runs:
       shell: "bash"
       run: |
         if [[ git ls-remote --tags origin "refs/tags/${{ inputs.tag-name }}" | grep -q "${{ inputs.tag-name }}" ]]; then
-          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "tag-exists=true" >> $GITHUB_OUTPUT
         else
-          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "tag-exists=false" >> $GITHUB_OUTPUT
         fi
