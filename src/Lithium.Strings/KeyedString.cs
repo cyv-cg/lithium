@@ -38,7 +38,7 @@ public class KeyedString {
 	/// </summary>
 	/// <param name="address">String address in the format "root.namespace.category.string-name".</param>
 	[SetsRequiredMembers]
-	private KeyedString(string address) {
+	public KeyedString(string address) {
 		(string @namespace, string key) = StringManager.ParseAddress(address);
 		Namespace = @namespace;
 		Key = key;
