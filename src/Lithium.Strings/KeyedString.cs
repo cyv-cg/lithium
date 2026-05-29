@@ -37,6 +37,7 @@ public class KeyedString {
 	/// Creates a KeyedString from a string address.
 	/// </summary>
 	/// <param name="address">String address in the format "root.namespace.category.string-name".</param>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	[SetsRequiredMembers]
 	public KeyedString(string address) {
 		(string @namespace, string key) = StringManager.ParseAddress(address);
@@ -63,6 +64,7 @@ public class KeyedString {
 	/// <returns>Translated string with parameters replaced.</returns>
 	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
 	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public string Translate(params StringArgument[] values) {
 		if (IsLoaded()) {
 			return Address.Translate(values);
@@ -79,6 +81,7 @@ public class KeyedString {
 	/// This translates with no parameters. If the string has parameters, call the Translate method directly.
 	/// </remarks>
 	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public static implicit operator string(KeyedString keyedString) {
 		return keyedString.Translate();
 	}
@@ -97,6 +100,7 @@ public class KeyedString {
 	/// Checks whether the string key exists.
 	/// </summary>
 	/// <returns>True if the string key; otherwise, false.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public bool IsLoaded() {
 		return StringManager.TryGetMessage(Address, out _, out _);
 	}
@@ -109,6 +113,7 @@ public class KeyedString {
 	/// <returns>Translated string with parameters replaced.</returns>
 	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
 	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public string ToString(params StringArgument[] values) {
 		return Translate(values);
 	}

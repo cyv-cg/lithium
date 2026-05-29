@@ -34,6 +34,7 @@ public static class TranslationService {
 	/// <exception cref="KeyNotFoundException">Thrown when the provided key does not exist in the string database.</exception>
 	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
 	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public static string Translate(this string key, params StringArgument[] args) {
 		if (!StringManager.TryGetMessage(key, out MessageContext? context, out Message? message)) {
 			throw new KeyNotFoundException(key);
