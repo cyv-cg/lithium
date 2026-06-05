@@ -23,10 +23,9 @@ public static class Settings {
 	public static bool DeferredParsing { get; set; } = true;
 
 	/// <summary>
-	/// Adds a root directory to scan for Fluent resource files (.ftl) when loading string contexts.
-	/// The directory should contain subdirectories named after locales (e.g. "en-US", "fr-FR") which in turn contain the .ftl files.
+	/// Adds a root directory to scan for def resource XML files.
 	/// </summary>
-	/// <param name="path"></param>
+	/// <param name="path">Directory path for def files.</param>
 	/// <exception cref="ArgumentNullException">Thrown when the provided path is null or empty.</exception>
 	/// <exception cref="DirectoryNotFoundException">Thrown when the provided path does not exist.</exception>
 	public static void AddDefRootDirectory(string path) {
