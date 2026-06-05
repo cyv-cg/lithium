@@ -103,6 +103,7 @@ internal static class StringManager {
 	/// <param name="context">The MessageContext containing the string key if found; otherwise, null.</param>
 	/// <param name="message">The Message associated with the string key if found; otherwise, null.</param>
 	/// <returns>Whether both the MessageContext and Message were successfully retrieved.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	internal static bool TryGetMessage(string address, out MessageContext? context, out Message? message) {
 		message = null;
 
@@ -125,12 +126,19 @@ internal static class StringManager {
 	/// </summary>
 	/// <param name="address">The string address to parse, including its namespace and key (e.g. root.namespace.category.string-key).</param>
 	/// <returns>A tuple containing the namespace and key extracted from the address.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	internal static (string @namespace, string key) ParseAddress(string address) {
+		if (string.IsNullOrEmpty(address)) {
+			throw new ArgumentNullException(nameof(address));
+		}
 		// String key should be passed in as a namespace followed by the key itself.
 		// e.g. root.namespace.category.string-key
 		// This will parse out the namespace and key for proper lookup.
-		string[] parts = address.Split('.');
-		string @namespace = string.Join('.', parts.Take(parts.Length - 1));
+		string[] parts = address.Split(Settings.STRING_NAMESPACE_SEPARATOR);
+		if (parts.Length == 0) {
+			return (string.Empty, address);
+		}
+		string @namespace = string.Join(Settings.STRING_NAMESPACE_SEPARATOR, parts.Take(parts.Length - 1));
 		string key = parts.Last();
 		return (@namespace, key);
 	}
@@ -148,7 +156,7 @@ internal static class StringManager {
 	/// Inputs:
 	/// 	rootDirectory = .../root/
 	/// 	locale = en-US
-	/// 	fileName = /root/en-US/namespace/directory/strings.ftl
+	/// 	fileName = .../root/en-US/namespace/directory/strings.ftl
 	/// Output:
 	/// 	root.namespace.directory.strings
 	/// </example>
@@ -164,7 +172,7 @@ internal static class StringManager {
 		// 'root/namespace/directory/strings'
 		string namespacePath = Path.Combine(rootNamespace, relativePath, Path.GetFileNameWithoutExtension(fileName));
 		// 'root.namespace.directory.strings'
-		string @namespace = namespacePath.Replace(Path.DirectorySeparatorChar, '.').TrimStart('.');
+		string @namespace = namespacePath.Replace(Path.DirectorySeparatorChar, Settings.STRING_NAMESPACE_SEPARATOR).TrimStart(Settings.STRING_NAMESPACE_SEPARATOR);
 
 		return @namespace;
 	}
