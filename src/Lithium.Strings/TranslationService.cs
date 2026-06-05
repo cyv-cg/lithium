@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Fluent.Net;
 using Fluent.Net.RuntimeAst;
+using Lithium.Core;
 using Lithium.Strings.Exceptions;
 
 using StringArgument = (string key, object value);
@@ -79,7 +81,7 @@ public static class TranslationService {
 			[Settings.PrimaryLocale.Name] = 1f
 		};
 
-		if (Settings.StringRootDirectories == null || Settings.StringRootDirectories.Count == 0) {
+		if (!Settings.HasData) {
 			return rates;
 		}
 
@@ -109,11 +111,28 @@ public static class TranslationService {
 	/// Helper function to get the name of every string in a given locale.
 	/// </summary>
 	/// <param name="locale">Name of the locale.</param>
-	/// <returns></returns>
-	private static IEnumerable<string> GetAllKeysForLocale(string locale) {
+	/// <returns>A collection of all string addresses defined in the given locale.</returns>
+	private static HashSet<string> GetAllKeysForLocale(string locale) {
 		HashSet<string> addresses = new HashSet<string>();
 
-		foreach (string directory in Settings.StringRootDirectories!) {
+		// Count resources from embedded files.
+		foreach (Assembly assembly in Settings.EmbeddedResources.Keys) {
+			IEnumerable<string> resources = Settings.EmbeddedResources[assembly];
+			foreach (string resource in resources) {
+				(string _, string resourceLocale, string _) = StringManager.ParseEmbeddedResourceName(resource);
+				if (!resourceLocale.Equals(locale)) {
+					continue;
+				}
+				Stream? stream = ResourceLoader.LoadResourceStream(assembly, resource);
+				if (stream == null) {
+					continue;
+				}
+				StreamReader reader = new StreamReader(stream);
+				addresses.UnionWith(LoadEntries(reader, StringManager.GetNamespace(resource)));
+			}
+		}
+
+		foreach (string directory in Settings.StringRootDirectories) {
 			// Get every Fluent resource file for the locale.
 			string localeDirectory = Path.Combine(directory, locale);
 			if (!Directory.Exists(localeDirectory)) {
@@ -124,13 +143,17 @@ public static class TranslationService {
 			foreach (string file in files) {
 				// Parse the file into a resource.
 				StreamReader reader = new StreamReader(file);
-				FluentResource resource = FluentResource.FromReader(reader);
-				// Fetch and store each string key.
-				IEnumerable<string> entries = resource.Entries.Select(e => $"{StringManager.GetNamespace(directory, locale, file)}.{e.Key}");
-				addresses.UnionWith(entries);
+				addresses.UnionWith(LoadEntries(reader, StringManager.GetNamespace(directory, locale, file)));
 			}
 		}
 
 		return addresses;
+	}
+
+	private static IEnumerable<string> LoadEntries(StreamReader reader, string @namespace) {
+		FluentResource resource = FluentResource.FromReader(reader);
+		// Fetch and store each string key.
+		IEnumerable<string> entries = resource.Entries.Select(e => $"{@namespace}.{e.Key}");
+		return entries;
 	}
 }

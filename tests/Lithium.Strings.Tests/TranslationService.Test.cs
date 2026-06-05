@@ -182,8 +182,7 @@ public class TranslationServiceTests {
 		Settings.Reset();
 		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
 
-		_ = Assert.Single(rates);
-		Assert.Equal(1, rates["en-US"]);
+		Assert.Empty(rates);
 	}
 	/// <summary>
 	/// Tests that percentages are calculated accurately with multiple root directories.
@@ -200,5 +199,31 @@ public class TranslationServiceTests {
 		float epsilon = 1e-10f;
 		Assert.InRange(rates["fr-FR"], (4f / 7) - epsilon, (4f / 7) + epsilon);
 		Assert.InRange(rates["ja-JP"], (1f / 7) - epsilon, (1f / 7) + epsilon);
+	}
+
+	[Fact]
+	public void CalculateTranslationCompletionTest05() {
+		Settings.Reset();
+		Settings.AddEmbeddedResources(typeof(TranslationServiceTests).Assembly);
+
+		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
+
+		Assert.Equal(1, rates["en-US"]);
+		Assert.Equal(1, rates["fr-FR"]);
+	}
+	[Fact]
+	public void CalculateTranslationCompletionTest06() {
+		Settings.Reset();
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings01"));
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings02"));
+		Settings.AddEmbeddedResources(typeof(TranslationServiceTests).Assembly);
+
+		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
+
+		Assert.Equal(1, rates["en-US"]);
+
+		float epsilon = 1e-10f;
+		Assert.InRange(rates["fr-FR"], (5f / 8) - epsilon, (5f / 8) + epsilon);
+		Assert.InRange(rates["ja-JP"], (1f / 8) - epsilon, (1f / 8) + epsilon);
 	}
 }
