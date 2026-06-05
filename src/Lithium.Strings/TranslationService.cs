@@ -73,6 +73,14 @@ public static class TranslationService {
 	}
 
 	/// <summary>
+	/// Gets a collection of all string keys that are currently loaded for the active locale.
+	/// </summary>
+	/// <returns>A collection of all string keys that are currently loaded for the active locale.</returns>
+	public static IEnumerable<string> GetAllLoadedStrings() {
+		return GetAllKeysForLocale(Settings.Locale.Name);
+	}
+
+	/// <summary>
 	/// Calculates the translation completion rate for each locale based on the number of string keys that have been translated compared to the primary locale.
 	/// </summary>
 	/// <returns>A dictionary mapping locale names to their corresponding translation completion rates (between 0 and 1).</returns>
