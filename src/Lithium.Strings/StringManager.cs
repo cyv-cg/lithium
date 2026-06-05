@@ -233,10 +233,10 @@ internal static class StringManager {
 		parts.RemoveAt(parts.Count - 1);
 
 		if (parts.Count > 0) {
-			return $"{rootDirectory}.{string.Join('.', parts)}.{name}";
+			return $"{rootDirectory}{Settings.STRING_NAMESPACE_SEPARATOR}{string.Join(Settings.STRING_NAMESPACE_SEPARATOR, parts)}.{name}";
 		}
 		else {
-			return $"{rootDirectory}.{name}";
+			return $"{rootDirectory}{Settings.STRING_NAMESPACE_SEPARATOR}{name}";
 		}
 	}
 }
