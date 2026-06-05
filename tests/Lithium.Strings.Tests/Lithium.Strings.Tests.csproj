@@ -18,6 +18,9 @@
 		<None Include="__mocks__\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<EmbeddedResource Include="__resources__/strings/**/*.ftl">
+			<LogicalName>strings/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+		</EmbeddedResource>
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Lithium.Strings\Lithium.Strings.csproj" />

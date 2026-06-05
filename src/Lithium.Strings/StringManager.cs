@@ -5,6 +5,8 @@ using Fluent.Net;
 using System.Linq;
 using Fluent.Net.RuntimeAst;
 using Lithium.Core.Exceptions;
+using System.Reflection;
+using Lithium.Core;
 
 namespace Lithium.Strings;
 
@@ -22,8 +24,21 @@ internal static class StringManager {
 	/// Automatically called when changing the locale.
 	/// </remarks>
 	internal static void Reload() {
-		Dictionary<string, string> resources = GetFilesInLocale();
 		contexts.Clear();
+
+		foreach (Assembly assembly in Settings.EmbeddedResources.Keys) {
+			Dictionary<string, string> embeddedResources = GetFilesInLocale(assembly);
+			// Construct the contexts for each namespace.
+			foreach (string @namespace in embeddedResources.Keys) {
+				MessageContext? context = BuildContext(assembly, embeddedResources[@namespace]);
+				if (context == null) {
+					continue;
+				}
+				contexts[@namespace] = context;
+			}
+		}
+
+		Dictionary<string, string> resources = GetFilesInLocale();
 		// Construct the contexts for each namespace.
 		foreach (string @namespace in resources.Keys) {
 			contexts[@namespace] = BuildContext(resources[@namespace]);
@@ -37,7 +52,7 @@ internal static class StringManager {
 	/// <returns>A dictionary mapping namespaces to lists of file paths for the Fluent resource files found.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the StringRootDirectories setting is null.</exception>
 	private static Dictionary<string, string> GetFilesInLocale() {
-		if (Settings.StringRootDirectories == null) {
+		if (Settings.StringRootDirectories.Count == 0 && Settings.EmbeddedResources.Count == 0) {
 			throw new ResourceRootDirectoryMissingException("String");
 		}
 
@@ -70,6 +85,23 @@ internal static class StringManager {
 
 		return namespaceFileMap;
 	}
+	private static Dictionary<string, string> GetFilesInLocale(Assembly assembly) {
+		Dictionary<string, string> namespaceFileMap = new Dictionary<string, string>();
+
+		IEnumerable<string> embeddedResources = Settings.EmbeddedResources[assembly];
+		foreach (string resource in embeddedResources) {
+			List<string> parts = resource.Split(Path.DirectorySeparatorChar).ToList();
+
+			int localeIndex = parts.IndexOf(Settings.Locale.Name);
+			if (localeIndex < 0) {
+				continue;
+			}
+			string @namespace = GetNamespace(resource);
+			namespaceFileMap[@namespace] = resource;
+		}
+
+		return namespaceFileMap;
+	}
 
 	/// <summary>
 	/// Builds a Fluent MessageContext from the provided Fluent resource files.
@@ -79,21 +111,34 @@ internal static class StringManager {
 	/// <returns>A MessageContext containing the messages from the provided Fluent resource files.</returns>
 	/// <exception cref="ParseException">Thrown when there is an error parsing any of the provided Fluent resource files.</exception>
 	private static MessageContext BuildContext(string file) {
+		MessageContext context = CreateContext();
+		ParseMessages(ref context, new StreamReader(file));
+		return context;
+	}
+	private static MessageContext? BuildContext(Assembly assembly, string resource) {
+		MessageContext context = CreateContext();
+		Stream? stream = ResourceLoader.LoadResourceStream(assembly, resource);
+		if (stream == null) {
+			return null;
+		}
+		ParseMessages(ref context, new StreamReader(stream));
+		return context;
+	}
+
+	private static void ParseMessages(ref MessageContext context, StreamReader reader) {
+		List<ParseException> errors = (List<ParseException>)context.AddMessages(reader);
+		if (errors.Count != 0) {
+			throw errors.First();
+		}
+	}
+
+	private static MessageContext CreateContext() {
 		// When not using bidi text, the inserted control characters can be a nuisance.
 		// So currently, this will probably not work for bi-directional text.
 		MessageContextOptions options = new MessageContextOptions {
 			UseIsolating = false
 		};
-		MessageContext context = new MessageContext(Settings.Locale.Name, options);
-
-		StreamReader reader = new StreamReader(file);
-
-		List<ParseException> errors = (List<ParseException>)context.AddMessages(reader);
-		if (errors.Count != 0) {
-			throw errors.First();
-		}
-
-		return context;
+		return new MessageContext(Settings.Locale.Name, options);
 	}
 
 	/// <summary>
@@ -167,5 +212,23 @@ internal static class StringManager {
 		string @namespace = namespacePath.Replace(Path.DirectorySeparatorChar, '.').TrimStart('.');
 
 		return @namespace;
+	}
+	internal static string GetNamespace(string fileName) {
+		List<string> parts = fileName.Split(Path.DirectorySeparatorChar).ToList();
+
+		int localeIndex = parts.IndexOf(Settings.Locale.Name);
+
+		string rootDirectory = parts[localeIndex - 1];
+		parts.RemoveRange(0, localeIndex + 1);
+
+		string name = Path.GetFileNameWithoutExtension(fileName);
+		parts.RemoveAt(parts.Count - 1);
+
+		if (parts.Count > 0) {
+			return $"{rootDirectory}.{string.Join('.', parts)}.{name}";
+		}
+		else {
+			return $"{rootDirectory}.{name}";
+		}
 	}
 }

@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using Lithium.Core;
 
 namespace Lithium.Strings;
 
@@ -20,7 +23,8 @@ public static class Settings {
 	/// <summary>
 	/// A set of root directories to scan for Fluent resource files (.ftl) when loading string contexts.
 	/// </summary>
-	internal static HashSet<string>? StringRootDirectories { get; private set; }
+	internal static HashSet<string> StringRootDirectories { get; private set; } = new HashSet<string>();
+	internal static Dictionary<Assembly, HashSet<string>> EmbeddedResources { get; private set; } = new Dictionary<Assembly, HashSet<string>>();
 
 	/// <summary>
 	/// Sets the current locale for string translations.
@@ -49,9 +53,19 @@ public static class Settings {
 			throw new DirectoryNotFoundException(path);
 		}
 
-		StringRootDirectories ??= new HashSet<string>();
-
 		_ = StringRootDirectories.Add(path);
+	}
+
+	public static void AddEmbeddedResources(Assembly assembly) {
+		IEnumerable<string> resources = ResourceLoader.FetchResources(assembly, ".ftl");
+		if (!resources.Any()) {
+			return;
+		}
+
+		if (EmbeddedResources.TryGetValue(assembly, out _)) {
+			throw new Exception();
+		}
+		EmbeddedResources.Add(assembly, resources.ToHashSet());
 	}
 
 	/// <summary>
@@ -59,6 +73,7 @@ public static class Settings {
 	/// </summary>
 	public static void Reset() {
 		Locale = PrimaryLocale;
-		StringRootDirectories = null;
+		StringRootDirectories.Clear();
+		EmbeddedResources.Clear();
 	}
 }
