@@ -43,6 +43,19 @@ public static class XmlLoader {
 		doc.LoadXml(contents);
 		return doc;
 	}
+	public static XmlDocument? LoadDocument(Stream stream) {
+		StreamReader reader = new StreamReader(stream);
+		string content = reader.ReadToEnd();
+
+		if (string.IsNullOrEmpty(content)) {
+			return null;
+		}
+
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml(content);
+
+		return doc;
+	}
 
 	/// <summary>
 	/// Retrieves the value of a child XML node with the specified name and converts it to the given type <typeparamref name="T"/>.
