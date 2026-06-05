@@ -26,6 +26,7 @@ internal static class StringManager {
 	internal static void Reload() {
 		contexts.Clear();
 
+		// Load strings from embedded resource files.
 		foreach (Assembly assembly in Settings.EmbeddedResources.Keys) {
 			Dictionary<string, string> embeddedResources = GetFilesInLocale(assembly);
 			// Construct the contexts for each namespace.
@@ -34,13 +35,20 @@ internal static class StringManager {
 				if (context == null) {
 					continue;
 				}
+				if (contexts.ContainsKey(@namespace)) {
+					throw new Exception($"Duplicate string namespace '{@namespace}' defined at assembly '{assembly.GetName()}'");
+				}
 				contexts[@namespace] = context;
 			}
 		}
 
+		// Load strings from non-embedded resource files.
 		Dictionary<string, string> resources = GetFilesInLocale();
 		// Construct the contexts for each namespace.
 		foreach (string @namespace in resources.Keys) {
+			if (contexts.ContainsKey(@namespace)) {
+				throw new Exception($"Duplicate string namespace '{@namespace}' defined in file '{resources[@namespace].First()}'");
+			}
 			contexts[@namespace] = BuildContext(resources[@namespace]);
 		}
 	}
@@ -52,7 +60,7 @@ internal static class StringManager {
 	/// <returns>A dictionary mapping namespaces to lists of file paths for the Fluent resource files found.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the StringRootDirectories setting is null.</exception>
 	private static Dictionary<string, string> GetFilesInLocale() {
-		if (Settings.StringRootDirectories.Count == 0 && Settings.EmbeddedResources.Count == 0) {
+		if (!Settings.HasData) {
 			throw new ResourceRootDirectoryMissingException("String");
 		}
 
@@ -90,10 +98,8 @@ internal static class StringManager {
 
 		IEnumerable<string> embeddedResources = Settings.EmbeddedResources[assembly];
 		foreach (string resource in embeddedResources) {
-			List<string> parts = resource.Split(Path.DirectorySeparatorChar).ToList();
-
-			int localeIndex = parts.IndexOf(Settings.Locale.Name);
-			if (localeIndex < 0) {
+			(string _, string locale, string _) = ParseEmbeddedResourceName(resource);
+			if (!locale.Equals(Settings.Locale.Name)) {
 				continue;
 			}
 			string @namespace = GetNamespace(resource);
@@ -221,22 +227,25 @@ internal static class StringManager {
 
 		return @namespace;
 	}
-	internal static string GetNamespace(string fileName) {
-		List<string> parts = fileName.Split(Path.DirectorySeparatorChar).ToList();
+	internal static string GetNamespace(string resourceName) {
+		(string root, string _, string path) = ParseEmbeddedResourceName(resourceName);
+		return $"{root}{Settings.STRING_NAMESPACE_SEPARATOR}{path.Replace(Path.DirectorySeparatorChar, Settings.STRING_NAMESPACE_SEPARATOR)}";
+	}
 
-		int localeIndex = parts.IndexOf(Settings.Locale.Name);
+	internal static (string rootDirectory, string locale, string relativePath) ParseEmbeddedResourceName(string resourceName) {
+		List<string> parts = resourceName.Split(Path.DirectorySeparatorChar).ToList();
 
-		string rootDirectory = parts[localeIndex - 1];
-		parts.RemoveRange(0, localeIndex + 1);
-
-		string name = Path.GetFileNameWithoutExtension(fileName);
-		parts.RemoveAt(parts.Count - 1);
-
-		if (parts.Count > 0) {
-			return $"{rootDirectory}{Settings.STRING_NAMESPACE_SEPARATOR}{string.Join(Settings.STRING_NAMESPACE_SEPARATOR, parts)}.{name}";
+		if (parts.Count < 3) {
+			throw new Exception("Resource names must be in the format 'root/locale/path/to/resource.ftl'.");
 		}
-		else {
-			return $"{rootDirectory}{Settings.STRING_NAMESPACE_SEPARATOR}{name}";
-		}
+
+		string root = parts[0];
+		string locale = parts[1];
+
+		parts.RemoveRange(0, 2);
+
+		string path = Path.GetFileNameWithoutExtension(string.Join(Path.DirectorySeparatorChar, parts));
+
+		return (root, locale, path);
 	}
 }

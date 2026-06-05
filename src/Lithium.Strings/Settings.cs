@@ -25,6 +25,7 @@ public static class Settings {
 	/// </summary>
 	internal static HashSet<string> StringRootDirectories { get; private set; } = new HashSet<string>();
 	internal static Dictionary<Assembly, HashSet<string>> EmbeddedResources { get; private set; } = new Dictionary<Assembly, HashSet<string>>();
+	internal static bool HasData => StringRootDirectories.Count > 0 || EmbeddedResources.Count > 0;
 
 	/// <summary>
 	/// Char delimiter for portions of a string address.
@@ -39,7 +40,7 @@ public static class Settings {
 	public static void SetLocale(string locale) {
 		Locale = new CultureInfo(locale);
 
-		if (StringRootDirectories != null) {
+		if (HasData) {
 			TranslationService.Reload();
 		}
 	}
