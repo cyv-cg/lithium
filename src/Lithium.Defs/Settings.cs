@@ -15,6 +15,9 @@ public static class Settings {
 	/// Root directory from which to start recursively checking for XML definition files.
 	/// </summary>
 	public static HashSet<string> DefRootDirectories { get; private set; } = new HashSet<string>();
+	/// <summary>
+	/// Set of assemblies and their embedded XML def files.
+	/// </summary>
 	internal static Dictionary<Assembly, HashSet<string>> EmbeddedResources { get; private set; } = new Dictionary<Assembly, HashSet<string>>();
 	/// <summary>
 	/// Deferred Parsing will wait for a def to be used before parsing it from XML.
@@ -39,14 +42,18 @@ public static class Settings {
 		_ = DefRootDirectories.Add(path);
 	}
 
+	/// <summary>
+	/// Adds an assembly's embedded XML files as a source for loading defs.
+	/// </summary>
+	/// <param name="assembly">Assembly containing the embedded resources.</param>
+	/// <exception cref="ArgumentException">The assembly has already been added as a source.</exception>
 	public static void AddEmbeddedResources(Assembly assembly) {
 		IEnumerable<string> resources = ResourceLoader.FetchResources(assembly, ".xml");
 		if (!resources.Any()) {
 			return;
 		}
-
 		if (EmbeddedResources.TryGetValue(assembly, out _)) {
-			throw new Exception();
+			throw new ArgumentException($"Assembly already added: {assembly.GetName()}");
 		}
 		EmbeddedResources.Add(assembly, resources.ToHashSet());
 	}

@@ -24,7 +24,13 @@ public static class Settings {
 	/// A set of root directories to scan for Fluent resource files (.ftl) when loading string contexts.
 	/// </summary>
 	internal static HashSet<string> StringRootDirectories { get; private set; } = new HashSet<string>();
+	/// <summary>
+	/// Set of assemblies and their embedded Fluent resources to scan when loading string contents.
+	/// </summary>
 	internal static Dictionary<Assembly, HashSet<string>> EmbeddedResources { get; private set; } = new Dictionary<Assembly, HashSet<string>>();
+	/// <summary>
+	/// Evaluates whether any data sources have been added, either external or embedded.
+	/// </summary>
 	internal static bool HasData => StringRootDirectories.Count > 0 || EmbeddedResources.Count > 0;
 
 	/// <summary>
@@ -62,14 +68,30 @@ public static class Settings {
 		_ = StringRootDirectories.Add(path);
 	}
 
+	/// <summary>
+	/// Adds .ftl files embedded into an assembly as string files.
+	/// </summary>
+	/// <param name="assembly">Assembly containing the embedded resource files.</param>
+	/// <remarks>
+	/// The logical names of the resource files are expected to be in a particular format, identical to a hierarchical folder structure.
+	/// e.g. 'root/locale/path/to/resource.ftl'.
+	///
+	/// Resources should be embedded as follows:
+	///
+	/// <code>
+	///	&lt;EmbeddedResource Include=".../resources/MyStrings/**/*.ftl"&gt;
+	///		&lt;LogicalName&gt;MyStrings/%(RecursiveDir)%(Filename)%(Extension)&lt;/LogicalName&gt;
+	///	&lt;/EmbeddedResource&gt;
+	/// </code>
+	/// </remarks>
+	/// <exception cref="ArgumentException">The assembly has already been added as a source.</exception>
 	public static void AddEmbeddedResources(Assembly assembly) {
 		IEnumerable<string> resources = ResourceLoader.FetchResources(assembly, ".ftl");
 		if (!resources.Any()) {
 			return;
 		}
-
 		if (EmbeddedResources.TryGetValue(assembly, out _)) {
-			throw new Exception();
+			throw new ArgumentException($"Assembly already added: {assembly.GetName()}");
 		}
 		EmbeddedResources.Add(assembly, resources.ToHashSet());
 	}

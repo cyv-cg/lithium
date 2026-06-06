@@ -43,6 +43,14 @@ public static class XmlLoader {
 		doc.LoadXml(contents);
 		return doc;
 	}
+	/// <summary>
+	/// Loads an XML document from a provided stream.
+	/// </summary>
+	/// <param name="stream">The <see cref="Stream"/> to read the XML content from.</param>
+	/// <returns>The loaded <see cref="XmlDocument"/> if the stream contains valid XML; otherwise, <c>null</c>.</returns>
+	/// <exception cref="XmlException">Thrown if the file contents cannot be parsed as valid XML.</exception>
+	/// <exception cref="ArgumentException">Stream does not support reading.</exception>
+	/// <exception cref="ArgumentNullException">Stream is null.</exception>
 	public static XmlDocument? LoadDocument(Stream stream) {
 		StreamReader reader = new StreamReader(stream);
 		string content = reader.ReadToEnd();

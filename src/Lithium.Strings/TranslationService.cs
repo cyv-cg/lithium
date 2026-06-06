@@ -158,6 +158,12 @@ public static class TranslationService {
 		return addresses;
 	}
 
+	/// <summary>
+	/// Loads all string addresses in a namespace.
+	/// </summary>
+	/// <param name="reader"><see cref="StreamReader"/> containing the file contents.</param>
+	/// <param name="namespace">String namespace holding the values.</param>
+	/// <returns>List of all string addresses in the namespace.</returns>
 	private static IEnumerable<string> LoadEntries(StreamReader reader, string @namespace) {
 		FluentResource resource = FluentResource.FromReader(reader);
 		// Fetch and store each string key.

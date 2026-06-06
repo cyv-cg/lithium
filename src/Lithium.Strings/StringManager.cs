@@ -227,11 +227,32 @@ internal static class StringManager {
 
 		return @namespace;
 	}
+	/// <summary>
+	/// Categorize string keys into namespaces derived from the file structure.
+	/// This will allow multiple root locations to both have a string with the same name while keeping them distinct.
+	/// Fluent does not inherently support namespaces, so this is a way of handling them externally.
+	/// </summary>
+	/// <param name="resourceName">Path name for the embedded resource file.</param>
+	/// <returns>The namespace derived from the file's relative path within the locale directory as a dot-delimited string (e.g. root.namespace.directory.strings).</returns>
+	/// <example>
+	/// Inputs:
+	/// 	resourceName = strings/en-US/namespace/directory/strings.ftl
+	/// Output:
+	/// 	strings.namespace.directory.strings
+	/// </example>
 	internal static string GetNamespace(string resourceName) {
 		(string root, string _, string path) = ParseEmbeddedResourceName(resourceName);
 		return $"{root}{Settings.STRING_NAMESPACE_SEPARATOR}{path.Replace(Path.DirectorySeparatorChar, Settings.STRING_NAMESPACE_SEPARATOR)}";
 	}
 
+	/// <summary>
+	/// Parses the name of an embedded resource into a namespace's components.
+	/// </summary>
+	/// <param name="resourceName">Path name for the embedded resource file.</param>
+	/// <returns>A tuple containing the root namespace, locale, and path to the resource file itself relative to the root.</returns>
+	/// <remarks>
+	/// Assumes the resource to be named in the particular schema, 'root/locale/path/to/resource.ftl'.
+	/// </remarks>
 	internal static (string rootDirectory, string locale, string relativePath) ParseEmbeddedResourceName(string resourceName) {
 		List<string> parts = resourceName.Split(Path.DirectorySeparatorChar).ToList();
 
