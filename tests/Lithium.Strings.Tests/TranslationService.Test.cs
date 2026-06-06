@@ -182,7 +182,8 @@ public class TranslationServiceTests {
 		Settings.Reset();
 		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
 
-		Assert.Empty(rates);
+		_ = Assert.Single(rates);
+		Assert.Equal(1, rates["en-US"]);
 	}
 	/// <summary>
 	/// Tests that percentages are calculated accurately with multiple root directories.

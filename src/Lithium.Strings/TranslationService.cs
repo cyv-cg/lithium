@@ -95,22 +95,17 @@ public static class TranslationService {
 
 		string[] primaryLocaleStrings = GetAllKeysForLocale(Settings.PrimaryLocale.Name).ToArray();
 
-		foreach (string root in Settings.StringRootDirectories) {
-			// Get the name of every available locale from the directory names.
-			string[] locales = Directory.GetDirectories(root).Select(d => Path.GetFileName(d)).ToArray();
-
-			foreach (string locale in locales) {
-				// The primary locale is always assumed to be complete, so skip counting it.
-				if (locale.Equals(Settings.PrimaryLocale.Name)) {
-					continue;
-				}
-				// Get all the strings for the secondary locale.
-				IEnumerable<string> localeStrings = GetAllKeysForLocale(locale);
-				// Count the number of strings from the primary locale which are also defined for the secondary locale.
-				// This explicitly does not count strings defined in the secondary locale but not in the primary.
-				uint numerator = (uint)primaryLocaleStrings.Count(k => localeStrings.Contains(k));
-				rates[locale] = (float)numerator / primaryLocaleStrings.Length;
+		foreach (string locale in GetLocales()) {
+			// The primary locale is always assumed to be complete, so skip counting it.
+			if (locale.Equals(Settings.PrimaryLocale.Name)) {
+				continue;
 			}
+			// Get all the strings for the secondary locale.
+			IEnumerable<string> localeStrings = GetAllKeysForLocale(locale);
+			// Count the number of strings from the primary locale which are also defined for the secondary locale.
+			// This explicitly does not count strings defined in the secondary locale but not in the primary.
+			uint numerator = (uint)primaryLocaleStrings.Count(k => localeStrings.Contains(k));
+			rates[locale] = (float)numerator / primaryLocaleStrings.Length;
 		}
 
 		return rates;
@@ -169,5 +164,31 @@ public static class TranslationService {
 		// Fetch and store each string key.
 		IEnumerable<string> entries = resource.Entries.Select(e => $"{@namespace}{Settings.STRING_NAMESPACE_SEPARATOR}{e.Key}");
 		return entries;
+	}
+
+	/// <summary>
+	/// Fetch every locale with defined string resources.
+	/// </summary>
+	/// <returns>Array of locale codes.</returns>
+	public static string[] GetLocales() {
+		HashSet<string> locales = new HashSet<string>();
+
+		foreach (string root in Settings.StringRootDirectories) {
+			// Get the name of every available locale from the directory names.
+			locales.UnionWith(Directory.GetDirectories(root).Select(d => Path.GetFileName(d)));
+		}
+
+		// Check all embedded resources for their locale.
+		foreach (Assembly assembly in Settings.EmbeddedResources.Keys) {
+			HashSet<string> resources = Settings.EmbeddedResources[assembly];
+			foreach (string resource in resources) {
+				(string _, string locale, string _) = StringManager.ParseEmbeddedResourceName(resource);
+				if (!string.IsNullOrEmpty(locale)) {
+					_ = locales.Add(locale);
+				}
+			}
+		}
+
+		return locales.ToArray();
 	}
 }
