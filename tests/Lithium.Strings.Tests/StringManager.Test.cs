@@ -10,6 +10,9 @@ namespace Lithium.Strings.Tests;
 /// Tests for Lithium.Strings.StringManager.cs
 /// </summary>
 public class StringManagerTests {
+	/// <summary>
+	/// Reset settings between runs.
+	/// </summary>
 	public StringManagerTests() {
 		Settings.Reset();
 	}
@@ -49,6 +52,9 @@ public class StringManagerTests {
 			Directory.Delete(tempDirectory, true);
 		}
 	}
+	/// <summary>
+	/// Tests that strings are loaded properly from embedded resources.
+	/// </summary>
 	[Fact]
 	public void BuildContextTest02() {
 		Settings.AddEmbeddedResources(typeof(StringManagerTests).Assembly);
@@ -57,6 +63,9 @@ public class StringManagerTests {
 
 		Assert.Equal("This is an embedded string!", "strings.embedded-strings.test-value".Translate());
 	}
+	/// <summary>
+	/// Tests that strings are loaded properly from embedded resources when switching locales.
+	/// </summary>
 	[Fact]
 	public void BuildContextTest03() {
 		Settings.AddEmbeddedResources(typeof(StringManagerTests).Assembly);

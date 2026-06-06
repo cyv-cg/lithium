@@ -200,7 +200,9 @@ public class TranslationServiceTests {
 		Assert.InRange(rates["fr-FR"], (4f / 7) - epsilon, (4f / 7) + epsilon);
 		Assert.InRange(rates["ja-JP"], (1f / 7) - epsilon, (1f / 7) + epsilon);
 	}
-
+	/// <summary>
+	/// Tests that completion is calculated accurately with embedded resources.
+	/// </summary>
 	[Fact]
 	public void CalculateTranslationCompletionTest05() {
 		Settings.Reset();
@@ -211,6 +213,9 @@ public class TranslationServiceTests {
 		Assert.Equal(1, rates["en-US"]);
 		Assert.Equal(1, rates["fr-FR"]);
 	}
+	/// <summary>
+	/// Tests that completion is calculated accurately with both external and embedded resources.
+	/// </summary>
 	[Fact]
 	public void CalculateTranslationCompletionTest06() {
 		Settings.Reset();
