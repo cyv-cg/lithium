@@ -161,7 +161,7 @@ public static class TranslationService {
 	private static IEnumerable<string> LoadEntries(StreamReader reader, string @namespace) {
 		FluentResource resource = FluentResource.FromReader(reader);
 		// Fetch and store each string key.
-		IEnumerable<string> entries = resource.Entries.Select(e => $"{@namespace}.{e.Key}");
+		IEnumerable<string> entries = resource.Entries.Select(e => $"{@namespace}{Settings.STRING_NAMESPACE_SEPARATOR}{e.Key}");
 		return entries;
 	}
 }
