@@ -23,6 +23,11 @@ public static class Settings {
 	internal static HashSet<string>? StringRootDirectories { get; private set; }
 
 	/// <summary>
+	/// Char delimiter for portions of a string address.
+	/// </summary>
+	internal const char STRING_NAMESPACE_SEPARATOR = '.';
+
+	/// <summary>
 	/// Sets the current locale for string translations.
 	/// This will trigger a reload of the string contexts to ensure that the appropriate Fluent resource files are loaded for the new locale.
 	/// </summary>
