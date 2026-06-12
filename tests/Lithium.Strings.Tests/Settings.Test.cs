@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Xunit;
 
@@ -9,11 +10,17 @@ namespace Lithium.Strings.Tests;
 /// </summary>
 public class SettingsTests {
 	/// <summary>
+	/// Reset state between runs.
+	/// </summary>
+	public SettingsTests() {
+		Settings.Reset();
+	}
+
+	/// <summary>
 	/// Tests that setting the locale updates the Locale property.
 	/// </summary>
 	[Fact]
 	public void SetLocaleTest01() {
-		Settings.Reset();
 		Settings.SetLocale("en-US");
 		Assert.Equal("English (United States)", Settings.Locale.DisplayName);
 	}
@@ -55,5 +62,38 @@ public class SettingsTests {
 			() => Settings.AddStringRootDirectory("path/that/does/not/exist")
 		);
 		Assert.NotNull(ex);
+	}
+
+	/// <summary>
+	/// Tests that adding an assembly adds all its strings.
+	/// </summary>
+	[Fact]
+	public void AddEmbeddedResourcesTest01() {
+		Settings.AddEmbeddedResources(typeof(SettingsTests).Assembly);
+		IEnumerable<string> resources = TranslationService.GetAllLoadedStrings();
+
+		string s = Assert.Single(resources);
+		Assert.Equal("strings.embedded-strings.test-value", s);
+	}
+
+	/// <summary>
+	/// Tests that adding an assembly twice throws an exception.
+	/// </summary>
+	[Fact]
+	public void AddEmbeddedResourcesTest02() {
+		Settings.AddEmbeddedResources(typeof(SettingsTests).Assembly);
+		Exception? ex = Assert.Throws<ArgumentException>(
+			() => Settings.AddEmbeddedResources(typeof(SettingsTests).Assembly)
+		);
+		Assert.NotNull(ex);
+	}
+
+	/// <summary>
+	/// Tests that adding an assembly with no strings results in no strings being added.
+	/// </summary>
+	[Fact]
+	public void AddEmbeddedResourcesTest03() {
+		Settings.AddEmbeddedResources(typeof(Settings).Assembly);
+		Assert.Empty(TranslationService.GetAllLoadedStrings());
 	}
 }
