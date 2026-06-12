@@ -98,6 +98,38 @@ public class XmlLoaderTests {
 			)
 		);
 	}
+	/// <summary>
+	/// Tests the LoadDocument correctly creates an XmlDocument object from an embedded XML resource.
+	/// </summary>
+	[Fact]
+	public void LoadDocumentTest04() {
+		Stream stream = ResourceLoader.LoadResourceStream(typeof(XmlLoaderTests).Assembly, "Lithium.__resources__.xml-resource.xml");
+
+		XmlDocument? doc = XmlLoader.LoadDocument(stream);
+		Assert.NotNull(doc);
+	}
+	/// <summary>
+	/// Tests that LoadDocument returns null when given an empty XML resource.
+	/// </summary>
+	[Fact]
+	public void LoadDocumentTest05() {
+		Stream stream = ResourceLoader.LoadResourceStream(typeof(XmlLoaderTests).Assembly, "Lithium.__resources__.empty-xml-resource.xml");
+
+		XmlDocument? doc = XmlLoader.LoadDocument(stream);
+		Assert.Null(doc);
+	}
+	/// <summary>
+	/// Tests that LoadDocument throws an exception when given a non-XML resource.
+	/// </summary>
+	[Fact]
+	public void LoadDocumentTest06() {
+		Stream stream = ResourceLoader.LoadResourceStream(typeof(XmlLoaderTests).Assembly, "Lithium.__resources__.text-resource.txt");
+
+		Exception ex = Assert.Throws<XmlException>(
+			() => XmlLoader.LoadDocument(stream)
+		);
+		Assert.NotNull(ex);
+	}
 	#endregion
 
 	#region GetChildValue tests

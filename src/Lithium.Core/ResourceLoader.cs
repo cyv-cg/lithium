@@ -23,13 +23,13 @@ public static class ResourceLoader {
 	/// <exception cref="BadImageFormatException"><c>assembly</c> is not a valid assembly.</exception>
 	/// <exception cref="NotImplementedException">Resource length is greater than <c>Int64.MaxValue</c>.</exception>
 	public static Stream LoadResourceStream(Assembly assembly, string resource) {
-		Stream? stream = assembly.GetManifestResourceStream(resource);
-
-		if (stream == null) {
-			throw new FileLoadException($"Failed to get stream for resource '{resource}' in assembly {assembly.GetName()}.");
+		try {
+			Stream? stream = assembly.GetManifestResourceStream(resource);
+			return stream!;
 		}
-
-		return stream;
+		catch {
+			throw;
+		}
 	}
 
 	/// <summary>
