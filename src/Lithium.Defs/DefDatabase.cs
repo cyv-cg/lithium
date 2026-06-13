@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
@@ -27,7 +28,7 @@ public static class DefDatabase {
 	/// <exception cref="XmlException">Thrown if the any contents cannot be parsed as valid XML.</exception>
 	public static void Initialize(params string[] defFiles) {
 		if (defFiles.Length == 0) {
-			if (Settings.DefRootDirectories.Count == 0) {
+			if (Settings.DefRootDirectories.Count == 0 && Settings.EmbeddedResources.Count == 0) {
 				throw new ResourceRootDirectoryMissingException("Def");
 			}
 			defFiles = Settings.DefRootDirectories.Select(XmlLoader.GetAllFiles).SelectMany(f => f).ToArray();
@@ -37,22 +38,20 @@ public static class DefDatabase {
 		XmlDefinitions.Clear();
 		ParsedDefinitions.Clear();
 
-		foreach (string path in defFiles) {
-			XmlDocument doc = XmlLoader.LoadDocument(path);
-
-			XmlNode? defsNode = doc.SelectSingleNode(Constants.DEFS_ROOT_NODE);
-			// Skip files that don't contain defs.
-			if (defsNode == null) {
-				continue;
-			}
-			foreach (XmlNode child in defsNode.ChildNodes) {
-				// Skip comment nodes.
-				if (child.NodeType == XmlNodeType.Comment) {
+		foreach (Assembly assembly in Settings.EmbeddedResources.Keys) {
+			IEnumerable<string> resources = Settings.EmbeddedResources[assembly];
+			foreach (string resource in resources) {
+				XmlDocument? doc = XmlLoader.LoadDocument(ResourceLoader.LoadResourceStream(assembly, resource));
+				if (doc == null) {
 					continue;
 				}
-
-				AddToDB(child);
+				ParseXmlDoc(doc);
 			}
+		}
+
+		foreach (string path in defFiles) {
+			XmlDocument doc = XmlLoader.LoadDocument(path);
+			ParseXmlDoc(doc);
 		}
 
 		if (!Settings.DeferredParsing) {
@@ -64,6 +63,22 @@ public static class DefDatabase {
 
 			DefParser.ResolveDefLinks();
 			XmlDefinitions.Clear();
+		}
+	}
+
+	private static void ParseXmlDoc(XmlDocument doc) {
+		XmlNode? defsNode = doc.SelectSingleNode(Constants.DEFS_ROOT_NODE);
+		// Skip files that don't contain defs.
+		if (defsNode == null) {
+			return;
+		}
+		foreach (XmlNode child in defsNode.ChildNodes) {
+			// Skip comment nodes.
+			if (child.NodeType == XmlNodeType.Comment) {
+				continue;
+			}
+
+			AddToDB(child);
 		}
 	}
 

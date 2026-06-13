@@ -23,4 +23,7 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="__resources__/**/*" />
+  </ItemGroup>
 </Project>

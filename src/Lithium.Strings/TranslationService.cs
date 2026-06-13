@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Fluent.Net;
 using Fluent.Net.RuntimeAst;
+using Lithium.Core;
 using Lithium.Strings.Exceptions;
 
 using StringArgument = (string key, object value);
@@ -71,6 +73,14 @@ public static class TranslationService {
 	}
 
 	/// <summary>
+	/// Gets a collection of all string keys that are currently loaded for the active locale.
+	/// </summary>
+	/// <returns>A collection of all string keys that are currently loaded for the active locale.</returns>
+	public static IEnumerable<string> GetAllLoadedStrings() {
+		return GetAllKeysForLocale(Settings.Locale.Name);
+	}
+
+	/// <summary>
 	/// Calculates the translation completion rate for each locale based on the number of string keys that have been translated compared to the primary locale.
 	/// </summary>
 	/// <returns>A dictionary mapping locale names to their corresponding translation completion rates (between 0 and 1).</returns>
@@ -79,28 +89,23 @@ public static class TranslationService {
 			[Settings.PrimaryLocale.Name] = 1f
 		};
 
-		if (Settings.StringRootDirectories == null || Settings.StringRootDirectories.Count == 0) {
+		if (!Settings.HasData) {
 			return rates;
 		}
 
 		string[] primaryLocaleStrings = GetAllKeysForLocale(Settings.PrimaryLocale.Name).ToArray();
 
-		foreach (string root in Settings.StringRootDirectories) {
-			// Get the name of every available locale from the directory names.
-			string[] locales = Directory.GetDirectories(root).Select(d => Path.GetFileName(d)).ToArray();
-
-			foreach (string locale in locales) {
-				// The primary locale is always assumed to be complete, so skip counting it.
-				if (locale.Equals(Settings.PrimaryLocale.Name)) {
-					continue;
-				}
-				// Get all the strings for the secondary locale.
-				IEnumerable<string> localeStrings = GetAllKeysForLocale(locale);
-				// Count the number of strings from the primary locale which are also defined for the secondary locale.
-				// This explicitly does not count strings defined in the secondary locale but not in the primary.
-				uint numerator = (uint)primaryLocaleStrings.Count(k => localeStrings.Contains(k));
-				rates[locale] = (float)numerator / primaryLocaleStrings.Length;
+		foreach (string locale in GetLocales()) {
+			// The primary locale is always assumed to be complete, so skip counting it.
+			if (locale.Equals(Settings.PrimaryLocale.Name)) {
+				continue;
 			}
+			// Get all the strings for the secondary locale.
+			IEnumerable<string> localeStrings = GetAllKeysForLocale(locale);
+			// Count the number of strings from the primary locale which are also defined for the secondary locale.
+			// This explicitly does not count strings defined in the secondary locale but not in the primary.
+			uint numerator = (uint)primaryLocaleStrings.Count(k => localeStrings.Contains(k));
+			rates[locale] = (float)numerator / primaryLocaleStrings.Length;
 		}
 
 		return rates;
@@ -109,11 +114,28 @@ public static class TranslationService {
 	/// Helper function to get the name of every string in a given locale.
 	/// </summary>
 	/// <param name="locale">Name of the locale.</param>
-	/// <returns></returns>
-	private static IEnumerable<string> GetAllKeysForLocale(string locale) {
+	/// <returns>A collection of all string addresses defined in the given locale.</returns>
+	private static HashSet<string> GetAllKeysForLocale(string locale) {
 		HashSet<string> addresses = new HashSet<string>();
 
-		foreach (string directory in Settings.StringRootDirectories!) {
+		// Count resources from embedded files.
+		foreach (Assembly assembly in Settings.EmbeddedResources.Keys) {
+			IEnumerable<string> resources = Settings.EmbeddedResources[assembly];
+			foreach (string resource in resources) {
+				(string _, string resourceLocale, string _) = StringManager.ParseEmbeddedResourceName(resource);
+				if (!resourceLocale.Equals(locale)) {
+					continue;
+				}
+				Stream? stream = ResourceLoader.LoadResourceStream(assembly, resource);
+				if (stream == null) {
+					continue;
+				}
+				StreamReader reader = new StreamReader(stream);
+				addresses.UnionWith(LoadEntries(reader, StringManager.GetNamespace(resource)));
+			}
+		}
+
+		foreach (string directory in Settings.StringRootDirectories) {
 			// Get every Fluent resource file for the locale.
 			string localeDirectory = Path.Combine(directory, locale);
 			if (!Directory.Exists(localeDirectory)) {
@@ -124,13 +146,49 @@ public static class TranslationService {
 			foreach (string file in files) {
 				// Parse the file into a resource.
 				StreamReader reader = new StreamReader(file);
-				FluentResource resource = FluentResource.FromReader(reader);
-				// Fetch and store each string key.
-				IEnumerable<string> entries = resource.Entries.Select(e => $"{StringManager.GetNamespace(directory, locale, file)}.{e.Key}");
-				addresses.UnionWith(entries);
+				addresses.UnionWith(LoadEntries(reader, StringManager.GetNamespace(directory, locale, file)));
 			}
 		}
 
 		return addresses;
+	}
+
+	/// <summary>
+	/// Loads all string addresses in a namespace.
+	/// </summary>
+	/// <param name="reader"><see cref="StreamReader"/> containing the file contents.</param>
+	/// <param name="namespace">String namespace holding the values.</param>
+	/// <returns>List of all string addresses in the namespace.</returns>
+	private static IEnumerable<string> LoadEntries(StreamReader reader, string @namespace) {
+		FluentResource resource = FluentResource.FromReader(reader);
+		// Fetch and store each string key.
+		IEnumerable<string> entries = resource.Entries.Select(e => $"{@namespace}{Settings.STRING_NAMESPACE_SEPARATOR}{e.Key}");
+		return entries;
+	}
+
+	/// <summary>
+	/// Fetch every locale with defined string resources.
+	/// </summary>
+	/// <returns>Array of locale codes.</returns>
+	public static string[] GetLocales() {
+		HashSet<string> locales = new HashSet<string>();
+
+		foreach (string root in Settings.StringRootDirectories) {
+			// Get the name of every available locale from the directory names.
+			locales.UnionWith(Directory.GetDirectories(root).Select(d => Path.GetFileName(d)));
+		}
+
+		// Check all embedded resources for their locale.
+		foreach (Assembly assembly in Settings.EmbeddedResources.Keys) {
+			HashSet<string> resources = Settings.EmbeddedResources[assembly];
+			foreach (string resource in resources) {
+				(string _, string locale, string _) = StringManager.ParseEmbeddedResourceName(resource);
+				if (!string.IsNullOrEmpty(locale)) {
+					_ = locales.Add(locale);
+				}
+			}
+		}
+
+		return locales.ToArray();
 	}
 }

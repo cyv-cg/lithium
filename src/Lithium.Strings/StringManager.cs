@@ -5,6 +5,8 @@ using Fluent.Net;
 using System.Linq;
 using Fluent.Net.RuntimeAst;
 using Lithium.Core.Exceptions;
+using System.Reflection;
+using Lithium.Core;
 
 namespace Lithium.Strings;
 
@@ -21,11 +23,33 @@ internal static class StringManager {
 	/// <remarks>
 	/// Automatically called when changing the locale.
 	/// </remarks>
+	/// <exception cref="InvalidOperationException">Thrown when duplicate string namespaces are added.</exception>
 	internal static void Reload() {
-		Dictionary<string, string> resources = GetFilesInLocale();
 		contexts.Clear();
+
+		// Load strings from embedded resource files.
+		foreach (Assembly assembly in Settings.EmbeddedResources.Keys) {
+			Dictionary<string, string> embeddedResources = GetFilesInLocale(assembly);
+			// Construct the contexts for each namespace.
+			foreach (string @namespace in embeddedResources.Keys) {
+				MessageContext? context = BuildContext(assembly, embeddedResources[@namespace]);
+				if (context == null) {
+					continue;
+				}
+				if (contexts.ContainsKey(@namespace)) {
+					throw new InvalidOperationException($"Duplicate string namespace '{@namespace}' defined at assembly '{assembly.GetName()}'");
+				}
+				contexts[@namespace] = context;
+			}
+		}
+
+		// Load strings from non-embedded resource files.
+		Dictionary<string, string> resources = GetFilesInLocale();
 		// Construct the contexts for each namespace.
 		foreach (string @namespace in resources.Keys) {
+			if (contexts.ContainsKey(@namespace)) {
+				throw new InvalidOperationException($"Duplicate string namespace '{@namespace}' defined in file '{resources[@namespace].First()}'");
+			}
 			contexts[@namespace] = BuildContext(resources[@namespace]);
 		}
 	}
@@ -37,7 +61,7 @@ internal static class StringManager {
 	/// <returns>A dictionary mapping namespaces to lists of file paths for the Fluent resource files found.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the StringRootDirectories setting is null.</exception>
 	private static Dictionary<string, string> GetFilesInLocale() {
-		if (Settings.StringRootDirectories == null) {
+		if (!Settings.HasData) {
 			throw new ResourceRootDirectoryMissingException("String");
 		}
 
@@ -70,6 +94,27 @@ internal static class StringManager {
 
 		return namespaceFileMap;
 	}
+	/// <summary>
+	/// Scans the assembly for Fluent resource files (.ftl) corresponding to the current locale and organizes them by namespace.
+	/// The namespace is derived from the file's relative path within the locale directory, allowing for hierarchical organization of strings.
+	/// </summary>
+	/// <param name="assembly">The assembly to scan.</param>
+	/// <returns>A dictionary mapping namespaces to lists of file paths for the Fluent resource files found.</returns>
+	private static Dictionary<string, string> GetFilesInLocale(Assembly assembly) {
+		Dictionary<string, string> namespaceFileMap = new Dictionary<string, string>();
+
+		IEnumerable<string> embeddedResources = Settings.EmbeddedResources[assembly];
+		foreach (string resource in embeddedResources) {
+			(string _, string locale, string _) = ParseEmbeddedResourceName(resource);
+			if (!locale.Equals(Settings.Locale.Name)) {
+				continue;
+			}
+			string @namespace = GetNamespace(resource);
+			namespaceFileMap[@namespace] = resource;
+		}
+
+		return namespaceFileMap;
+	}
 
 	/// <summary>
 	/// Builds a Fluent MessageContext from the provided Fluent resource files.
@@ -79,21 +124,51 @@ internal static class StringManager {
 	/// <returns>A MessageContext containing the messages from the provided Fluent resource files.</returns>
 	/// <exception cref="ParseException">Thrown when there is an error parsing any of the provided Fluent resource files.</exception>
 	private static MessageContext BuildContext(string file) {
+		MessageContext context = CreateContext();
+		ParseMessages(ref context, new StreamReader(file));
+		return context;
+	}
+	/// <summary>
+	/// Attempts to build a Fluent MessageContext from the provided Fluent resource files.
+	/// Each file is expected to contain messages for the same locale, and the context will be used for translating strings within that locale.
+	/// </summary>
+	/// <param name="assembly">The assembly containing the resource.</param>
+	/// <param name="resource">The name of the resource to be loaded into the MessageContext.</param>
+	/// <returns>A MessageContext containing the messages from the provided Fluent resource files.</returns>
+	/// <exception cref="ParseException">Thrown when there is an error parsing any of the provided Fluent resource files.</exception>
+	private static MessageContext? BuildContext(Assembly assembly, string resource) {
+		MessageContext context = CreateContext();
+		Stream? stream = ResourceLoader.LoadResourceStream(assembly, resource);
+		if (stream == null) {
+			return null;
+		}
+		ParseMessages(ref context, new StreamReader(stream));
+		return context;
+	}
+
+	/// <summary>
+	/// Attempts to parse Fluent messages from a stream.
+	/// </summary>
+	/// <param name="context">The <see cref="MessageContext"/> to load messages into.</param>
+	/// <param name="reader">The <see cref="StreamReader"/> containing the message contents.</param>
+	private static void ParseMessages(ref MessageContext context, StreamReader reader) {
+		List<ParseException> errors = (List<ParseException>)context.AddMessages(reader);
+		if (errors.Count != 0) {
+			throw errors.First();
+		}
+	}
+
+	/// <summary>
+	/// Creates an empty <see cref="MessageContext"/> with default settings.
+	/// </summary>
+	/// <returns>New <see cref="MessageContext"/>.</returns>
+	private static MessageContext CreateContext() {
 		// When not using bidi text, the inserted control characters can be a nuisance.
 		// So currently, this will probably not work for bi-directional text.
 		MessageContextOptions options = new MessageContextOptions {
 			UseIsolating = false
 		};
-		MessageContext context = new MessageContext(Settings.Locale.Name, options);
-
-		StreamReader reader = new StreamReader(file);
-
-		List<ParseException> errors = (List<ParseException>)context.AddMessages(reader);
-		if (errors.Count != 0) {
-			throw errors.First();
-		}
-
-		return context;
+		return new MessageContext(Settings.Locale.Name, options);
 	}
 
 	/// <summary>
@@ -175,5 +250,48 @@ internal static class StringManager {
 		string @namespace = namespacePath.Replace(Path.DirectorySeparatorChar, Settings.STRING_NAMESPACE_SEPARATOR).TrimStart(Settings.STRING_NAMESPACE_SEPARATOR);
 
 		return @namespace;
+	}
+	/// <summary>
+	/// Categorize string keys into namespaces derived from the file structure.
+	/// This will allow multiple root locations to both have a string with the same name while keeping them distinct.
+	/// Fluent does not inherently support namespaces, so this is a way of handling them externally.
+	/// </summary>
+	/// <param name="resourceName">Path name for the embedded resource file.</param>
+	/// <returns>The namespace derived from the file's relative path within the locale directory as a dot-delimited string (e.g. root.namespace.directory.strings).</returns>
+	/// <example>
+	/// Inputs:
+	/// 	resourceName = strings/en-US/namespace/directory/strings.ftl
+	/// Output:
+	/// 	strings.namespace.directory.strings
+	/// </example>
+	internal static string GetNamespace(string resourceName) {
+		(string root, string _, string path) = ParseEmbeddedResourceName(resourceName);
+		return $"{root}{Settings.STRING_NAMESPACE_SEPARATOR}{path.Replace(Path.DirectorySeparatorChar, Settings.STRING_NAMESPACE_SEPARATOR)}";
+	}
+
+	/// <summary>
+	/// Parses the name of an embedded resource into a namespace's components.
+	/// </summary>
+	/// <param name="resourceName">Path name for the embedded resource file.</param>
+	/// <returns>A tuple containing the root namespace, locale, and path to the resource file itself relative to the root.</returns>
+	/// <remarks>
+	/// Assumes the resource to be named in the particular schema, 'root/locale/path/to/resource.ftl'.
+	/// </remarks>
+	/// <exception cref="FormatException">Thrown if the provided <c>resourceName</c> is not in the expected format.</exception>
+	internal static (string rootDirectory, string locale, string relativePath) ParseEmbeddedResourceName(string resourceName) {
+		List<string> parts = resourceName.Split(Path.DirectorySeparatorChar).ToList();
+
+		if (parts.Count < 3) {
+			throw new FormatException($"{nameof(resourceName)} must be in the format 'root/locale/path/to/resource.ftl': '{resourceName}'.");
+		}
+
+		string root = parts[0];
+		string locale = parts[1];
+
+		parts.RemoveRange(0, 2);
+
+		string path = Path.GetFileNameWithoutExtension(string.Join(Path.DirectorySeparatorChar, parts));
+
+		return (root, locale, path);
 	}
 }

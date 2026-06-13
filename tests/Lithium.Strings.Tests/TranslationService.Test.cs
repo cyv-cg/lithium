@@ -201,4 +201,35 @@ public class TranslationServiceTests {
 		Assert.InRange(rates["fr-FR"], (4f / 7) - epsilon, (4f / 7) + epsilon);
 		Assert.InRange(rates["ja-JP"], (1f / 7) - epsilon, (1f / 7) + epsilon);
 	}
+	/// <summary>
+	/// Tests that completion is calculated accurately with embedded resources.
+	/// </summary>
+	[Fact]
+	public void CalculateTranslationCompletionTest05() {
+		Settings.Reset();
+		Settings.AddEmbeddedResources(typeof(TranslationServiceTests).Assembly);
+
+		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
+
+		Assert.Equal(1, rates["en-US"]);
+		Assert.Equal(1, rates["fr-FR"]);
+	}
+	/// <summary>
+	/// Tests that completion is calculated accurately with both external and embedded resources.
+	/// </summary>
+	[Fact]
+	public void CalculateTranslationCompletionTest06() {
+		Settings.Reset();
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings01"));
+		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings02"));
+		Settings.AddEmbeddedResources(typeof(TranslationServiceTests).Assembly);
+
+		Dictionary<string, float> rates = TranslationService.CalculateTranslationCompletion();
+
+		Assert.Equal(1, rates["en-US"]);
+
+		float epsilon = 1e-10f;
+		Assert.InRange(rates["fr-FR"], (5f / 8) - epsilon, (5f / 8) + epsilon);
+		Assert.InRange(rates["ja-JP"], (1f / 8) - epsilon, (1f / 8) + epsilon);
+	}
 }
