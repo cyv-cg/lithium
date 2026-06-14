@@ -34,6 +34,7 @@ internal sealed class StringResource {
 
 		ResourcePath = resourcePath;
 		Locale = locale;
+		Namespace = GetNamespace();
 	}
 	/// <summary>
 	/// Define a new embedded string resource.
@@ -53,7 +54,7 @@ internal sealed class StringResource {
 	/// </summary>
 	/// <returns>Namespace descriptor for storing the resource.</returns>
 	/// <exception cref="FormatException">Thrown if the resource path is not in the format <c>'.../root/locale/path/to/resource/file.ftl'</c>.</exception>
-	public string GetNamespace() {
+	private string GetNamespace() {
 		List<string> parts = ResourcePath.Split(Path.DirectorySeparatorChar).ToList();
 		int localeIndex = parts.IndexOf(Locale.Name);
 
