@@ -12,6 +12,9 @@ using StringArgument = (string key, object value);
 
 namespace Lithium.Strings;
 
+/// <summary>
+/// Default template service used to translate strings.
+/// </summary>
 public class TranslationService : ITranslationService {
 	private readonly TranslationServiceOptions options;
 	internal readonly HashSet<StringResource> resources = new HashSet<StringResource>();
@@ -21,10 +24,22 @@ public class TranslationService : ITranslationService {
 	/// </summary>
 	protected readonly Dictionary<string, MessageContext> contexts = new Dictionary<string, MessageContext>();
 
+	/// <summary>
+	/// Initializes the service with set options.
+	/// </summary>
+	/// <param name="options"><see cref="TranslationServiceOptions"/> for configuration.</param>
 	public TranslationService(TranslationServiceOptions options) {
 		this.options = options;
 	}
 
+	/// <summary>
+	/// Registers all external string resources in a directory.
+	/// The directory should contain subdirectories named after locales (e.g. "en-US", "fr-FR") which in turn contain the Fluent resource files (.ftl).
+	/// </summary>
+	/// <param name="directory">Directory containing the Fluent resource files.</param>
+	/// <returns>True if all Fluent resource files were registered successfully, false if any failed to register.</returns>
+	/// <exception cref="ArgumentNullException">Thrown if the directory string is null or empty.</exception>
+	/// <exception cref="DirectoryNotFoundException">Thrown if the given directory does not exist.</exception>
 	public bool RegisterResource(string directory) {
 		if (string.IsNullOrEmpty(directory)) {
 			throw new ArgumentNullException(nameof(directory));
@@ -47,6 +62,23 @@ public class TranslationService : ITranslationService {
 		}
 		return true;
 	}
+	/// <summary>
+	/// Registers all Fluent resource files (.ftl) embedded in an assembly.
+	/// </summary>
+	/// <param name="assembly">Assembly containing the embedded resource files.</param>
+	/// <remarks>
+	/// The logical names of the resource files are expected to be in a particular format, identical to a hierarchical folder structure.
+	/// e.g. 'root/locale/path/to/resource.ftl'.
+	///
+	/// Resources should be embedded as follows:
+	///
+	/// <code>
+	///	&lt;EmbeddedResource Include=".../resources/MyStrings/**/*.ftl"&gt;
+	///		&lt;LogicalName&gt;MyStrings/%(RecursiveDir)%(Filename)%(Extension)&lt;/LogicalName&gt;
+	///	&lt;/EmbeddedResource&gt;
+	/// </code>
+	/// </remarks>
+	/// <returns>True if all Fluent resource files were registered successfully, false if any failed to register.</returns>
 	public bool RegisterResource(Assembly assembly) {
 		IEnumerable<string> embeddedResources = ResourceLoader.FetchResources(assembly, ".ftl").Where(r => r.Contains(options.PrimaryLocale.Name));
 		if (!embeddedResources.Any()) {
