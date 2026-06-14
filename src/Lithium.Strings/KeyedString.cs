@@ -31,7 +31,7 @@ public class KeyedString {
 	/// The full string address, combining the namespace and key.
 	/// Used for translation lookups in the string context.
 	/// </summary>
-	public string Address => string.IsNullOrEmpty(Namespace) ? Key : $"{Namespace}{Settings.STRING_NAMESPACE_SEPARATOR}{Key}";
+	public string Address => string.IsNullOrEmpty(Namespace) ? Key : $"{Namespace}{Constants.STRING_NAMESPACE_SEPARATOR}{Key}";
 
 	/// <summary>
 	/// Creates a KeyedString from a string address.

@@ -206,11 +206,11 @@ public class TranslationService : ITranslationService {
 		// String key should be passed in as a namespace followed by the key itself.
 		// e.g. root.namespace.category.string-key
 		// This will parse out the namespace and key for proper lookup.
-		string[] parts = address.Split(Settings.STRING_NAMESPACE_SEPARATOR);
+		string[] parts = address.Split(Constants.STRING_NAMESPACE_SEPARATOR);
 		if (parts.Length == 1) {
 			return (string.Empty, address);
 		}
-		string @namespace = string.Join(Settings.STRING_NAMESPACE_SEPARATOR, parts.Take(parts.Length - 1));
+		string @namespace = string.Join(Constants.STRING_NAMESPACE_SEPARATOR, parts.Take(parts.Length - 1));
 		string key = parts.Last();
 		return (@namespace, key);
 	}

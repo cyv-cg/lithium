@@ -67,8 +67,8 @@ internal sealed class StringResource {
 		parts.RemoveAt(localeIndex);
 		parts.RemoveRange(0, localeIndex - 1);
 
-		string @namespace = string.Join(Settings.STRING_NAMESPACE_SEPARATOR, parts);
-		return string.Join(Settings.STRING_NAMESPACE_SEPARATOR, @namespace, fileName);
+		string @namespace = string.Join(Constants.STRING_NAMESPACE_SEPARATOR, parts);
+		return string.Join(Constants.STRING_NAMESPACE_SEPARATOR, @namespace, fileName);
 	}
 
 	/// <summary>
@@ -102,7 +102,7 @@ internal sealed class StringResource {
 	private static IEnumerable<string> LoadEntries(StreamReader reader, string @namespace) {
 		FluentResource resource = FluentResource.FromReader(reader);
 		// Fetch and store each string key.
-		IEnumerable<string> entries = resource.Entries.Select(e => $"{@namespace}{Settings.STRING_NAMESPACE_SEPARATOR}{e.Key}");
+		IEnumerable<string> entries = resource.Entries.Select(e => $"{@namespace}{Constants.STRING_NAMESPACE_SEPARATOR}{e.Key}");
 		return entries;
 	}
 
