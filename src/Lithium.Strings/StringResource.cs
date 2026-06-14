@@ -133,13 +133,13 @@ internal sealed class StringResource {
 	/// Creates an empty <see cref="MessageContext"/> with default settings.
 	/// </summary>
 	/// <returns>New <see cref="MessageContext"/>.</returns>
-	private static MessageContext CreateContext() {
+	private MessageContext CreateContext() {
 		// When not using bidi text, the inserted control characters can be a nuisance.
 		// So currently, this will probably not work for bi-directional text.
 		MessageContextOptions options = new MessageContextOptions {
 			UseIsolating = false
 		};
-		return new MessageContext(Settings.Locale.Name, options);
+		return new MessageContext(Locale.Name, options);
 	}
 
 	/// <summary>
