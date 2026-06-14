@@ -29,6 +29,7 @@ dotnet_style_prefer_collection_expression = false
 dotnet_style_prefer_conditional_expression_over_return = false
 dotnet_style_coalesce_expression = false
 csharp_style_prefer_primary_constructors = false;
+dotnet_style_require_accessibility_modifiers = for_non_interface_members
 
 dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity
 dotnet_style_parentheses_in_other_binary_operators = always_for_clarity
