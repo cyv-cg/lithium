@@ -15,19 +15,44 @@ internal sealed class StringResource {
 	public Assembly? Assembly { get; init; }
 
 	public required CultureInfo Locale { get; init; }
+	public required string Namespace { get; init; }
 
 	public bool Embedded => Assembly != null;
 
+	/// <summary>
+	/// Define a new external string resource.
+	/// </summary>
+	/// <param name="locale">Locale of the strings.</param>
+	/// <param name="resourcePath">Path to the resource.</param>
+	/// <exception cref="ArgumentNullException">Thrown if the resourcePath is empty.</exception>
+	/// <exception cref="FormatException">Thrown if the resource path is not in the format <c>'.../root/locale/path/to/resource/file.ftl'</c>.</exception>
 	[SetsRequiredMembers]
 	public StringResource(CultureInfo locale, string resourcePath) {
+		if (string.IsNullOrEmpty(resourcePath)) {
+			throw new ArgumentNullException(nameof(resourcePath));
+		}
+
 		ResourcePath = resourcePath;
 		Locale = locale;
 	}
+	/// <summary>
+	/// Define a new embedded string resource.
+	/// </summary>
+	/// <param name="locale">Locale of the strings.</param>
+	/// <param name="assembly">Assembly containing the resource.</param>
+	/// <param name="resourcePath">Path to the resource.</param>
+	/// <exception cref="ArgumentNullException">Thrown if the resourcePath is empty.</exception>
+	/// <exception cref="FormatException">Thrown if the resource path is not in the format <c>'.../root/locale/path/to/resource/file.ftl'</c>.</exception>
 	[SetsRequiredMembers]
 	public StringResource(CultureInfo locale, Assembly assembly, string resourcePath) : this(locale, resourcePath) {
 		Assembly = assembly;
 	}
 
+	/// <summary>
+	/// Calculates string namespace from file path.
+	/// </summary>
+	/// <returns>Namespace descriptor for storing the resource.</returns>
+	/// <exception cref="FormatException">Thrown if the resource path is not in the format <c>'.../root/locale/path/to/resource/file.ftl'</c>.</exception>
 	public string GetNamespace() {
 		List<string> parts = ResourcePath.Split(Path.DirectorySeparatorChar).ToList();
 		int localeIndex = parts.IndexOf(Locale.Name);
@@ -45,6 +70,10 @@ internal sealed class StringResource {
 		return string.Join(Settings.STRING_NAMESPACE_SEPARATOR, @namespace, fileName);
 	}
 
+	/// <summary>
+	/// Gets the address of every string defined in the resource.
+	/// </summary>
+	/// <returns>List of string addresses.</returns>
 	public IEnumerable<string> GetAddresses() {
 		string @namespace = GetNamespace();
 		StreamReader reader;
@@ -76,6 +105,10 @@ internal sealed class StringResource {
 		return entries;
 	}
 
+	/// <summary>
+	/// Creates a usable <see cref="MessageContext"/> from the resource contents.
+	/// </summary>
+	/// <returns><see cref="MessageContext"/> containing all strings defined in the resource.</returns>
 	public MessageContext ToMessageContext() {
 		MessageContext context = CreateContext();
 		StreamReader reader;
@@ -120,6 +153,10 @@ internal sealed class StringResource {
 		}
 	}
 
+	/// <summary>
+	/// Parses the resource into a string.
+	/// </summary>
+	/// <returns>The assembly name, if the resource is embedded, or the resource path if it's external.</returns>
 	public override string ToString() {
 		if (Embedded) {
 			return Assembly!.GetName().ToString();
