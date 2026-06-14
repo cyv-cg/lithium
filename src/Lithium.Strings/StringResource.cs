@@ -169,11 +169,11 @@ internal sealed class StringResource {
 
 	public override bool Equals(object? obj) {
 		if (obj is StringResource res) {
-			return res.ResourcePath.Equals(ResourcePath);
+			return res.ResourcePath.Equals(ResourcePath) && res.Embedded == Embedded;
 		}
 		return false;
 	}
 	public override int GetHashCode() {
-		return HashCode.Combine(ResourcePath);
+		return HashCode.Combine(ResourcePath, Embedded);
 	}
 }
