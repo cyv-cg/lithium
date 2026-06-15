@@ -16,6 +16,12 @@ namespace Lithium.Strings;
 /// Default template service used to translate strings.
 /// </summary>
 public class TranslationService : ITranslationService {
+	/// <summary>
+	/// Default translation service.
+	/// Used when translating a string without specifying a service to use.
+	/// </summary>
+	public static ITranslationService? Default { get; set; }
+
 	private readonly TranslationServiceOptions options;
 	internal readonly HashSet<StringResource> resources = new HashSet<StringResource>();
 
@@ -30,6 +36,8 @@ public class TranslationService : ITranslationService {
 	/// <param name="options"><see cref="TranslationServiceOptions"/> for configuration.</param>
 	public TranslationService(TranslationServiceOptions options) {
 		this.options = options;
+
+		Default ??= this;
 	}
 
 	/// <summary>
@@ -199,7 +207,7 @@ public class TranslationService : ITranslationService {
 	/// <param name="address">The string address to parse, including its namespace and key (e.g. root.namespace.category.string-key).</param>
 	/// <returns>A tuple containing the namespace and key extracted from the address.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
-	protected static (string @namespace, string key) ParseAddress(string address) {
+	internal static (string @namespace, string key) ParseAddress(string address) {
 		if (string.IsNullOrEmpty(address)) {
 			throw new ArgumentNullException(nameof(address));
 		}
