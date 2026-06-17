@@ -14,6 +14,8 @@ namespace Lithium.Strings;
 
 /// <summary>
 /// Default template service used to translate strings.
+/// Uses Mozilla Fluent for localization.
+/// (https://firefox-source-docs.mozilla.org/l10n/fluent/index.html)
 /// </summary>
 public class TranslationService : ITranslationService {
 	/// <summary>
@@ -127,8 +129,16 @@ public class TranslationService : ITranslationService {
 	/// Gets a collection of all string keys that are currently loaded for the primary locale.
 	/// </summary>
 	/// <returns>A collection of all string keys that are currently loaded for the primary locale.</returns>
-	public IEnumerable<string> GetAllStringAddresses() {
+	public IEnumerable<string> GetAllStringKeys() {
 		return resources.SelectMany(r => r.GetAddresses());
+	}
+	/// <summary>
+	/// Determine whether a string with the given key is defined as a translatable unit.
+	/// </summary>
+	/// <param name="address">String key to search for.</param>
+	/// <returns>True if the string is loaded.</returns>
+	public bool HasMessage(string address) {
+		return TryGetMessage(address, out _, out _);
 	}
 
 	/// <summary>
@@ -239,8 +249,8 @@ public class TranslationService : ITranslationService {
 			return -1f;
 		}
 
-		IEnumerable<string> theseKeys = GetAllStringAddresses();
-		IEnumerable<string> otherKeys = other.GetAllStringAddresses();
+		IEnumerable<string> theseKeys = GetAllStringKeys();
+		IEnumerable<string> otherKeys = other.GetAllStringKeys();
 
 		if (!otherKeys.Any()) {
 			return 0f;

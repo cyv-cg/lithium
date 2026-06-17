@@ -20,11 +20,18 @@ public interface ITranslationService {
 	/// <param name="args">Tuples where the first item is the placeable name and the second is the value.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
 	string Translate(string key, params StringArgument[] args);
+
 	/// <summary>
-	/// Fetches a list of all string addresses in the service.
+	/// Fetches a list of all string keys in the service.
 	/// </summary>
-	/// <returns>List of string addresses.</returns>
-	IEnumerable<string> GetAllStringAddresses();
+	/// <returns>List of string keys.</returns>
+	IEnumerable<string> GetAllStringKeys();
+	/// <summary>
+	/// Determine whether a string with the given key is defined as a translatable unit.
+	/// </summary>
+	/// <param name="key">String key to search for.</param>
+	/// <returns>True if the string is loaded.</returns>
+	bool HasMessage(string key);
 
 	/// <summary>
 	/// Registers a collection of external string resources within a directory.
