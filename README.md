@@ -182,17 +182,30 @@ namespace MyNamespace;
 
 public class Program {
 	public static void Main(string[] args) {
+		// Initialize the service.
+		TranslationServiceOptions options = new TranslationServiceOptions
+		{
+			// Change to your preferred locale.
+			PrimaryLocale = new CultureInfo("en-US")
+		};
+		TranslationService service = new TranslationService(options);
+
 		// Adds "C:\Documents\project\strings\root1" as a source for Fluent files.
-		Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
+		service.RegisterResource("C:\Documents\project\strings\root1");
+		service.Reload();
 
-		// Change to your preferred locale.
-		// Changing the locale automatically updates the strings.
-		Settings.SetLocale("en-US");
-		Console.WriteLine("root1.area1.strings.string-key".Translate()); // "Text in English (United States)."
+		Console.WriteLine(service.Translate("root1.area1.strings.string-key")); // "Text in English (United States)."
 
-		// Locale can be changed at runtime.
-		Settings.SetLocale("fr-FR");
-		Console.WriteLine("root1.area1.strings.string-key".Translate()); // "Texte en français (France)."
+
+		options = new TranslationServiceOptions
+		{
+			PrimaryLocale = new CultureInfo("fr-FR")
+		};
+		service = new TranslationService(options);
+		service.RegisterResource("C:\Documents\project\strings\root1");
+		service.Reload();
+
+		Console.WriteLine(service.Translate("root1.area1.strings.string-key")); // "Texte en français (France)."
 	}
 }
 ```
@@ -209,11 +222,16 @@ namespace MyNamespace;
 
 public class Program {
 	public static void Main(string[] args) {
-		Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
+		TranslationServiceOptions options = new TranslationServiceOptions
+		{
+			PrimaryLocale = new CultureInfo("en-US")
+		};
+		TranslationService service = new TranslationService(options);
+		service.RegisterResource("C:\Documents\project\strings\root1");
+		service.Reload();
 
-		Settings.SetLocale("en-US");
 		Console.WriteLine(
-			"root1.area2.yet-more-strings.string-with-parameters".Translate(
+			service.Translate("root1.area2.yet-more-strings.string-with-parameters",
 				("param1", 2.3f),
 				("param2", "text")
 			)
@@ -245,6 +263,9 @@ my-def-name = My Def name
 # C:\Documents\project\strings\root1\fr-FR\area2\yet-more-strings.ftl
 my-def-name = Le nom de ma déf
 ```
+
+The `TranslationService` class comes with a built-in singleton, `TranslationService.Default`. When translating a string without specifying the service, this one is used.
+
 ```C#
 using Lithium.Defs;
 using Lithium.Strings;
@@ -255,16 +276,40 @@ public class Program {
 	public static void Main(string[] args) {
 		Lithium.Defs.Settings.AddDefRootDirectory("C:\Documents\project\defs");
 		DefDatabase.Initialize();
-		Lithium.Strings.Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
+
+		TranslationServiceOptions options = new TranslationServiceOptions
+		{
+			PrimaryLocale = new CultureInfo("en-US")
+		};
+		// When declaring your first service, it gets saved to TranslationService.Default.
+		TranslationService service = new TranslationService(options);
+		service.RegisterResource("C:\Documents\project\strings\root1");
+		service.Reload();
 
 		MyCustomDef? myDef = DefDatabase.Load<MyCustomDef>("My_Def_Key");
 		Console.WriteLine(myDef.Label.Address); // "root1.area2.yet-more-strings.my-def-name"
 
-		Lithium.Strings.Settings.SetLocale("en-US");
+		// These are all valid ways to translate a string.
+		Console.WriteLine(TranslationService.Default.Translate(myDef.Label)); // "My Def name"
+		Console.WriteLine(service.Translate(myDef.Label)); // "My Def name"
+		Console.WriteLine(myDef.Label.Translate(service)); // "My Def name"
+		Console.WriteLine(myDef.Label); // "My Def name"
 		Console.WriteLine(myDef); // "My Def name"
 
-		Lithium.Strings.Settings.SetLocale("fr-FR");
-		Console.WriteLine(myDef); // "Le nom de ma déf"
+
+		// New services can be declared and used at runtime.
+
+		options = new TranslationServiceOptions
+		{
+			PrimaryLocale = new CultureInfo("fr-FR")
+		};
+		TranslationService otherService = new TranslationService(options);
+		otherService.RegisterResource("C:\Documents\project\strings\root1");
+		otherService.Reload();
+
+		// Creating a second service does not change the default.
+		Console.WriteLine(otherService.Translate(myDef)); // "Le nom de ma déf"
+		Console.WriteLine(myDef); // "My Def name"
 	}
 }
 ```
