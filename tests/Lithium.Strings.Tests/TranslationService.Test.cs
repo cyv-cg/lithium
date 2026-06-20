@@ -431,6 +431,19 @@ public class TranslationServiceTests {
 		Assert.True(success);
 		Assert.Equal("サンプル", service.Translate("strings02.mockStrings.test-string"));
 	}
+	/// <summary>
+	/// Test that KeyedStrings are translated properly.
+	/// </summary>
+	[Fact]
+	public void TranslateTest12() {
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		service.Reload();
+
+		KeyedString keyedString = new KeyedString("strings01.mockStrings01.sample-string");
+
+		Assert.True(success);
+		Assert.Equal("test", service.Translate(keyedString));
+	}
 	#endregion
 
 	#region HasMessage

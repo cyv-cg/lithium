@@ -169,6 +169,19 @@ public class TranslationService : ITranslationService<string>, ITranslationServi
 
 		return result;
 	}
+	/// <summary>
+	/// Translates the string by replacing parameters with the given values.
+	/// </summary>
+	/// <param name="string">The <see cref="KeyedString"/> to translate.</param>
+	/// <param name="args">Tuples where the first item is the placeable name and the second is the value.</param>
+	/// <returns>Translated string with parameters replaced.</returns>
+	/// <exception cref="KeyNotFoundException">Thrown when the provided key does not exist in the string database.</exception>
+	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
+	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
+	public string Translate(KeyedString @string, params StringArgument[] args) {
+		return Translate(@string.Address, args);
+	}
 
 	#region Translate helpers
 	/// <summary>
