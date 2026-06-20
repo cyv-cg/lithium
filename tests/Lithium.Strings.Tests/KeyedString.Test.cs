@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Xml;
 using Lithium.Core;
@@ -12,10 +13,17 @@ namespace Lithium.Strings.Tests;
 public class KeyedStringTests {
 	private static readonly string mocksDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__mocks__");
 
-	private static void Setup() {
-		Settings.Reset();
-		Settings.AddStringRootDirectory(Path.Combine(mocksDirectory, "strings01"));
-		Settings.SetLocale("en-US");
+	private TranslationService service;
+	/// <summary>
+	/// Initialize a default service between runs.
+	/// </summary>
+	public KeyedStringTests() {
+		TranslationServiceOptions options = new TranslationServiceOptions {
+			PrimaryLocale = new CultureInfo("en-US")
+		};
+		service = new TranslationService(options);
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		service.Reload();
 	}
 
 	#region Factory tests
@@ -53,27 +61,48 @@ public class KeyedStringTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest01() {
-		Setup();
-
-		Assert.Equal("test", ((KeyedString)"strings01.mockStrings01.sample-string").Translate());
+		Assert.Equal("test", ((KeyedString)"strings01.mockStrings01.sample-string").Translate(service));
 	}
 	/// <summary>
 	/// Tests that an unloaded KeyedString returns its address when translated.
 	/// </summary>
 	[Fact]
 	public void TranslateTest02() {
-		Setup();
-
-		Assert.Equal("key-that-does-not-exist", ((KeyedString)"key-that-does-not-exist").Translate());
+		Assert.Equal("key-that-does-not-exist", ((KeyedString)"key-that-does-not-exist").Translate(service));
 	}
 	/// <summary>
-	/// Tests that a KeyedString gets implicityly cast to its translated string.
+	/// Tests that a KeyedString can be translated properly with parameters replaced.
+	/// </summary>
+	[Fact]
+	public void TranslateTest03() {
+		KeyedString keyedString = (KeyedString)"strings01.mockStrings01.string-with-one-placeable";
+		Assert.Equal("value: 5", keyedString.Translate(("data", 5)));
+	}
+	/// <summary>
+	/// Tests that a KeyedString can be translated properly when using the default service.
+	/// </summary>
+	[Fact]
+	public void TranslateTest04() {
+		Assert.Equal("test", ((KeyedString)"strings01.mockStrings01.sample-string").Translate());
+	}
+	/// <summary>
+	/// Tests that an unloaded KeyedString returns its address when translated when the default service is not set.
+	/// </summary>
+	[Fact]
+	public void TranslateTest05() {
+		TranslationService.Default = null;
+		Assert.Equal("strings01.mockStrings01.sample-string", ((KeyedString)"strings01.mockStrings01.sample-string").Translate());
+	}
+
+	/// <summary>
+	/// Tests that a KeyedString gets implicitly cast to its translated string.
 	/// </summary>
 	[Fact]
 	public void ImplicitStringCastTest01() {
-		Setup();
+		KeyedString keyedString = (KeyedString)"strings01.mockStrings01.sample-string";
+		string s = keyedString;
 
-		Assert.Equal("test", (KeyedString)"strings01.mockStrings01.sample-string");
+		Assert.Equal("test", s);
 	}
 
 	/// <summary>
@@ -81,20 +110,24 @@ public class KeyedStringTests {
 	/// </summary>
 	[Fact]
 	public void ToStringTest01() {
-		Setup();
-
 		KeyedString keyedString = (KeyedString)"strings01.mockStrings01.sample-string";
-		Assert.Equal("test", keyedString.ToString());
+		Assert.Equal("test", keyedString.ToString(service));
 	}
 	/// <summary>
 	/// Tests that the ToString method returns the translated string with parameters replaced.
 	/// </summary>
 	[Fact]
 	public void ToStringTest02() {
-		Setup();
-
 		KeyedString keyedString = (KeyedString)"strings01.mockStrings01.string-with-one-placeable";
-		Assert.Equal("value: 5", keyedString.ToString(("data", 5)));
+		Assert.Equal("value: 5", keyedString.ToString(service, ("data", 5)));
+	}
+	/// <summary>
+	/// Tests that the ToString method returns the translated string when using the default service.
+	/// </summary>
+	[Fact]
+	public void ToStringTest03() {
+		KeyedString keyedString = (KeyedString)"strings01.mockStrings01.sample-string";
+		Assert.Equal("test", keyedString.ToString());
 	}
 	#endregion
 
@@ -104,15 +137,36 @@ public class KeyedStringTests {
 	/// </summary>
 	[Fact]
 	public void IsLoadedTest01() {
-		Settings.SetLocale("it-IT");
-		Assert.False(((KeyedString)"sample-string").IsLoaded());
+		service = new TranslationService(
+			new TranslationServiceOptions {
+				PrimaryLocale = new CultureInfo("it-IT")
+			}
+		);
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		service.Reload();
+
+		Assert.False(((KeyedString)"sample-string").IsLoaded(service));
 	}
 	/// <summary>
 	/// Tests that IsLoaded returns true for a string key that exists.
 	/// </summary>
 	[Fact]
 	public void IsLoadedTest02() {
-		Setup();
+		Assert.True(((KeyedString)"strings01.mockStrings01.sample-string").IsLoaded(service));
+	}
+	/// <summary>
+	/// Tests that IsLoaded returns false for a string key that does not exist when using the default service, which is not set.
+	/// </summary>
+	[Fact]
+	public void IsLoadedTest03() {
+		TranslationService.Default = null;
+		Assert.False(((KeyedString)"sample-string").IsLoaded());
+	}
+	/// <summary>
+	/// Tests that IsLoaded returns true for a string key that exists when using the default service.
+	/// </summary>
+	[Fact]
+	public void IsLoadedTest04() {
 		Assert.True(((KeyedString)"strings01.mockStrings01.sample-string").IsLoaded());
 	}
 	#endregion
