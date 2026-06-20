@@ -107,7 +107,7 @@ public sealed class KeyedString {
 	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public bool IsLoaded() {
 		if (TranslationService.Default != null) {
-			return TranslationService.Default.GetAllStringAddresses().Contains(Address);
+			return IsLoaded(TranslationService.Default);
 		}
 		return false;
 	}
@@ -118,7 +118,7 @@ public sealed class KeyedString {
 	/// <returns>True if the string key; otherwise, false.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public bool IsLoaded(ITranslationService service) {
-		return service.GetAllStringAddresses().Contains(Address);
+		return service.HasMessage(Address);
 	}
 
 	/// <summary>
