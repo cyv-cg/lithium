@@ -3,7 +3,6 @@ using System.Xml;
 using Lithium.Core.Attributes;
 using System.Diagnostics.CodeAnalysis;
 using Lithium.Strings.Exceptions;
-using System.Linq;
 
 using StringArgument = (string key, object value);
 
