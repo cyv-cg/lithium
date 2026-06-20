@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using System.Reflection;
 
 using StringArgument = (string key, object value);
 
 namespace Lithium.Strings;
 
 /// <summary>
-/// Interface for a service used to translate strings.
+/// Base interface for a service used to translate strings.
 /// </summary>
 public interface ITranslationService {
 	/// <summary>
@@ -32,17 +31,17 @@ public interface ITranslationService {
 	/// <param name="key">String key to search for.</param>
 	/// <returns>True if the string is loaded.</returns>
 	bool HasMessage(string key);
+}
 
+/// <summary>
+/// Interface for a service used to translate strings.
+/// </summary>
+/// <typeparam name="T">Resource data type.</typeparam>
+public interface ITranslationService<T> : ITranslationService {
 	/// <summary>
-	/// Registers a collection of external string resources within a directory.
+	/// Register a given resource containing translatable units.
 	/// </summary>
-	/// <param name="directory">Path of the directory containing the string resources.</param>
+	/// <param name="resource">The resource to add.</param>
 	/// <returns>True if the resource was successfully registered.</returns>
-	bool RegisterResource(string directory);
-	/// <summary>
-	/// Registers string resources embedded within an assembly.
-	/// </summary>
-	/// <param name="assembly">Assembly containing the string resources.</param>
-	/// <returns>True if the resource was successfully registered.</returns>
-	bool RegisterResource(Assembly assembly);
+	bool RegisterResource(T resource);
 }

@@ -17,7 +17,7 @@ namespace Lithium.Strings;
 /// Uses Mozilla Fluent for localization.
 /// (https://firefox-source-docs.mozilla.org/l10n/fluent/index.html)
 /// </summary>
-public class TranslationService : ITranslationService {
+public class TranslationService : ITranslationService<string>, ITranslationService<Assembly> {
 	/// <summary>
 	/// Default translation service.
 	/// Used when translating a string without specifying a service to use.
@@ -144,16 +144,16 @@ public class TranslationService : ITranslationService {
 	/// <summary>
 	/// Translates the string by replacing parameters with the given values.
 	/// </summary>
-	/// <param name="key">The key of the string to translate, including its namespace (e.g. root.namespace.category.string-key).</param>
+	/// <param name="address">The key of the string to translate, including its namespace (e.g. root.namespace.category.string-key).</param>
 	/// <param name="args">Tuples where the first item is the placeable name and the second is the value.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
 	/// <exception cref="KeyNotFoundException">Thrown when the provided key does not exist in the string database.</exception>
 	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
 	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
 	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
-	public string Translate(string key, params StringArgument[] args) {
-		if (!TryGetMessage(key, out MessageContext? context, out Message? message)) {
-			throw new KeyNotFoundException(key);
+	public string Translate(string address, params StringArgument[] args) {
+		if (!TryGetMessage(address, out MessageContext? context, out Message? message)) {
+			throw new KeyNotFoundException(address);
 		}
 
 		// Translate and interpolate.
