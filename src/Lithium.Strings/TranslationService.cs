@@ -84,7 +84,7 @@ public class TranslationService : ITranslationService<string>, ITranslationServi
 	///
 	/// <code>
 	///	&lt;EmbeddedResource Include=".../resources/MyStrings/**/*.ftl"&gt;
-	///		&lt;LogicalName&gt;MyStrings/%(RecursiveDir)%(Filename)%(Extension)&lt;/LogicalName&gt;
+	///		&lt;LogicalName&gt;MyStrings@%(RecursiveDir)%(Filename)%(Extension)&lt;/LogicalName&gt;
 	///	&lt;/EmbeddedResource&gt;
 	/// </code>
 	/// </remarks>
