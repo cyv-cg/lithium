@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Fluent.Net;
 using Lithium.Core;
+using Lithium.Strings.Exceptions;
 
 namespace Lithium.Strings;
 
@@ -45,28 +46,95 @@ internal sealed class StringResource {
 	/// <exception cref="ArgumentNullException">Thrown if the resourcePath is empty.</exception>
 	/// <exception cref="FormatException">Thrown if the resource path is not in the format <c>'.../root/locale/path/to/resource/file.ftl'</c>.</exception>
 	[SetsRequiredMembers]
-	public StringResource(CultureInfo locale, Assembly assembly, string resourcePath) : this(locale, resourcePath) {
+	public StringResource(CultureInfo locale, Assembly assembly, string resourcePath) {
+		if (string.IsNullOrEmpty(resourcePath)) {
+			throw new ArgumentNullException(nameof(resourcePath));
+		}
+
+		ResourcePath = resourcePath;
+		Locale = locale;
 		Assembly = assembly;
+		Namespace = GetNamespace();
 	}
 
 	/// <summary>
-	/// Calculates string namespace from file path.
+	/// Parses resource paths into a string namespace.
 	/// </summary>
 	/// <returns>Namespace descriptor for storing the resource.</returns>
-	/// <exception cref="FormatException">Thrown if the resource path is not in the format <c>'.../root/locale/path/to/resource/file.ftl'</c>.</exception>
+	/// <exception cref="ResourceFormatException">Thrown if the resource path is not in the correct format.</exception>
 	private string GetNamespace() {
+		if (Embedded) {
+			return GetNamespaceEmbedded();
+		}
+		else {
+			return GetNamespaceExternal();
+		}
+	}
+	/// <summary>
+	/// Parses embedded resource paths into a string namespace.
+	/// </summary>
+	/// <returns>Namespace descriptor for storing the resource.</returns>
+	/// <exception cref="ResourceFormatException">Thrown if the resource path is not in the correct format. <c>'root@locale/path/to/resource/file.ftl'</c>.</exception>
+	private string GetNamespaceEmbedded() {
+		// Split path at the root indicator '@'.
+		string[] segments = ResourcePath.Split(Constants.EMBEDDED_RESOURCE_ROOT_INDICATOR);
+
+		// If the indicator wasn't found, it must just be a resource file. Return that.
+		if (segments.Length == 1) {
+			return Path.GetFileNameWithoutExtension(segments[0]);
+		}
+		// If the path contains multiple root indicators, throw an error.
+		else if (segments.Length > 2) {
+			throw new ResourceFormatException(ResourcePath, Embedded, Locale.Name);
+		}
+
+		// The name of the root will be the string just befor the @.
+		string root = segments[0].Split(Path.DirectorySeparatorChar).Last();
+		// Everything after the @ is the remainder of the namespace + the file name.
+		string path = segments[1];
+
+		List<string> parts = path.Split(Path.DirectorySeparatorChar).ToList();
+
+		// After the @ should be the locale name.
+		if (parts.IndexOf(Locale.Name) != 0) {
+			throw new ResourceFormatException(ResourcePath, Embedded, Locale.Name);
+		}
+		// The file name itself is the last element, so split that off.
+		string fileName = Path.GetFileNameWithoutExtension(parts.Last());
+		// The locale and file name are not included in the namespace.
+		parts.RemoveAt(parts.Count - 1);
+		parts.RemoveAt(0);
+
+		// parts can be empty if all the file is stored at the root.
+		// In that case, string.Join will include an empty segment if we try to include the namespace.
+		if (parts.Count == 0) {
+			return string.Join(Constants.STRING_NAMESPACE_SEPARATOR, root, fileName);
+		}
+		string @namespace = string.Join(Constants.STRING_NAMESPACE_SEPARATOR, parts);
+		return string.Join(Constants.STRING_NAMESPACE_SEPARATOR, root, @namespace, fileName);
+	}
+	/// <summary>
+	/// Parses external resource paths into a string namespace.
+	/// </summary>
+	/// <returns>Namespace descriptor for storing the resource.</returns>
+	/// <exception cref="ResourceFormatException">Thrown if the resource path is not in the correct format. <c>'root@locale/path/to/resource/file.ftl'</c>.</exception>
+	private string GetNamespaceExternal() {
+		// Split up the directory names and find where the locale name is.
 		List<string> parts = ResourcePath.Split(Path.DirectorySeparatorChar).ToList();
 		int localeIndex = parts.IndexOf(Locale.Name);
-
+		// If the locale is either not found or the first element, that's bad.
+		// We assume the locale name immediately follows the root name.
 		if (localeIndex < 1) {
-			throw new FormatException($"{nameof(ResourcePath)} must be in the format '.../root/{Locale.Name}/path/to/resource.ftl': '{ResourcePath}'.");
+			throw new ResourceFormatException(ResourcePath, Embedded, Locale.Name);
 		}
+		// The file name itself is the last element, so get that.
 		string fileName = Path.GetFileNameWithoutExtension(parts.Last());
-
+		// The locale, file name, and everything before the root are not included in the namespace.
 		parts.RemoveAt(parts.Count - 1);
 		parts.RemoveAt(localeIndex);
 		parts.RemoveRange(0, localeIndex - 1);
 
+		// This comes out to root.path.to.file-name
 		string @namespace = string.Join(Constants.STRING_NAMESPACE_SEPARATOR, parts);
 		return string.Join(Constants.STRING_NAMESPACE_SEPARATOR, @namespace, fileName);
 	}
