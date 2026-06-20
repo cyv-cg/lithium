@@ -76,7 +76,6 @@ internal sealed class StringResource {
 	/// </summary>
 	/// <returns>List of string addresses.</returns>
 	public IEnumerable<string> GetAddresses() {
-		string @namespace = GetNamespace();
 		StreamReader reader;
 
 		if (Embedded) {
@@ -90,7 +89,7 @@ internal sealed class StringResource {
 			reader = new StreamReader(ResourcePath);
 		}
 
-		return LoadEntries(reader, @namespace);
+		return LoadEntries(reader, Namespace);
 	}
 
 	/// <summary>
@@ -110,14 +109,14 @@ internal sealed class StringResource {
 	/// Creates a usable <see cref="MessageContext"/> from the resource contents.
 	/// </summary>
 	/// <returns><see cref="MessageContext"/> containing all strings defined in the resource.</returns>
-	public MessageContext ToMessageContext() {
+	public MessageContext? ToMessageContext() {
 		MessageContext context = CreateContext();
 		StreamReader reader;
 
 		if (Embedded) {
 			Stream? stream = ResourceLoader.LoadResourceStream(Assembly!, ResourcePath);
 			if (stream == null) {
-				return context;
+				return null;
 			}
 			reader = new StreamReader(stream);
 		}
@@ -169,7 +168,7 @@ internal sealed class StringResource {
 
 	public override bool Equals(object? obj) {
 		if (obj is StringResource res) {
-			return res.ResourcePath.Equals(ResourcePath) && res.Embedded == Embedded;
+			return res.GetHashCode() == GetHashCode();
 		}
 		return false;
 	}

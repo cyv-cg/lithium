@@ -117,7 +117,10 @@ public class TranslationService : ITranslationService<string>, ITranslationServi
 
 		foreach (StringResource resource in resources) {
 			string @namespace = resource.Namespace;
-			MessageContext context = resource.ToMessageContext();
+			MessageContext? context = resource.ToMessageContext();
+			if (context == null) {
+				continue;
+			}
 			if (contexts.ContainsKey(@namespace)) {
 				throw new InvalidOperationException($"Duplicate string namespace '{@namespace}' defined at resource '{resource}'");
 			}
