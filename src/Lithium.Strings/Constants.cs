@@ -1,6 +1,6 @@
-namespace Lithium;
+namespace Lithium.Strings;
 
-public static class Constants {
+internal static class Constants {
 	/// <summary>
 	/// Char delimiter for portions of a string address.
 	/// </summary>
