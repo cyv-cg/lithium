@@ -56,7 +56,7 @@ public class TranslationServiceTests {
 		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
 
 		Assert.True(success);
-		Assert.Collection(service.Resources,
+		Assert.Collection(service.Resources.OrderBy(r => r.ResourcePath),
 			r => {
 				Assert.Equal(Path.Combine(mocksDirectory, "strings01", "en-US", "mockStrings01.ftl"), r.ResourcePath);
 			},
@@ -116,7 +116,7 @@ public class TranslationServiceTests {
 		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
 
 		Assert.False(success);
-		Assert.Collection(service.Resources,
+		Assert.Collection(service.Resources.OrderBy(r => r.ResourcePath),
 			r => {
 				Assert.Equal(Path.Combine(mocksDirectory, "strings01", "en-US", "mockStrings01.ftl"), r.ResourcePath);
 			},
@@ -137,7 +137,7 @@ public class TranslationServiceTests {
 		bool success = service.RegisterResource(typeof(TranslationServiceTests).Assembly);
 
 		Assert.True(success);
-		Assert.Collection(service.Resources,
+		Assert.Collection(service.Resources.OrderBy(r => r.ResourcePath),
 			r => {
 				Assert.Equal("strings@" + Path.Combine("en-US", "embedded-strings.ftl"), r.ResourcePath);
 			},
@@ -164,7 +164,7 @@ public class TranslationServiceTests {
 		bool success = service.RegisterResource(typeof(TranslationServiceTests).Assembly);
 
 		Assert.False(success);
-		Assert.Collection(service.Resources,
+		Assert.Collection(service.Resources.OrderBy(r => r.ResourcePath),
 			r => {
 				Assert.Equal("strings@" + Path.Combine("en-US", "embedded-strings.ftl"), r.ResourcePath);
 			},
@@ -194,7 +194,7 @@ public class TranslationServiceTests {
 		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
 		service.Reload();
 
-		Assert.Collection(service.Contexts.Keys,
+		Assert.Collection(service.Contexts.Keys.Order(),
 			k => {
 				Assert.Equal("strings01.mockStrings01", k);
 			},
@@ -260,18 +260,18 @@ public class TranslationServiceTests {
 
 		IEnumerable<string> addresses = service.GetAllStringKeys();
 
-		Assert.Collection(addresses,
+		Assert.Collection(addresses.Order(),
 			key => {
 				Assert.Equal("strings01.mockStrings01.sample-string", key);
+			},
+			key => {
+				Assert.Equal("strings01.mockStrings01.string-with-bad-selector", key);
 			},
 			key => {
 				Assert.Equal("strings01.mockStrings01.string-with-one-placeable", key);
 			},
 			key => {
 				Assert.Equal("strings01.mockStrings01.string-with-two-placeables", key);
-			},
-			key => {
-				Assert.Equal("strings01.mockStrings01.string-with-bad-selector", key);
 			},
 			key => {
 				Assert.Equal("strings01.sub.mockStrings02.sample-string", key);
@@ -292,7 +292,7 @@ public class TranslationServiceTests {
 		IEnumerable<string> addresses = service.GetAllStringKeys();
 
 #pragma warning disable xUnit2023 // Do not use collection methods for single-item collections
-		Assert.Collection(addresses,
+		Assert.Collection(addresses.Order(),
 			key => {
 				Assert.Equal("strings.embedded-strings.test-value", key);
 			}
@@ -474,7 +474,7 @@ public class TranslationServiceTests {
 	[Fact]
 	public void FormatArgsTest01() {
 		Dictionary<string, object> map = service.FormatArgs(("key", "value"), ("another-key", 2));
-		Assert.Collection(map,
+		Assert.Collection(map.OrderBy(kvp => kvp.Key),
 			v => {
 				Assert.Equal("key", v.Key);
 				Assert.Equal("value", v.Value);
