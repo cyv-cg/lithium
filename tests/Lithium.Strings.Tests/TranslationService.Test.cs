@@ -476,12 +476,12 @@ public class TranslationServiceTests {
 		Dictionary<string, object> map = service.FormatArgs(("key", "value"), ("another-key", 2));
 		Assert.Collection(map.OrderBy(kvp => kvp.Key),
 			v => {
-				Assert.Equal("key", v.Key);
-				Assert.Equal("value", v.Value);
-			},
-			v => {
 				Assert.Equal("another-key", v.Key);
 				Assert.Equal(2, v.Value);
+			},
+			v => {
+				Assert.Equal("key", v.Key);
+				Assert.Equal("value", v.Value);
 			}
 		);
 	}
