@@ -156,6 +156,10 @@ public class TranslationService : ITranslationService<string>, ITranslationServi
 	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public string Translate(string address, params StringArgument[] args) {
 		if (!TryGetMessage(address, out MessageContext? context, out Message? message)) {
+			if (options.FallbackService != null) {
+				return options.FallbackService.Translate(address, args);
+			}
+
 			throw new KeyNotFoundException(address);
 		}
 
