@@ -1,6 +1,6 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef9>
-		<Key>MockDef</Key>
+		<Key>MockDef-comments</Key>
 		<Label>MockDef_Label</Label>
 		<!-- comment -->
 		<PrimitiveField>1.2</PrimitiveField>

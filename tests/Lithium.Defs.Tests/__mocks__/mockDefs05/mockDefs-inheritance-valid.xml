@@ -1,6 +1,6 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef10>
-		<Key>MockDef</Key>
+		<Key>MockDef-inheritance-valid</Key>
 		<Label>MockDef_Label</Label>
 		<TypeField>System.Int32</TypeField>
 	</Lithium.Defs.Tests.MockDef10>

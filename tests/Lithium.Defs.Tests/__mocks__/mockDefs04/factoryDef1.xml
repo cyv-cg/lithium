@@ -1,7 +1,0 @@
-<Defs>
-	<Lithium.Defs.Tests.MockDef4>
-		<Key>MockDef</Key>
-		<Label>MockDef_Label</Label>
-		<FactoryClass>5</FactoryClass>
-	</Lithium.Defs.Tests.MockDef4>
-</Defs>

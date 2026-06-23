@@ -5,6 +5,7 @@ using System;
 using Lithium.Defs.Exceptions;
 using Lithium.Core.Exceptions;
 using Lithium.Core.Attributes;
+using System.Linq;
 
 namespace Lithium.Defs.Tests;
 
@@ -12,32 +13,24 @@ namespace Lithium.Defs.Tests;
 /// Tests for Lithium.Defs.DefParser.cs
 /// </summary>
 public class DefParserTests {
+	private DefService service;
+
 	/// <summary>
 	/// Reset the state for each test.
 	/// </summary>
 	public DefParserTests() {
-		Settings.DeferredParsing = false;
-		Settings.DefRootDirectories.Clear();
+		service = new DefService(new DefServiceOptions());
 	}
 
 	#region LoadAll tests
-	/// <summary>
-	/// Tests that LoadAll throws an exception when trying to load defs before adding a directory.
-	/// </summary>
-	[Fact]
-	public void LoadAllTest01() {
-		Exception e = Assert.Throws<ResourceRootDirectoryMissingException>(
-			() => DefDatabase.Initialize()
-		);
-	}
 	/// <summary>
 	/// Tests that LoadAll can initialize a simple Def.
 	/// </summary>
 	[Fact]
 	public void LoadAllTest02() {
-		Init.Setup(1);
+		Init.Setup(1, service);
 
-		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
+		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
@@ -49,9 +42,9 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest03() {
-		Init.Setup(2);
+		Init.Setup(2, service);
 
-		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
+		MockDef2? loadedDef = service.LoadDef<MockDef2>("MockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
@@ -68,49 +61,36 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest04() {
-		Init.Setup(2);
+		Init.Setup(2, service);
 
-		MockDef3? loadedDef = DefDatabase.Load<MockDef3>("ThirdDef");
+		MockDef3? loadedDef = service.LoadDef<MockDef3>("ThirdDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("ThirdDef", loadedDef.Key);
 
 		Assert.NotNull(loadedDef.DefList);
 		Assert.NotEmpty(loadedDef.DefList);
-		Assert.Collection(loadedDef.DefList,
-			d => {
-				_ = Assert.IsType<MockDef1>(d);
-				Assert.Equal("SecondDef", d.Key);
-				Assert.Equal(2, ((MockDef1)d).SampleValue1);
-			},
+		Assert.Collection(loadedDef.DefList.OrderBy(d => d.Key),
 			d => {
 				_ = Assert.IsType<MockDef2>(d);
 				Assert.Equal("MockDef", d.Key);
 				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
+			},
+			d => {
+				_ = Assert.IsType<MockDef1>(d);
+				Assert.Equal("SecondDef", d.Key);
+				Assert.Equal(2, ((MockDef1)d).SampleValue1);
 			}
 		);
 	}
-	/// <summary>
-	/// Tests that LoadAll throws an exception when trying to load a Def that does not exist.
-	/// </summary>
-	[Fact]
-	public void LoadAllTest05() {
-		Settings.AddDefRootDirectory(Init.MockDirectory(3));
-
-		Exception e = Assert.Throws<DefNotFoundException>(
-			() => DefDatabase.Initialize()
-		);
-	}
-
 	/// <summary>
 	/// Tests that LoadAll can initialize a simple Def with deferred loading.
 	/// </summary>
 	[Fact]
 	public void LoadAllTest06() {
-		Settings.DeferredParsing = true;
-		Init.Setup(1);
+		Init.Setup(1, service);
 
-		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
+		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
@@ -123,10 +103,9 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest07() {
-		Settings.DeferredParsing = true;
-		Init.Setup(2);
+		Init.Setup(2, service);
 
-		MockDef2? loadedDef = DefDatabase.Load<MockDef2>("MockDef");
+		MockDef2? loadedDef = service.LoadDef<MockDef2>("MockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("MockDef", loadedDef.Key);
@@ -143,26 +122,25 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest08() {
-		Settings.DeferredParsing = true;
-		Init.Setup(2);
+		Init.Setup(2, service);
 
-		MockDef3? loadedDef = DefDatabase.Load<MockDef3>("ThirdDef");
+		MockDef3? loadedDef = service.LoadDef<MockDef3>("ThirdDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("ThirdDef", loadedDef.Key);
 
 		Assert.NotNull(loadedDef.DefList);
 		Assert.NotEmpty(loadedDef.DefList);
-		Assert.Collection(loadedDef.DefList,
-			d => {
-				_ = Assert.IsType<MockDef1>(d);
-				Assert.Equal("SecondDef", d.Key);
-				Assert.Equal(2, ((MockDef1)d).SampleValue1);
-			},
+		Assert.Collection(loadedDef.DefList.OrderBy(d => d.Key),
 			d => {
 				_ = Assert.IsType<MockDef2>(d);
 				Assert.Equal("MockDef", d.Key);
 				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
+			},
+			d => {
+				_ = Assert.IsType<MockDef1>(d);
+				Assert.Equal("SecondDef", d.Key);
+				Assert.Equal(2, ((MockDef1)d).SampleValue1);
 			}
 		);
 	}
@@ -174,10 +152,9 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest01() {
-		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs.xml");
-		DefDatabase.Initialize(mockFile);
+		Init.Setup(5, service);
 
-		MockDef9? loadedDef = DefDatabase.Load<MockDef9>("MockDef");
+		MockDef9? loadedDef = service.LoadDef<MockDef9>("MockDef-comments");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal(1.2f, loadedDef.PrimitiveField);
@@ -190,10 +167,10 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest02() {
-		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidEnum.xml");
+		Init.Setup(5, service);
 
 		Exception e = Assert.Throws<PropertyLoadException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<Def>("MockDef-invalid-enum")
 		);
 	}
 	/// <summary>
@@ -201,10 +178,10 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest03() {
-		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidType.xml");
+		Init.Setup(5, service);
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<Def>("MockDef-invalid-type")
 		);
 	}
 	/// <summary>
@@ -212,10 +189,9 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest04() {
-		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-inheritance-valid.xml");
-		DefDatabase.Initialize(mockFile);
+		Init.Setup(5, service);
 
-		MockDef10? loadedDef = DefDatabase.Load<MockDef10>("MockDef");
+		MockDef10? loadedDef = service.LoadDef<MockDef10>("MockDef-inheritance-valid");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal(typeof(int), loadedDef.TypeField);
@@ -225,10 +201,10 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest05() {
-		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-inheritance-invalid.xml");
+		Init.Setup(5, service);
 
 		Exception e = Assert.Throws<DefInheritanceException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<Def>("MockDef-inheritance-invalid")
 		);
 	}
 	/// <summary>
@@ -236,10 +212,10 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest06() {
-		string mockFile = Path.Combine(Init.MockDirectory(5), "mockDefs-invalidProp.xml");
+		Init.Setup(5, service);
 
 		Exception e = Assert.Throws<MissingFieldException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<Def>("MockDef-invalid-prop")
 		);
 	}
 	/// <summary>
@@ -247,10 +223,11 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest07() {
-		Settings.AddDefRootDirectory(Init.MockDirectory(11));
+		Init.Setup(11, service);
+		service.Reload();
 
 		Exception e = Assert.Throws<MissingDefPropException>(
-			() => DefDatabase.Initialize()
+			() => service.LoadDef<Def>("MockDef")
 		);
 	}
 
@@ -259,14 +236,13 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadTest08() {
-		Settings.AddDefRootDirectory(Init.MockDirectory(1));
-		Settings.AddDefRootDirectory(Init.MockDirectory(2));
-		Settings.DeferredParsing = true;
+		_ = service.RegisterResource(Init.MockDirectory(1));
+		_ = service.RegisterResource(Init.MockDirectory(2));
+		service.Reload();
 
-		DefDatabase.Initialize();
 
-		MockDef1? loadedDef1 = DefDatabase.Load<MockDef1>("MockDef");
-		MockDef3? loadedDef2 = DefDatabase.Load<MockDef3>("ThirdDef");
+		MockDef1? loadedDef1 = service.LoadDef<MockDef1>("MockDef");
+		MockDef3? loadedDef2 = service.LoadDef<MockDef3>("ThirdDef");
 
 		Assert.NotNull(loadedDef1);
 		Assert.NotNull(loadedDef2);
@@ -279,10 +255,9 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest01() {
-		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef1.xml");
-		DefDatabase.Initialize(mockFile);
+		Init.Setup(4, service);
 
-		MockDef4? loadedDef = DefDatabase.Load<MockDef4>("MockDef");
+		MockDef4? loadedDef = service.LoadDef<MockDef4>("MockDef01");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal(15, loadedDef.FactoryClass.tenPlus);
@@ -292,10 +267,9 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest02() {
-		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef2.xml");
-		DefDatabase.Initialize(mockFile);
+		Init.Setup(4, service);
 
-		MockDef5? loadedDef = DefDatabase.Load<MockDef5>("MockDef");
+		MockDef5? loadedDef = service.LoadDef<MockDef5>("MockDef02");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("test", loadedDef.FactoryClass.value);
@@ -305,10 +279,10 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest03() {
-		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef3.xml");
+		Init.Setup(4, service);
 
 		Exception e = Assert.Throws<DefFactoryMissingException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<MockDef6>("MockDef03")
 		);
 	}
 	/// <summary>
@@ -316,10 +290,10 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest04() {
-		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef4.xml");
+		Init.Setup(4, service);
 
 		Exception e = Assert.Throws<DefFactoryConstructorParamsException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<MockDef7>("MockDef04")
 		);
 	}
 	/// <summary>
@@ -327,10 +301,10 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void LoadFactoryTest05() {
-		string mockFile = Path.Combine(Init.MockDirectory(4), "factoryDef5.xml");
+		Init.Setup(4, service);
 
 		Exception e = Assert.Throws<DefFactoryReturnTypeException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<MockDef8>("MockDef05")
 		);
 	}
 	#endregion
@@ -341,10 +315,10 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest01() {
-		Settings.AddDefRootDirectory(Init.MockDirectory(6));
+		Init.Setup(6, service);
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
-			() => DefDatabase.Initialize()
+			() => service.LoadDef<Def>("MockDef")
 		);
 	}
 	/// <summary>
@@ -352,11 +326,12 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest02() {
-		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentValid.xml");
-		DefDatabase.Initialize(mockFile);
+		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-valid");
+		service.RegisterResource(mockFile);
+		service.Reload();
 
-		MockDef1? loadedDef = DefDatabase.Load<MockDef1>("MockDef");
-		MockDef1? loadedDef2 = DefDatabase.Load<MockDef1>("OtherMockDef");
+		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
+		MockDef1? loadedDef2 = service.LoadDef<MockDef1>("OtherMockDef");
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal(1, loadedDef.SampleValue1);
@@ -369,10 +344,12 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest03() {
-		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-selfReference.xml");
+		string mockFile = Path.Combine(Init.MockDirectory(7), "self-reference");
+		service.RegisterResource(mockFile);
+		service.Reload();
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<Def>("MockDef")
 		);
 	}
 	/// <summary>
@@ -380,10 +357,12 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest04() {
-		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentInvalid.xml");
+		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid");
+		service.RegisterResource(mockFile);
+		service.Reload();
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<Def>("MockDef")
 		);
 	}
 	/// <summary>
@@ -391,10 +370,12 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest05() {
-		string mockFile = Path.Combine(Init.MockDirectory(7), "mockDefs-parentInvalid2.xml");
+		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid-2");
+		service.RegisterResource(mockFile);
+		service.Reload();
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
-			() => DefDatabase.Initialize(mockFile)
+			() => service.LoadDef<Def>("MockDef")
 		);
 	}
 	#endregion

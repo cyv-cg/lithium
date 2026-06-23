@@ -1,6 +1,6 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef9>
-		<Key>MockDef</Key>
+		<Key>MockDef-invalid-type</Key>
 		<Label>MockDef_Label</Label>
 		<TypeField>Type.That.Does.Not.Exist</TypeField>
 	</Lithium.Defs.Tests.MockDef9>

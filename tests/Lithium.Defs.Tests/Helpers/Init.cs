@@ -10,9 +10,8 @@ internal static class Init {
 		return Path.Combine(defMocksDirectory, $"mockDefs{i:00}");
 	}
 
-	internal static void Setup(byte i) {
-		Settings.DefRootDirectories?.Clear();
-		Settings.AddDefRootDirectory(MockDirectory(i));
-		DefDatabase.Initialize();
+	internal static void Setup(byte i, DefService service) {
+		_ = service.RegisterResource(MockDirectory(i));
+		service.Reload();
 	}
 }

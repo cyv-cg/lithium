@@ -1,6 +1,6 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef11>
-		<Key>MockDef</Key>
+		<Key>MockDef-invalid-class</Key>
 		<Label>MockDef_Label</Label>
 		<ClassField>
 			<Value>1</Value>

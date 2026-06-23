@@ -1,6 +1,6 @@
 <Defs>
 	<Lithium.Defs.Tests.MockDef1>
-		<Key>MockDef</Key>
+		<Key>MockDef-invalid-prop</Key>
 		<Label>MockDef_Label</Label>
 		<SampleValue1>1</SampleValue1>
 		<PropThatDoesNotExist>1</PropThatDoesNotExist>
