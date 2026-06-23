@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
@@ -43,7 +44,7 @@ internal static class TypeChecker {
 	/// <param name="type">Type to check.</param>
 	/// <param name="listType">Output variable containing the generic type of the list elements.</param>
 	/// <returns>True if the type is a generic list.</returns>
-	internal static bool IsList(this Type type, out Type? listType) {
+	internal static bool IsList(this Type type, [NotNullWhen(true)] out Type? listType) {
 		listType = null;
 		if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>)) {
 			listType = type.GetGenericArguments()[0];
@@ -61,7 +62,7 @@ internal static class TypeChecker {
 	/// <param name="type">Type to check.</param>
 	/// <param name="factory">Output variable containing the invokable factory.</param>
 	/// <returns>True if the type has a valid override constructor or factory method.</returns>
-	internal static bool IsSpecialConstructor(this Type type, out MethodBase? factory) {
+	internal static bool IsSpecialConstructor(this Type type, [NotNullWhen(true)] out MethodBase? factory) {
 		factory = null;
 		if (!type.IsDefined(typeof(UseDefOverrideInitializer), false)) {
 			return false;
