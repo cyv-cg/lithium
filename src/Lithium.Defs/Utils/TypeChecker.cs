@@ -62,6 +62,9 @@ internal static class TypeChecker {
 	/// <param name="type">Type to check.</param>
 	/// <param name="factory">Output variable containing the invokable factory.</param>
 	/// <returns>True if the type has a valid override constructor or factory method.</returns>
+	/// <exception cref="DefFactoryMissingException">Thrown when the class has the <see cref="UseDefOverrideInitializer"/> attribute but no applicable constructor or factory method.</exception>
+	/// <exception cref="DefFactoryReturnTypeException">Thrown when the def factory has the wrong return type.</exception>
+	/// <exception cref="DefFactoryConstructorParamsException">Thrown when the def constructor has the wrong parameter list.</exception>
 	internal static bool IsSpecialConstructor(this Type type, [NotNullWhen(true)] out MethodBase? factory) {
 		factory = null;
 		if (!type.IsDefined(typeof(UseDefOverrideInitializer), false)) {

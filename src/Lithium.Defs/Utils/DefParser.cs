@@ -12,15 +12,27 @@ namespace Lithium.Defs;
 
 /// <summary>
 /// Utility for loading defs from XML.
-/// Use LoadAll or LoadSingle to parse a def.
 /// </summary>
-internal static class DefParser {
+public static class DefParser {
 	/// <summary>
 	/// Parses a def from an XML node.
 	/// </summary>
+	/// <param name="service">The service used to load nested defs, if required.</param>
 	/// <param name="node">XML node containing the data for the def.</param>
 	/// <returns>Collection of loaded defs where the first element is the def requested and the rest are its dependencies.</returns>
-	internal static IEnumerable<Def> ParseDef(this IDefService service, XmlNode node) {
+	/// <remarks>The returned collection can contain Defs that are already stored in the service.</remarks>
+	/// <exception cref="UnresolvedTypeException">Thrown if the specified value could not be matched to a type.</exception>
+	/// <exception cref="DefNotFoundException">Thrown when a Def with the specified key could not be found.</exception>
+	/// <exception cref="DefParentInvalidException">Thrown either when a Def is trying to inherit from itself, or a parent of a different type.</exception>
+	/// <exception cref="MissingDefPropException">Thrown when the def XML is missing a required property.</exception>
+	/// <exception cref="MissingFieldException">Thrown when a property specified in the def XML does not exist on the type.</exception>
+	/// <exception cref="PropertyLoadException">Thrown when a string could not be matched to a property value.</exception>
+	/// <exception cref="DefInheritanceException">Thrown when a <see cref="Type"/> property value does not meet its inheritance restrictions.</exception>
+	/// <exception cref="NodeMissingChildException">Thrown when the "Key" element does not exist in a Def's XML.</exception>
+	/// <exception cref="DefFactoryMissingException">Thrown when the class has the <see cref="UseDefOverrideInitializer"/> attribute but no applicable constructor or factory method.</exception>
+	/// <exception cref="DefFactoryReturnTypeException">Thrown when the def factory has the wrong return type.</exception>
+	/// <exception cref="DefFactoryConstructorParamsException">Thrown when the def constructor has the wrong parameter list.</exception>
+	public static IEnumerable<Def> ParseDef(this IDefService service, XmlNode node) {
 		Type? defType = TypeChecker.ResolveType(node.Name);
 		if (defType == null) {
 			throw new UnresolvedTypeException(node.Name);
@@ -43,6 +55,10 @@ internal static class DefParser {
 	/// <summary>
 	/// Parses out nested def references.
 	/// </summary>
+	/// <param name="service">The service used to load nested defs.</param>
+	/// <param name="links">Collection of <see cref="DefLink"/>s that need to be resolved.</param>
+	/// <returns>A collection of the Defs that needed to be loaded to resolve the links.</returns>
+	/// <remarks>The returned collection can contain Defs that are already stored in the service.</remarks>
 	private static HashSet<Def> ResolveDefLinks(this IDefService service, Stack<DefLink> links) {
 		HashSet<Def> newDefs = new HashSet<Def>();
 
@@ -55,6 +71,9 @@ internal static class DefParser {
 				throw new DefNotFoundException(link.DefName);
 			}
 			ApplyDefLink(link, defValue);
+			// Note that TryLoadDef does not differentiate between a def that was already loaded
+			// and one that had to be loaded on-the-fly. That means newDefs can and will contain defs
+			// which are already stored in the service.
 			_ = newDefs.Add(defValue);
 		}
 
@@ -66,14 +85,21 @@ internal static class DefParser {
 	/// <param name="link">DefLink containing the data.</param>
 	/// <param name="defValue">Def instance to apply the data to.</param>
 	private static void ApplyDefLink(DefLink link, Def defValue) {
-		if (link.ParentList == null) {
-			link.Field.SetValue(link.Instance, defValue);
+		if (link.ParentList != null) {
+			_ = link.ParentList.Add(defValue);
 		}
 		else {
-			_ = link.ParentList.Add(defValue);
+			link.Field.SetValue(link.Instance, defValue);
 		}
 	}
 
+	/// <summary>
+	/// Applies any XML attributes applied to the Def.
+	/// </summary>
+	/// <param name="service">The service used to load nested defs.</param>
+	/// <param name="defInstance">Reference to the instance to populate.</param>
+	/// <param name="defNode">Top-level XML node for the Def.</param>
+	/// <param name="defType">Type of the def instance.</param>
 	private static void ParseAttributes(this IDefService service, ref object defInstance, XmlNode defNode, Type defType) {
 		if (defNode.Attributes == null) {
 			return;
@@ -87,6 +113,16 @@ internal static class DefParser {
 			service.ParseRoot(ref defInstance, rootAttr.Value, defKey, defType);
 		}
 	}
+	/// <summary>
+	/// Loads properties from a parent def instance into a child.
+	/// </summary>
+	/// <param name="service">The service used to load nested defs.</param>
+	/// <param name="defInstance">Reference to the instance to populate.</param>
+	/// <param name="rootKey">Key of the parent def to load.</param>
+	/// <param name="defKey">Key of the def instance.</param>
+	/// <param name="defType">Type of the def instance.</param>
+	/// <exception cref="DefParentInvalidException">Thrown either when a Def is trying to inherit from itself, or a parent of a different type.</exception>
+	/// <exception cref="DefNotFoundException">Thrown when the specified parent Def could not be found.</exception>
 	private static void ParseRoot(this IDefService service, ref object defInstance, string rootKey, string defKey, Type defType) {
 		if (rootKey.Equals(defKey)) {
 			throw new DefParentInvalidException(defKey, defType, defKey, defType);
@@ -111,6 +147,9 @@ internal static class DefParser {
 	/// <param name="instance">Reference to the instance to populate.</param>
 	/// <param name="defNode">XML node containing the data.</param>
 	/// <param name="type">Type of the class to parse into.</param>
+	/// <returns>Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the class.</returns>
+	/// <exception cref="MissingDefPropException">Thrown when the def XML is missing a required property.</exception>
+	/// <exception cref="MissingFieldException">Thrown when a property specified in the def XML does not exist on the type.</exception>
 	private static Stack<DefLink> ParseXmlToClass(ref object instance, XmlNode defNode, Type type) {
 		// Check if any required fields are not defined in XML.
 		if (!ValidateRequiredFields(defNode, type, out IEnumerable<PropertyInfo> missingProps)) {
@@ -135,6 +174,7 @@ internal static class DefParser {
 				// Load single values.
 				: ParseSingle(ref instance, prop, defNode, propNode);
 
+			// Add stack elements from start to finish to preserve the order instead of flipping it with pop/push.
 			foreach (DefLink link in nestedLinks) {
 				links.Push(link);
 			}
@@ -143,12 +183,22 @@ internal static class DefParser {
 		return links;
 	}
 
+	/// <summary>
+	/// Loads a collection of objects from XML.
+	/// </summary>
+	/// <param name="instance">Reference to the Def object being parsed.</param>
+	/// <param name="prop">Property being loaded.</param>
+	/// <param name="defNode">Top-level Def XML node.</param>
+	/// <param name="listNode">Top-level XML node containing all the list items as children.</param>
+	/// <param name="listType">Generic type of the list property.</param>
+	/// <returns>Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the list elements.</returns>
 	private static IEnumerable<DefLink> ParseList(ref object instance, PropertyInfo prop, XmlNode defNode, XmlNode listNode, Type listType) {
-		IList typedList = (Activator.CreateInstance(typeof(List<>).MakeGenericType(listType!)) as IList)!;
+		IList typedList = (Activator.CreateInstance(typeof(List<>).MakeGenericType(listType)) as IList)!;
 		prop.SetValue(instance, typedList);
 
 		Stack<DefLink> links = new Stack<DefLink>();
 
+		// No children means no list elements to load.
 		if (!listNode.HasChildNodes) {
 			return links;
 		}
@@ -162,11 +212,14 @@ internal static class DefParser {
 				continue;
 			}
 
+			// Parse out the child node and add that to the list.
+			// Slightly different from loading a single value, since it's applied to a list instead of the property itself.
 			object? entry = LoadProperty(defNode, li, prop, listType, out Stack<DefLink> nestedLinks);
 			if (entry != null) {
 				_ = typedList.Add(entry);
 			}
 
+			// Add stack elements from start to finish to preserve the order instead of flipping it with pop/push.
 			foreach (DefLink link in nestedLinks) {
 				links.Push(link);
 			}
@@ -174,6 +227,14 @@ internal static class DefParser {
 
 		return links.ToList();
 	}
+	/// <summary>
+	/// Loads a single object from XML.
+	/// </summary>
+	/// <param name="instance">Reference to the Def object being parsed.</param>
+	/// <param name="prop">Property being loaded.</param>
+	/// <param name="defNode">Top-level Def XML node.</param>
+	/// <param name="propNode">XML node for the property being loaded.</param>
+	/// <returns>Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the property.</returns>
 	private static Stack<DefLink> ParseSingle(ref object instance, PropertyInfo prop, XmlNode defNode, XmlNode propNode) {
 		Stack<DefLink> links = new Stack<DefLink>();
 
@@ -182,11 +243,13 @@ internal static class DefParser {
 			return links;
 		}
 
+		// Parse property value and apply directly to the property on the def instance.
 		object? value = LoadProperty(defNode, propNode, prop, prop.PropertyType, out Stack<DefLink> nestedLinks);
 		if (value != null) {
 			prop.SetValue(instance, value);
 		}
 
+		// Add stack elements from start to finish to preserve the order instead of flipping it with pop/push
 		foreach (DefLink link in nestedLinks) {
 			links.Push(link);
 		}
@@ -230,6 +293,7 @@ internal static class DefParser {
 	/// <param name="node">XML node containing the raw data for the property.</param>
 	/// <param name="prop">PropertyInfo of the property being set.</param>
 	/// <param name="type"><see cref="Type"/> of the data to read as.</param>
+	/// <param name="links">Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the property.</param>
 	/// <returns>Data parsed to the given type.</returns>
 	private static object? LoadProperty(XmlNode defNode, XmlNode node, PropertyInfo prop, Type type, out Stack<DefLink> links) {
 		links = new Stack<DefLink>();
@@ -274,6 +338,7 @@ internal static class DefParser {
 	/// <param name="node">XML node containing the enum value as a string.</param>
 	/// <param name="type">Type of the enum to parse.</param>
 	/// <returns>Parsed enum value.</returns>
+	/// <exception cref="PropertyLoadException">Thrown if the string could not be matched to an enum value.</exception>
 	private static object? LoadEnum(XmlNode defNode, XmlNode node, Type type) {
 		if (Enum.TryParse(type, node.InnerText, out object? value)) {
 			return value;
@@ -289,6 +354,8 @@ internal static class DefParser {
 	/// <param name="node">XML node containing the type name as a string.</param>
 	/// <param name="prop">PropertyInfo of the property being set.</param>
 	/// <returns>Parsed System.Type value.</returns>
+	/// <exception cref="UnresolvedTypeException">Thrown if the specified value could not be matched to a type.</exception>
+	/// <exception cref="DefInheritanceException">Thrown when the type does not meet its inheritance restrictions.</exception>
 	private static Type? LoadType(XmlNode defNode, XmlNode node, PropertyInfo prop) {
 		Type? targetType = TypeChecker.ResolveType(node.InnerText);
 		if (targetType == null) {
@@ -314,6 +381,7 @@ internal static class DefParser {
 	/// </summary>
 	/// <param name="node">XML node containing the data.</param>
 	/// <param name="type">Type of the class to parse.</param>
+	/// <param name="links">Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the class.</param>
 	/// <returns>Parsed class instance.</returns>
 	private static object LoadClass(XmlNode node, Type type, out Stack<DefLink> links) {
 		object subClass = Activator.CreateInstance(type)!;
@@ -321,6 +389,12 @@ internal static class DefParser {
 		return subClass;
 	}
 
+	/// <summary>
+	/// Attemps to get the name of a Def from its XML.
+	/// </summary>
+	/// <param name="node">Top-level Def node to check.</param>
+	/// <returns>The value of the Def's "Key" child.</returns>
+	/// <exception cref="NodeMissingChildException">Thrown if the "Key" element does not exist.</exception>
 	private static string GetDefKey(XmlNode node) {
 		XmlNode? keyNode = node.SelectSingleNode(Constants.DEF_KEY_ELEMENT);
 		if (keyNode == null) {
