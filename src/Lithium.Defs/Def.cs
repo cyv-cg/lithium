@@ -44,4 +44,16 @@ public record Def {
 	public static implicit operator string(Def def) {
 		return def.ToString();
 	}
+
+	/// <inheritdoc/>
+	public virtual bool Equals(Def? other) {
+		if (other == null) {
+			return false;
+		}
+		return GetHashCode() == other.GetHashCode();
+	}
+	/// <inheritdoc/>
+	public override int GetHashCode() {
+		return HashCode.Combine(Key);
+	}
 }
