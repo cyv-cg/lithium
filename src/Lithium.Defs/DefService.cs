@@ -184,6 +184,10 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	private Def InitDef(XmlNode node) {
 		IEnumerable<Def> loadedDefs = this.ParseDef(node);
 		foreach (Def def in loadedDefs) {
+			if (defs.ContainsKey(def.Key)) {
+				continue;
+			}
+
 			defs.Add(def.Key, def);
 			_ = resources.Remove(def.Key);
 		}
