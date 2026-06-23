@@ -17,7 +17,7 @@ namespace Lithium.Strings;
 /// Uses Mozilla Fluent for localization.
 /// (https://firefox-source-docs.mozilla.org/l10n/fluent/index.html)
 /// </summary>
-public class TranslationService : ITranslationService<string>, ITranslationService<Assembly> {
+public class TranslationService : ITranslationService, IResourceRegistry<string>, IResourceRegistry<Assembly> {
 	/// <summary>
 	/// Default translation service.
 	/// Used when translating a string without specifying a service to use.
