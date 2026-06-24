@@ -53,6 +53,41 @@ public static class DefParser {
 	}
 
 	/// <summary>
+	/// Utility for applying Def inheritance at the XML-level.
+	/// Used for when a single Def key is defined in multiple places.
+	/// The Def loaded later overwrites the one loaded sooner.
+	/// </summary>
+	/// <param name="child">Reference to the child node. This is the node that will have its data overwritten.</param>
+	/// <param name="parent">The parent node and source of the data to overwrite with.</param>
+	/// <exception cref="DefParentInvalidException">Thrown if the parent and child are not the same type.</exception>
+	public static void InheritDefXML(ref XmlNode child, XmlNode parent) {
+		// Validate that the parent and child reference the same type name.
+		if (!child.Name.Equals(parent.Name)) {
+			throw new DefParentInvalidException(GetDefKey(child));
+		}
+		// Copy all properties from the parent onto the child, overwriting existing data.
+		foreach (XmlNode childOverride in parent.ChildNodes) {
+			string nodeProp = childOverride.Name;
+			// Skip the key property, since those should match anyway.
+			if (nodeProp.Equals(Constants.DEF_KEY_ELEMENT)) {
+				continue;
+			}
+			// If the child node already has this property defined, just replace the inner XML.
+			XmlNode? toReplace = child.SelectSingleNode(nodeProp);
+			if (toReplace != null) {
+				toReplace.InnerXml = childOverride.InnerXml;
+			}
+			// If it doesn't have that property already, import the parent's node.
+			else {
+				// child.OwnerDocument only returns null if child is itself of type XmlDocument.
+				// That *should* never happen with this setup and syntax.
+				XmlNode importedNodeToAdd = child.OwnerDocument!.ImportNode(childOverride, true);
+				_ = child.AppendChild(importedNodeToAdd);
+			}
+		}
+	}
+
+	/// <summary>
 	/// Parses out nested def references.
 	/// </summary>
 	/// <param name="service">The service used to load nested defs.</param>
