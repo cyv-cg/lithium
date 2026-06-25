@@ -155,6 +155,10 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 
 		// Add each found node to the resources registry.
 		foreach ((string key, XmlNode node) in nodes) {
+			if (!DefParser.ValidateDefName(key)) {
+				throw new FormatException($"{Constants.DEF_KEY_ELEMENT} ('{key}') must be a valid identifier: '^[a-zA-Z@][a-zA-Z0-9\\-_]*$'.");
+			}
+
 			if (resources.TryGetValue(key, out XmlNode? baseNode)) {
 				DefParser.InheritDefXML(ref baseNode, node);
 			}

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Xml;
 using Lithium.Core.Attributes;
 using Lithium.Core.Exceptions;
@@ -85,6 +86,17 @@ public static class DefParser {
 				_ = child.AppendChild(importedNodeToAdd);
 			}
 		}
+	}
+
+	/// <summary>
+	/// Validates a Def key against a regular expression.
+	/// </summary>
+	/// <param name="key">Def key to check.</param>
+	/// <returns>True if the key passes, false otherwise.</returns>
+	public static bool ValidateDefName(string key) {
+		// Basic identifier regex just including a hyphen.
+		string pattern = @"^[a-zA-Z@][a-zA-Z0-9\-_]*$";
+		return Regex.Count(key, pattern) > 0;
 	}
 
 	/// <summary>
@@ -431,10 +443,10 @@ public static class DefParser {
 	/// <returns>The value of the Def's "Key" child.</returns>
 	/// <exception cref="NodeMissingChildException">Thrown if the "Key" element does not exist.</exception>
 	private static string GetDefKey(XmlNode node) {
-		XmlNode? keyNode = node.SelectSingleNode(Constants.DEF_KEY_ELEMENT);
-		if (keyNode == null) {
+		string? key = node.GetChildValue<string>(Constants.DEF_KEY_ELEMENT);
+		if (string.IsNullOrEmpty(key)) {
 			throw new NodeMissingChildException(node, Constants.DEF_KEY_ELEMENT);
 		}
-		return keyNode.InnerText;
+		return key;
 	}
 }
