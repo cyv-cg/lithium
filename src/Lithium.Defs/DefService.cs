@@ -140,6 +140,10 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 				continue;
 			}
 
+			if (child.GetChildValue<bool>("Disabled")) {
+				continue;
+			}
+
 			// Throw an exception if the Def node doesn't define a key.
 			XmlNode? keyNode = child.SelectSingleNode(Constants.DEF_KEY_ELEMENT);
 			if (keyNode == null) {

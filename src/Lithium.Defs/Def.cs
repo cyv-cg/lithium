@@ -19,6 +19,10 @@ public record Def {
 	/// String name for the Def.
 	/// </summary>
 	public required KeyedString Label { get; init; }
+	/// <summary>
+	/// Whether or not the Def should be treated as not in-use.
+	/// </summary>
+	public bool Disabled { get; init; } = false;
 
 	/// <summary>
 	/// Translates the label by replacing parameters with the given values.
