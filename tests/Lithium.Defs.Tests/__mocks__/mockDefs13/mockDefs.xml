@@ -1,0 +1,31 @@
+<Defs>
+	<Def>
+		<Key>MockDef</Key>
+		<Class>Lithium.Defs.Tests.MockDef9</Class>
+		<Label>MockDef_Label</Label>
+		<EnumField>VALUE1</EnumField>
+		<ClassField>
+			<Value>8</Value>
+		</ClassField>
+		<ListField>
+			<li>1</li>
+			<li>2</li>
+			<li>3</li>
+		</ListField>
+	</Def>
+
+	<Def>
+		<Key>MockDef</Key>
+		<Class>Lithium.Defs.Tests.MockDef9</Class>
+		<PrimitiveField>3</PrimitiveField>
+		<EnumField>VALUE2</EnumField>
+		<ClassField>
+			<Value>1</Value>
+		</ClassField>
+		<ListField>
+			<li>4</li>
+			<li>5</li>
+			<li>6</li>
+		</ListField>
+	</Def>
+</Defs>

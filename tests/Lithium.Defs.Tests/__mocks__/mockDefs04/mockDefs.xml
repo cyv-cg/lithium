@@ -1,31 +1,36 @@
 <Defs>
-	<Lithium.Defs.Tests.MockDef4>
+	<Def>
 		<Key>MockDef01</Key>
+		<Class>Lithium.Defs.Tests.MockDef4</Class>
 		<Label>MockDef_Label</Label>
 		<FactoryClass>5</FactoryClass>
-	</Lithium.Defs.Tests.MockDef4>
+	</Def>
 
-	<Lithium.Defs.Tests.MockDef5>
+	<Def>
 		<Key>MockDef02</Key>
+		<Class>Lithium.Defs.Tests.MockDef5</Class>
 		<Label>MockDef_Label</Label>
 		<FactoryClass>test</FactoryClass>
-	</Lithium.Defs.Tests.MockDef5>
+	</Def>
 
-	<Lithium.Defs.Tests.MockDef6>
+	<Def>
 		<Key>MockDef03</Key>
+		<Class>Lithium.Defs.Tests.MockDef6</Class>
 		<Label>MockDef_Label</Label>
 		<FactoryClass>0</FactoryClass>
-	</Lithium.Defs.Tests.MockDef6>
+	</Def>
 
-	<Lithium.Defs.Tests.MockDef7>
+	<Def>
 		<Key>MockDef04</Key>
+		<Class>Lithium.Defs.Tests.MockDef7</Class>
 		<Label>MockDef_Label</Label>
 		<FactoryClass>0</FactoryClass>
-	</Lithium.Defs.Tests.MockDef7>
+	</Def>
 
-	<Lithium.Defs.Tests.MockDef8>
+	<Def>
 		<Key>MockDef05</Key>
+		<Class>Lithium.Defs.Tests.MockDef8</Class>
 		<Label>MockDef_Label</Label>
 		<FactoryClass>0</FactoryClass>
-	</Lithium.Defs.Tests.MockDef8>
+	</Def>
 </Defs>

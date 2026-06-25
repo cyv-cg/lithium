@@ -1,7 +1,8 @@
 <Defs>
-	<Lithium.Defs.Tests.MockDef1 Root="DefThatDoesNotExist">
+	<Def Root="DefThatDoesNotExist">
 		<Key>MockDef</Key>
+		<Class>Lithium.Defs.Tests.MockDef1</Class>
 		<Label>MockDef_Label</Label>
 		<SampleValue1>1</SampleValue1>
-	</Lithium.Defs.Tests.MockDef1>
+	</Def>
 </Defs>

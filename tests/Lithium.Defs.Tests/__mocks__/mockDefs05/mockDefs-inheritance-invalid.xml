@@ -1,7 +1,0 @@
-<Defs>
-	<Lithium.Defs.Tests.MockDef10>
-		<Key>MockDef-inheritance-invalid</Key>
-		<Label>MockDef_Label</Label>
-		<TypeField>System.Action</TypeField>
-	</Lithium.Defs.Tests.MockDef10>
-</Defs>
