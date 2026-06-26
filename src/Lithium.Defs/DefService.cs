@@ -21,7 +21,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// <summary>
 	/// Unprocessed XML documents.
 	/// </summary>
-	private readonly HashSet<XmlDocument> documents = new HashSet<XmlDocument>();
+	private readonly Dictionary<string, XmlDocument> documents = new Dictionary<string, XmlDocument>();
 	/// <summary>
 	/// XML node for every Def, mapped to their keys.
 	/// </summary>
@@ -57,7 +57,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		IEnumerable<string> defFiles = XmlLoader.GetAllFiles(directory);
 		foreach (string file in defFiles) {
 			XmlDocument doc = XmlLoader.LoadDocument(file);
-			if (!RegisterResource(doc)) {
+			if (!RegisterResource(file, doc)) {
 				return false;
 			}
 		}
@@ -82,10 +82,10 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 			}
 			XmlDocument? doc = XmlLoader.LoadDocument(stream);
 			if (doc == null) {
-				continue;
+				return false;
 			}
 
-			if (!RegisterResource(doc)) {
+			if (!RegisterResource(assembly.GetName().FullName, doc)) {
 				return false;
 			}
 		}
@@ -98,7 +98,15 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// <param name="document">Document to register.</param>
 	/// <returns>True if the document was successfully registered; false otherwise.</returns>
 	public bool RegisterResource(XmlDocument document) {
-		return documents.Add(document);
+		return RegisterResource(HashCode.Combine(document.InnerText).ToString(), document);
+	}
+
+	private bool RegisterResource(string key, XmlDocument document) {
+		if (documents.ContainsKey(key)) {
+			return false;
+		}
+		documents.Add(key, document);
+		return true;
 	}
 
 	/// <summary>
@@ -108,7 +116,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		resources.Clear();
 		defs.Clear();
 
-		foreach (XmlDocument doc in documents) {
+		foreach (XmlDocument doc in documents.Values) {
 			ParseDocument(doc);
 		}
 
@@ -173,18 +181,10 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// </summary>
 	/// <typeparam name="T">Type of Defs to load.</typeparam>
 	/// <returns>Collection of all Defs matching the supplied type.</returns>
-	/// <remarks>
-	/// If <c>options.DeferredLoad</c> is enabled, this can be very slow because
-	/// it needs to search every uninitialized def's XML to check its type.
-	/// </remarks>
 	public IEnumerable<T> LoadAll<T>() where T : Def {
-		HashSet<T> found = new HashSet<T>();
-
-		foreach ((_, Def def) in defs) {
-			if (def is T typed) {
-				_ = found.Add(typed);
-			}
-		}
+		IEnumerable<T> found = defs.Values
+			.Where(d => d.GetType().Equals(typeof(T)))
+			.Select(d => (d as T)!);
 
 		if (!options.DeferredLoad) {
 			return found;
@@ -193,13 +193,15 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		// If deferred loading is enabled, also check every unloaded def
 		// to see if it's the requested type.
 		foreach ((string key, XmlNode node) in resources) {
-			// Find what type the def is.
-			Type? type = TypeChecker.ResolveType(node.Name);
-			// Check against the requested type.
-			if (type != null && type.Equals(typeof(T))) {
+			string? className = node.GetChildValue<string>(Constants.DEF_CLASS_ELEMENT);
+			if (string.IsNullOrEmpty(className)) {
+				continue;
+			}
+			// Check the Def's type against the requested type.
+			if (className.Equals(typeof(T).ToString())) {
 				// Load it!
 				if (TryLoadDef(key, out T? loadedDef)) {
-					_ = found.Add(loadedDef);
+					_ = found.Append(loadedDef);
 				}
 			}
 		}

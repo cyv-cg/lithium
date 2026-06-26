@@ -13,7 +13,7 @@ namespace Lithium.Defs.Tests;
 /// Tests for Lithium.Defs.DefParser.cs
 /// </summary>
 public class DefParserTests {
-	private DefService service;
+	private readonly DefService service;
 
 	/// <summary>
 	/// Reset the state for each test.
@@ -44,10 +44,10 @@ public class DefParserTests {
 	public void LoadAllTest03() {
 		Init.Setup(2, service);
 
-		MockDef2? loadedDef = service.LoadDef<MockDef2>("MockDef");
+		MockDef2? loadedDef = service.LoadDef<MockDef2>("FirstDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal("FirstDef", loadedDef.Key);
 		Assert.True(loadedDef.Label.Equals("MockDef_Label"));
 
 		Assert.NotNull(loadedDef.SubDef);
@@ -73,7 +73,7 @@ public class DefParserTests {
 		Assert.Collection(loadedDef.DefList.OrderBy(d => d.Key),
 			d => {
 				_ = Assert.IsType<MockDef2>(d);
-				Assert.Equal("MockDef", d.Key);
+				Assert.Equal("FirstDef", d.Key);
 				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
 			},
 			d => {
@@ -105,10 +105,10 @@ public class DefParserTests {
 	public void LoadAllTest07() {
 		Init.Setup(2, service);
 
-		MockDef2? loadedDef = service.LoadDef<MockDef2>("MockDef");
+		MockDef2? loadedDef = service.LoadDef<MockDef2>("FirstDef");
 
 		Assert.NotNull(loadedDef);
-		Assert.Equal("MockDef", loadedDef.Key);
+		Assert.Equal("FirstDef", loadedDef.Key);
 		Assert.Equal((KeyedString)"MockDef_Label", loadedDef.Label);
 
 		Assert.NotNull(loadedDef.SubDef);
@@ -134,7 +134,7 @@ public class DefParserTests {
 		Assert.Collection(loadedDef.DefList.OrderBy(d => d.Key),
 			d => {
 				_ = Assert.IsType<MockDef2>(d);
-				Assert.Equal("MockDef", d.Key);
+				Assert.Equal("FirstDef", d.Key);
 				Assert.Equal("SecondDef", ((MockDef2)d).SubDef.Key);
 			},
 			d => {
@@ -247,6 +247,35 @@ public class DefParserTests {
 		Assert.NotNull(loadedDef1);
 		Assert.NotNull(loadedDef2);
 	}
+
+
+	/// <summary>
+	/// Tests that defs can be loaded from multiple roots.
+	/// </summary>
+	[Fact]
+	public void LoadTest09() {
+		Init.Setup(13, service);
+
+		MockDef9? def = service.LoadDef<MockDef9>("MockDef");
+
+		Assert.NotNull(def);
+		Assert.Equal(3, def.PrimitiveField);
+		Assert.Equal(MockEnum.VALUE2, def.EnumField);
+		Assert.NotNull(def.ClassField);
+		Assert.Equal(1, def.ClassField.Value);
+		Assert.NotNull(def.ListField);
+		Assert.Collection(def.ListField,
+			e => {
+				Assert.Equal(4, e);
+			},
+			e => {
+				Assert.Equal(5, e);
+			},
+			e => {
+				Assert.Equal(6, e);
+			}
+		);
+	}
 	#endregion
 
 	#region LoadFactory tests
@@ -327,7 +356,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest02() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-valid");
-		service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile);
 		service.Reload();
 
 		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
@@ -345,7 +374,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest03() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "self-reference");
-		service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile);
 		service.Reload();
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
@@ -358,7 +387,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest04() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid");
-		service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile);
 		service.Reload();
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
@@ -371,7 +400,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest05() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid-2");
-		service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile);
 		service.Reload();
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
