@@ -1,6 +1,5 @@
 <Defs>
-	<Def>
+	<Def Class="Lithium.Defs.Tests.MockDef1">
 		<Key>MockDef</Key>
-		<Class>Lithium.Defs.Tests.MockDef1</Class>
 	</Def>
 </Defs>

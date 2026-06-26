@@ -1,14 +1,12 @@
 <Defs>
-	<Def>
+	<Def Class="Lithium.Defs.Tests.MockDef9">
 		<Key>MockParentDef</Key>
-		<Class>Lithium.Defs.Tests.MockDef9</Class>
 		<Label>MockDef_Label</Label>
 		<PrimitiveField>1.0</PrimitiveField>
 	</Def>
 
-	<Def Root="MockParentDef">
+	<Def Class="Lithium.Defs.Tests.MockDef1" Root="MockParentDef">
 		<Key>MockDef</Key>
-		<Class>Lithium.Defs.Tests.MockDef1</Class>
 		<Label>MockDef_Label</Label>
 	</Def>
 </Defs>

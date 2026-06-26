@@ -1,5 +1,5 @@
 <Defs>
-	<Def>
+	<Def Class="Def.Class.That.Does.Not.Exist">
 		<Key>MockDef</Key>
 		<Class>Def.Class.That.Does.Not.Exist</Class>
 		<Label>MockDef_Label</Label>

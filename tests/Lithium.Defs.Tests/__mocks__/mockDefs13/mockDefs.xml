@@ -1,7 +1,6 @@
 <Defs>
-	<Def>
+	<Def Class="Lithium.Defs.Tests.MockDef9">
 		<Key>MockDef</Key>
-		<Class>Lithium.Defs.Tests.MockDef9</Class>
 		<Label>MockDef_Label</Label>
 		<EnumField>VALUE1</EnumField>
 		<ClassField>
@@ -14,9 +13,8 @@
 		</ListField>
 	</Def>
 
-	<Def>
+	<Def Class="Lithium.Defs.Tests.MockDef9">
 		<Key>MockDef</Key>
-		<Class>Lithium.Defs.Tests.MockDef9</Class>
 		<PrimitiveField>3</PrimitiveField>
 		<EnumField>VALUE2</EnumField>
 		<ClassField>

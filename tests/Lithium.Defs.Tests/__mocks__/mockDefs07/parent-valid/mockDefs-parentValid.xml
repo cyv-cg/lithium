@@ -1,20 +1,17 @@
 <Defs>
-	<Def Root="MockParentDef">
+	<Def Class="Lithium.Defs.Tests.MockDef1" Root="MockParentDef">
 		<Key>OtherMockDef</Key>
-		<Class>Lithium.Defs.Tests.MockDef1</Class>
 		<Label>MockDef_Label</Label>
 	</Def>
 
-	<Def>
+	<Def Class="Lithium.Defs.Tests.MockDef1">
 		<Key>MockParentDef</Key>
-		<Class>Lithium.Defs.Tests.MockDef1</Class>
 		<Label>MockDef_Label</Label>
 		<SampleValue1>1</SampleValue1>
 	</Def>
 
-	<Def Root="MockParentDef">
+	<Def Class="Lithium.Defs.Tests.MockDef1" Root="MockParentDef">
 		<Key>MockDef</Key>
-		<Class>Lithium.Defs.Tests.MockDef1</Class>
 		<Label>MockDef_Label</Label>
 	</Def>
 </Defs>

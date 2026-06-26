@@ -1,13 +1,11 @@
 <Defs>
-	<Def>
+	<Def Class="Lithium.Defs.Tests.MockDef1">
 		<Key>MockDef1</Key>
-		<Class>Lithium.Defs.Tests.MockDef1</Class>
 		<Label>MockDef_Label</Label>
 	</Def>
 
-	<Def>
+	<Def Class="Lithium.Defs.Tests.MockDef1">
 		<Key>MockDef2</Key>
-		<Class>Lithium.Defs.Tests.MockDef1</Class>
 		<Label>sub.namespace.MockDef_Label</Label>
 	</Def>
 </Defs>

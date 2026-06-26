@@ -1,5 +1,5 @@
 <Defs>
-	<Def Root="MockDef">
+	<Def Class="Lithium.Defs.Tests.MockDef1" Root="MockDef">
 		<Key>MockDef</Key>
 		<Class>Lithium.Defs.Tests.MockDef1</Class>
 		<Label>MockDef_Label</Label>
