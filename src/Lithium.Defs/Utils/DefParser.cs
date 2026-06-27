@@ -35,9 +35,9 @@ public static class DefParser {
 	/// <exception cref="DefFactoryReturnTypeException">Thrown when the def factory has the wrong return type.</exception>
 	/// <exception cref="DefFactoryConstructorParamsException">Thrown when the def constructor has the wrong parameter list.</exception>
 	public static IEnumerable<Def> ParseDef(this IDefService service, XmlNode node) {
-		string? defClass = node.GetChildValue<string>(Constants.DEF_CLASS_ELEMENT);
+		string defClass = node.GetAttributeValue(Constants.DEF_CLASS_ATTR);
 		if (string.IsNullOrEmpty(defClass)) {
-			throw new NodeMissingChildException(node, Constants.DEF_CLASS_ELEMENT);
+			throw new NodeMissingChildException(node, Constants.DEF_CLASS_ATTR);
 		}
 		Type? defType = TypeChecker.ResolveType(defClass);
 		if (defType == null) {
@@ -68,7 +68,7 @@ public static class DefParser {
 	/// <exception cref="DefParentInvalidException">Thrown if the parent and child are not the same type.</exception>
 	public static void InheritDefXML(ref XmlNode child, XmlNode parent) {
 		// Validate that the parent and child reference the same type name.
-		if (!child.Name.Equals(parent.Name)) {
+		if (!child.GetAttributeValue(Constants.DEF_CLASS_ATTR).Equals(parent.GetAttributeValue(Constants.DEF_CLASS_ATTR))) {
 			throw new DefParentInvalidException(GetDefKey(child));
 		}
 		// Copy all properties from the parent onto the child, overwriting existing data.
@@ -160,9 +160,9 @@ public static class DefParser {
 		string defKey = GetDefKey(defNode);
 
 		// Load the "Root" def, if present.
-		XmlAttribute? rootAttr = defNode.Attributes[Constants.DEF_PARENT_ATTR];
-		if (rootAttr != null) {
-			service.ParseRoot(ref defInstance, rootAttr.Value, defKey, defType);
+		string rootAttr = defNode.GetAttributeValue(Constants.DEF_PARENT_ATTR);
+		if (!string.IsNullOrEmpty(rootAttr)) {
+			service.ParseRoot(ref defInstance, rootAttr, defKey, defType);
 		}
 	}
 	/// <summary>
@@ -211,7 +211,7 @@ public static class DefParser {
 		Stack<DefLink> links = new Stack<DefLink>();
 
 		foreach (XmlNode propNode in defNode.ChildNodes) {
-			if (propNode.NodeType == XmlNodeType.Comment || propNode.Name.Equals(Constants.DEF_CLASS_ELEMENT)) {
+			if (propNode.NodeType == XmlNodeType.Comment) {
 				continue;
 			}
 

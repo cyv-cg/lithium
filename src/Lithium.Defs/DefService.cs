@@ -193,7 +193,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		// If deferred loading is enabled, also check every unloaded def
 		// to see if it's the requested type.
 		foreach ((string key, XmlNode node) in resources) {
-			string? className = node.GetChildValue<string>(Constants.DEF_CLASS_ELEMENT);
+			string className = node.GetAttributeValue(Constants.DEF_CLASS_ATTR);
 			if (string.IsNullOrEmpty(className)) {
 				continue;
 			}
