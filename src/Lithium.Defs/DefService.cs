@@ -9,6 +9,7 @@ using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
 using Lithium.Defs.Exceptions;
+using Lithium.Defs.XML;
 
 namespace Lithium.Defs;
 
@@ -163,12 +164,12 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 
 		// Add each found node to the resources registry.
 		foreach ((string key, XmlNode node) in nodes) {
-			if (!DefParser.ValidateDefName(key)) {
+			if (!DefXMLUtils.ValidateDefName(key)) {
 				throw new FormatException($"{Constants.DEF_KEY_ELEMENT} ('{key}') must be a valid identifier: '^[a-zA-Z@][a-zA-Z0-9\\-_]*$'.");
 			}
 
 			if (resources.TryGetValue(key, out XmlNode? baseNode)) {
-				DefParser.InheritDefXML(ref baseNode, node);
+				DefXMLUtils.InheritDefXML(ref baseNode, node);
 			}
 			else {
 				resources.Add(key, node);

@@ -3,14 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Attributes;
 using Lithium.Core.Exceptions;
 using Lithium.Defs.Exceptions;
 
-namespace Lithium.Defs;
+namespace Lithium.Defs.XML;
 
 /// <summary>
 /// Utility for loading defs from XML.
@@ -43,6 +42,9 @@ public static class DefParser {
 		if (defType == null) {
 			throw new UnresolvedTypeException(defClass);
 		}
+		if (!defType.IsDef()) {
+			throw new DefInheritanceException(DefXMLUtils.GetDefKey(node), defType, typeof(Def));
+		}
 
 		object defInstance = Activator.CreateInstance(defType)!;
 		service.ParseAttributes(ref defInstance, node, defType);
@@ -56,52 +58,6 @@ public static class DefParser {
 		defs.UnionWith(service.ResolveDefLinks(links));
 
 		return defs;
-	}
-
-	/// <summary>
-	/// Utility for applying Def inheritance at the XML-level.
-	/// Used for when a single Def key is defined in multiple places.
-	/// The Def loaded later overwrites the one loaded sooner.
-	/// </summary>
-	/// <param name="child">Reference to the child node. This is the node that will have its data overwritten.</param>
-	/// <param name="parent">The parent node and source of the data to overwrite with.</param>
-	/// <exception cref="DefParentInvalidException">Thrown if the parent and child are not the same type.</exception>
-	public static void InheritDefXML(ref XmlNode child, XmlNode parent) {
-		// Validate that the parent and child reference the same type name.
-		if (!child.GetAttributeValue(Constants.DEF_CLASS_ATTR).Equals(parent.GetAttributeValue(Constants.DEF_CLASS_ATTR))) {
-			throw new DefParentInvalidException(GetDefKey(child));
-		}
-		// Copy all properties from the parent onto the child, overwriting existing data.
-		foreach (XmlNode childOverride in parent.ChildNodes) {
-			string nodeProp = childOverride.Name;
-			// Skip the key property, since those should match anyway.
-			if (nodeProp.Equals(Constants.DEF_KEY_ELEMENT)) {
-				continue;
-			}
-			// If the child node already has this property defined, just replace the inner XML.
-			XmlNode? toReplace = child.SelectSingleNode(nodeProp);
-			if (toReplace != null) {
-				toReplace.InnerXml = childOverride.InnerXml;
-			}
-			// If it doesn't have that property already, import the parent's node.
-			else {
-				// child.OwnerDocument only returns null if child is itself of type XmlDocument.
-				// That *should* never happen with this setup and syntax.
-				XmlNode importedNodeToAdd = child.OwnerDocument!.ImportNode(childOverride, true);
-				_ = child.AppendChild(importedNodeToAdd);
-			}
-		}
-	}
-
-	/// <summary>
-	/// Validates a Def key against a regular expression.
-	/// </summary>
-	/// <param name="key">Def key to check.</param>
-	/// <returns>True if the key passes, false otherwise.</returns>
-	public static bool ValidateDefName(string key) {
-		// Basic identifier regex just including a hyphen.
-		string pattern = @"^[a-zA-Z@][a-zA-Z0-9\-_]*$";
-		return Regex.Count(key, pattern) > 0;
 	}
 
 	/// <summary>
@@ -157,7 +113,7 @@ public static class DefParser {
 			return;
 		}
 
-		string defKey = GetDefKey(defNode);
+		string defKey = DefXMLUtils.GetDefKey(defNode);
 
 		// Load the "Root" def, if present.
 		string rootAttr = defNode.GetAttributeValue(Constants.DEF_PARENT_ATTR);
@@ -205,7 +161,7 @@ public static class DefParser {
 	private static Stack<DefLink> ParseXmlToClass(ref object instance, XmlNode defNode, Type type) {
 		// Check if any required fields are not defined in XML.
 		if (!ValidateRequiredFields(defNode, type, out IEnumerable<PropertyInfo> missingProps)) {
-			throw new MissingDefPropException(GetDefKey(defNode), missingProps.ToArray());
+			throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), missingProps.ToArray());
 		}
 
 		Stack<DefLink> links = new Stack<DefLink>();
@@ -396,7 +352,7 @@ public static class DefParser {
 			return value;
 		}
 		else {
-			throw new PropertyLoadException(GetDefKey(defNode), node.Name, node.InnerText, type);
+			throw new PropertyLoadException(DefXMLUtils.GetDefKey(defNode), node.Name, node.InnerText, type);
 		}
 	}
 	/// <summary>
@@ -423,7 +379,7 @@ public static class DefParser {
 			PropertyInfo parentTypeProperty = enforceAttr.GetType().GetProperty("ParentType")!;
 			Type enforcedType = (Type)parentTypeProperty.GetValue(enforceAttr)!;
 			if (!enforcedType.IsAssignableFrom(targetType)) {
-				throw new DefInheritanceException(GetDefKey(defNode), prop.Name, targetType, enforcedType);
+				throw new DefInheritanceException(DefXMLUtils.GetDefKey(defNode), prop.Name, targetType, enforcedType);
 			}
 		}
 		return targetType;
@@ -439,19 +395,5 @@ public static class DefParser {
 		object subClass = Activator.CreateInstance(type)!;
 		links = ParseXmlToClass(ref subClass, node, type);
 		return subClass;
-	}
-
-	/// <summary>
-	/// Attemps to get the name of a Def from its XML.
-	/// </summary>
-	/// <param name="node">Top-level Def node to check.</param>
-	/// <returns>The value of the Def's "Key" child.</returns>
-	/// <exception cref="NodeMissingChildException">Thrown if the "Key" element does not exist.</exception>
-	private static string GetDefKey(XmlNode node) {
-		string? key = node.GetChildValue<string>(Constants.DEF_KEY_ELEMENT);
-		if (string.IsNullOrEmpty(key)) {
-			throw new NodeMissingChildException(node, Constants.DEF_KEY_ELEMENT);
-		}
-		return key;
 	}
 }
