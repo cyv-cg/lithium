@@ -74,6 +74,12 @@ public static class DefParser {
 		while (links.Count > 0) {
 			DefLink link = links.Pop();
 
+			// Special case to handle self-references.
+			if (link.Instance is Def def && link.DefName.Equals(def.Key)) {
+				ApplyDefLink(link, def);
+				continue;
+			}
+
 			// Either fetch value from loaded defs or load a new one.
 			if (!service.TryLoadDef(link.DefName, out Def? defValue)) {
 				throw new DefNotFoundException(link.DefName);

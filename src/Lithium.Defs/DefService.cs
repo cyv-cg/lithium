@@ -279,13 +279,22 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// <param name="node">Def node to parse.</param>
 	/// <returns>The parsed Def object.</returns>
 	private Def InitDef(XmlNode node) {
+		// Save a temporary version of the Def to load in case of circular references.
+		defs.Add(DefXMLUtils.GetDefKey(node), DefXMLUtils.CreateTempDef(node));
+
 		IEnumerable<Def> loadedDefs = this.ParseDef(node);
 		foreach (Def def in loadedDefs) {
-			if (defs.ContainsKey(def.Key)) {
+			// Skip temporary defs.
+			if (def.Key.Contains(Constants.TEMP_DEF_INDICATOR)) {
 				continue;
 			}
 
-			defs.Add(def.Key, def);
+			if (!defs.TryAdd(def.Key, def)) {
+				// Replace temporary entry.
+				Def tempEntry = defs[def.Key];
+				def.CopyTo(ref tempEntry);
+			}
+
 			_ = resources.Remove(def.Key);
 		}
 		return loadedDefs.First();
