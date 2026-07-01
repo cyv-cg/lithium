@@ -58,6 +58,10 @@ public class MockDef13 : Def {
 public class MockDef14 : Def {
 	public required Def Pointer { get; init; }
 }
+public class MockDef15 : Def {
+	public required MockDefDataClass DataSingle { get; init; }
+	public required List<MockDefDataClass> DataList { get; init; }
+}
 
 public enum MockEnum {
 	VALUE1,
@@ -69,6 +73,9 @@ public class MockDataClass {
 }
 public struct MockDataStruct {
 	public int Value { get; set; }
+}
+public class MockDefDataClass {
+	public Def? Value { get; set; }
 }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

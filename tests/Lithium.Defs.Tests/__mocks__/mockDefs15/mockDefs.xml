@@ -93,4 +93,23 @@
 		<Label>MockDef_Label</Label>
 		<Pointer>DefA</Pointer>
 	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef9">
+		<Key>MockDef-EmptyList</Key>
+		<Label>MockDef_Label</Label>
+		<ListField></ListField>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef15">
+		<Key>MockDef-ClassList</Key>
+		<Label>MockDef_Label</Label>
+		<DataSingle>
+			<Value>MockDef2</Value>
+		</DataSingle>
+		<DataList>
+			<li>
+				<Value>FactoryDef</Value>
+			</li>
+		</DataList>
+	</Def>
 </Defs>

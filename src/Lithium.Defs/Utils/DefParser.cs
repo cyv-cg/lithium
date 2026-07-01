@@ -29,15 +29,12 @@ public static class DefParser {
 	/// <exception cref="MissingFieldException">Thrown when a property specified in the def XML does not exist on the type.</exception>
 	/// <exception cref="PropertyLoadException">Thrown when a string could not be matched to a property value.</exception>
 	/// <exception cref="DefInheritanceException">Thrown when a <see cref="Type"/> property value does not meet its inheritance restrictions.</exception>
-	/// <exception cref="NodeMissingChildException">Thrown when the "Key" or "Class" element does not exist in a Def's XML.</exception>
+	/// <exception cref="NodeMissingChildException">Thrown when the "Key" element does not exist in a Def's XML.</exception>
 	/// <exception cref="DefFactoryMissingException">Thrown when the class has the <see cref="UseDefOverrideInitializer"/> attribute but no applicable constructor or factory method.</exception>
 	/// <exception cref="DefFactoryReturnTypeException">Thrown when the def factory has the wrong return type.</exception>
 	/// <exception cref="DefFactoryConstructorParamsException">Thrown when the def constructor has the wrong parameter list.</exception>
 	public static IEnumerable<Def> ParseDef(this IDefService service, XmlNode node) {
 		string defClass = node.GetAttributeValue(Constants.DEF_CLASS_ATTR);
-		if (string.IsNullOrEmpty(defClass)) {
-			throw new NodeMissingChildException(node, Constants.DEF_CLASS_ATTR);
-		}
 		Type? defType = TypeChecker.ResolveType(defClass);
 		if (defType == null) {
 			throw new UnresolvedTypeException(defClass);
@@ -115,10 +112,6 @@ public static class DefParser {
 	/// <param name="defNode">Top-level XML node for the Def.</param>
 	/// <param name="defType">Type of the def instance.</param>
 	private static void ParseAttributes(this IDefService service, ref object defInstance, XmlNode defNode, Type defType) {
-		if (defNode.Attributes == null) {
-			return;
-		}
-
 		string defKey = DefXMLUtils.GetDefKey(defNode);
 
 		// Load the "Root" def, if present.

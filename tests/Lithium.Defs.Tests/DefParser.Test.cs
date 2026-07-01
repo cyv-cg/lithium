@@ -4,9 +4,12 @@ using System.IO;
 using System;
 using Lithium.Defs.Exceptions;
 using Lithium.Core.Exceptions;
-using Lithium.Core.Attributes;
 using System.Linq;
 using System.Collections.Generic;
+using System.Xml;
+using Lithium.Core;
+using Lithium.Defs.XML;
+using Lithium.Core.Attributes;
 
 namespace Lithium.Defs.Tests;
 
@@ -160,6 +163,25 @@ public class DefParserTests {
 				);
 			},
 			d => {
+				MockDef15 def = (d as MockDef15)!;
+
+				Assert.Equal("MockDef-ClassList", d.Key);
+
+				Assert.NotNull(def.DataSingle.Value);
+				Assert.Equal("MockDef2", def.DataSingle.Value.Key);
+
+				MockDefDataClass @class = Assert.Single(def.DataList);
+				Assert.NotNull(@class.Value);
+				Assert.Equal("FactoryDef", @class.Value.Key);
+			},
+			d => {
+				MockDef9 def = (d as MockDef9)!;
+
+				Assert.Equal("MockDef-EmptyList", d.Key);
+				Assert.NotNull(def.ListField);
+				Assert.Empty(def.ListField);
+			},
+			d => {
 				MockDef13 def = (d as MockDef13)!;
 
 				Assert.Equal("MockDef-Self-Reference", d.Key);
@@ -200,14 +222,37 @@ public class DefParserTests {
 			}
 		);
 	}
-	#endregion
+	/// <summary>
+	/// Tests that ParseDef fails under various conditions
+	/// </summary>
+	[Fact]
+	public void ParseDefTest07() {
+		XmlNodeList nodes = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(16), "mockDefs.xml"))!.FirstChild!.ChildNodes!;
 
-	#region LoadAll tests
+		Exception ex1 = Assert.Throws<UnresolvedTypeException>(
+			() => DefParser.ParseDef(service, nodes[0]!)
+		);
+		Exception ex2 = Assert.Throws<DefInheritanceException>(
+			() => DefParser.ParseDef(service, nodes[1]!)
+		);
+		Exception ex3 = Assert.Throws<DefNotFoundException>(
+			() => DefParser.ParseDef(service, nodes[2]!)
+		);
+		Exception ex4 = Assert.Throws<DefNotFoundException>(
+			() => DefParser.ParseDef(service, nodes[3]!)
+		);
+
+		Assert.NotNull(ex1);
+		Assert.NotNull(ex2);
+		Assert.NotNull(ex3);
+		Assert.NotNull(ex4);
+	}
+
 	/// <summary>
 	/// Tests that LoadAll can initialize a simple Def.
 	/// </summary>
 	[Fact]
-	public void LoadAllTest02() {
+	public void ParseDefTest08() {
 		Init.Setup(1, service);
 
 		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
@@ -221,7 +266,7 @@ public class DefParserTests {
 	/// Tests that LoadAll can initialize nested Defs.
 	/// </summary>
 	[Fact]
-	public void LoadAllTest03() {
+	public void ParseDefTest09() {
 		Init.Setup(2, service);
 
 		MockDef2? loadedDef = service.LoadDef<MockDef2>("FirstDef");
@@ -240,7 +285,7 @@ public class DefParserTests {
 	/// Tests that LoadAll can initialize a nested list of Defs.
 	/// </summary>
 	[Fact]
-	public void LoadAllTest04() {
+	public void ParseDefTest10() {
 		Init.Setup(2, service);
 
 		MockDef3? loadedDef = service.LoadDef<MockDef3>("ThirdDef");
@@ -267,7 +312,7 @@ public class DefParserTests {
 	/// Tests that LoadAll can initialize a simple Def with deferred loading.
 	/// </summary>
 	[Fact]
-	public void LoadAllTest06() {
+	public void ParseDefTest11() {
 		Init.Setup(1, service);
 
 		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
@@ -282,7 +327,7 @@ public class DefParserTests {
 	/// Tests that LoadAll can initialize nested Defs with deferred loading.
 	/// </summary>
 	[Fact]
-	public void LoadAllTest07() {
+	public void ParseDefTest12() {
 		Init.Setup(2, service);
 
 		MockDef2? loadedDef = service.LoadDef<MockDef2>("FirstDef");
@@ -301,7 +346,7 @@ public class DefParserTests {
 	/// Tests that LoadAll can initialize a nested list of Defs with deferred loading.
 	/// </summary>
 	[Fact]
-	public void LoadAllTest08() {
+	public void ParseDefTest13() {
 		Init.Setup(2, service);
 
 		MockDef3? loadedDef = service.LoadDef<MockDef3>("ThirdDef");
@@ -324,14 +369,12 @@ public class DefParserTests {
 			}
 		);
 	}
-	#endregion
 
-	#region Load tests
 	/// <summary>
 	/// Tests that Load can initialize a Def with various field types, including primitives, enums, types, classes, and lists.
 	/// </summary>
 	[Fact]
-	public void LoadTest01() {
+	public void ParseDefTest14() {
 		Init.Setup(5, service);
 
 		MockDef9? loadedDef = service.LoadDef<MockDef9>("MockDef-comments");
@@ -346,7 +389,7 @@ public class DefParserTests {
 	/// Tests that Load throws an exception when trying to load a Def with an invalid enum value.
 	/// </summary>
 	[Fact]
-	public void LoadTest02() {
+	public void ParseDefTest15() {
 		Init.Setup(5, service);
 
 		Exception e = Assert.Throws<PropertyLoadException>(
@@ -357,7 +400,7 @@ public class DefParserTests {
 	/// Tests that Load throws an exception when trying to load a Def with an invalid type value.
 	/// </summary>
 	[Fact]
-	public void LoadTest03() {
+	public void ParseDefTest16() {
 		Init.Setup(5, service);
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
@@ -368,7 +411,7 @@ public class DefParserTests {
 	/// Tests that Load can successfully load a Def with a type field that meets the requirements of the EnforceInheritance attribute.
 	/// </summary>
 	[Fact]
-	public void LoadTest04() {
+	public void ParseDefTest17() {
 		Init.Setup(5, service);
 
 		MockDef10? loadedDef = service.LoadDef<MockDef10>("MockDef-inheritance-valid");
@@ -380,7 +423,7 @@ public class DefParserTests {
 	/// Tests that Load throws an exception when trying to load a Def with a type that does not meet the requirements of the EnforceInheritance attribute.
 	/// </summary>
 	[Fact]
-	public void LoadTest05() {
+	public void ParseDefTest18() {
 		Init.Setup(5, service);
 
 		Exception e = Assert.Throws<DefInheritanceException>(
@@ -391,7 +434,7 @@ public class DefParserTests {
 	/// Tests that Load throws an exception when trying to load a Def with a property that does not exist on the Def class.
 	/// </summary>
 	[Fact]
-	public void LoadTest06() {
+	public void ParseDefTest19() {
 		Init.Setup(5, service);
 
 		Exception e = Assert.Throws<MissingFieldException>(
@@ -402,7 +445,7 @@ public class DefParserTests {
 	/// Tests that Load throws a <see cref="MissingDefPropException"/> when a required field is missing.
 	/// </summary>
 	[Fact]
-	public void LoadTest07() {
+	public void ParseDefTest20() {
 		Init.Setup(11, service);
 		service.Reload();
 
@@ -415,7 +458,7 @@ public class DefParserTests {
 	/// Tests that defs can be loaded from multiple roots.
 	/// </summary>
 	[Fact]
-	public void LoadTest08() {
+	public void ParseDefTest21() {
 		_ = service.RegisterResource(Init.MockDirectory(1));
 		_ = service.RegisterResource(Init.MockDirectory(2));
 		service.Reload();
@@ -428,12 +471,11 @@ public class DefParserTests {
 		Assert.NotNull(loadedDef2);
 	}
 
-
 	/// <summary>
 	/// Tests that defs can be loaded from multiple roots.
 	/// </summary>
 	[Fact]
-	public void LoadTest09() {
+	public void ParseDefTest22() {
 		Init.Setup(13, service);
 
 		MockDef9? def = service.LoadDef<MockDef9>("MockDef");
