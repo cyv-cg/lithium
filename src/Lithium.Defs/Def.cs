@@ -9,7 +9,7 @@ namespace Lithium.Defs;
 /// <summary>
 /// Root structure for all Defs.
 /// </summary>
-public record Def {
+public class Def {
 	/// <summary>
 	/// Primary key used to solely define the object.
 	/// Must be distinct from all other Defs.

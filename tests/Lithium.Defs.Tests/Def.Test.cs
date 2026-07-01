@@ -9,17 +9,10 @@ namespace Lithium.Defs.Tests;
 public class DefTests {
 	/// <summary>
 	/// Tests the setters for Def.
-	/// Records are funny, so this has to be done after instantiating for full test coverage.
-	/// https://stackoverflow.com/questions/70455702/how-to-get-code-coverage-on-c-sharp-record-setters-with-positional-constructor
 	/// </summary>
 	[Fact]
 	public void ConstructorTest01() {
 		Def def = new Def {
-			Key = "MockDef",
-			Label = new KeyedString("MockDef_Label")
-		};
-
-		def = def with {
 			Key = "MockDef",
 			Label = new KeyedString("MockDef_Label")
 		};
