@@ -47,6 +47,17 @@ public class MockDef10 : Def {
 public class MockDef11 : Def {
 	public MockDataStruct? ClassField { get; init; }
 }
+public class MockDef12 : MockDef9 {
+	public required List<Def> DefList { get; init; }
+}
+public class MockDef13 : Def {
+	public required Def NestedDef1 { get; init; }
+	public required Def NestedDef2 { get; init; }
+	public required Def NestedDef3 { get; init; }
+}
+public class MockDef14 : Def {
+	public required Def Pointer { get; init; }
+}
 
 public enum MockEnum {
 	VALUE1,

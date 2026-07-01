@@ -6,6 +6,7 @@ using Lithium.Defs.Exceptions;
 using Lithium.Core.Exceptions;
 using Lithium.Core.Attributes;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Lithium.Defs.Tests;
 
@@ -21,6 +22,185 @@ public class DefParserTests {
 	public DefParserTests() {
 		service = new DefService(new DefServiceOptions());
 	}
+
+	#region ParseDef tests
+	/// <summary>
+	/// Test that ParseDef throws an exception if an invalid class name is used.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest01() {
+		Init.Setup(6, service);
+
+		Exception e = Assert.Throws<UnresolvedTypeException>(
+			() => service.LoadDef<Def>("MockDef")
+		);
+	}
+	/// <summary>
+	/// Test that ParseDef correctly applies a parent's properties regardless of load order.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest02() {
+		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-valid");
+		_ = service.RegisterResource(mockFile);
+		service.Reload();
+
+		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
+		MockDef1? loadedDef2 = service.LoadDef<MockDef1>("OtherMockDef");
+
+		Assert.NotNull(loadedDef);
+		Assert.Equal(1, loadedDef.SampleValue1);
+
+		Assert.NotNull(loadedDef2);
+		Assert.Equal(1, loadedDef2.SampleValue1);
+	}
+	/// <summary>
+	/// Test that ParseDef throws an exception when a def tries to inherit from itself.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest03() {
+		string mockFile = Path.Combine(Init.MockDirectory(7), "self-reference");
+		_ = service.RegisterResource(mockFile);
+		service.Reload();
+
+		Exception e = Assert.Throws<DefParentInvalidException>(
+			() => service.LoadDef<Def>("MockDef")
+		);
+	}
+	/// <summary>
+	/// Test that ParseDef throws an exception when a def tries to inherit from a parent of a different class.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest04() {
+		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid");
+		_ = service.RegisterResource(mockFile);
+		service.Reload();
+
+		Exception e = Assert.Throws<DefParentInvalidException>(
+			() => service.LoadDef<Def>("MockDef")
+		);
+	}
+	/// <summary>
+	/// Test that an exception is thrown when trying to inherit from a parent with a class that does not exist.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest05() {
+		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid-2");
+		_ = service.RegisterResource(mockFile);
+		service.Reload();
+
+		Exception e = Assert.Throws<UnresolvedTypeException>(
+			() => service.LoadDef<Def>("MockDef")
+		);
+	}
+	/// <summary>
+	/// Test that ParseDef can parse objects in various valid configurations.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest06() {
+		_ = service.RegisterResource(Init.MockDirectory(15));
+		service.Reload();
+
+		IEnumerable<Def> defs = service.LoadAll();
+
+		Assert.Collection(defs.OrderBy(d => d.Key),
+			d => {
+				MockDef14 def = (d as MockDef14)!;
+
+				Assert.Equal("DefA", d.Key);
+				Assert.Equal("DefB", def.Pointer.Key);
+			},
+			d => {
+				MockDef14 def = (d as MockDef14)!;
+
+				Assert.Equal("DefB", d.Key);
+				Assert.Equal("DefC", def.Pointer.Key);
+			},
+			d => {
+				MockDef14 def = (d as MockDef14)!;
+
+				Assert.Equal("DefC", d.Key);
+				Assert.Equal("DefD", def.Pointer.Key);
+			},
+			d => {
+				MockDef14 def = (d as MockDef14)!;
+
+				Assert.Equal("DefD", d.Key);
+				Assert.Equal("DefA", def.Pointer.Key);
+			},
+			d => {
+				MockDef4 def = (d as MockDef4)!;
+
+				Assert.Equal("FactoryDef", d.Key);
+				Assert.Equal("MockDef_Label", d.Label.Address);
+				Assert.Equal(11, def.FactoryClass.tenPlus);
+			},
+			d => {
+				MockDef12 def = (d as MockDef12)!;
+
+				Assert.Equal("MasterDef", d.Key);
+				Assert.Equal("MockDef_Label", d.Label.Address);
+				Assert.Equal(0.1f, def.PrimitiveField);
+				Assert.Equal(MockEnum.VALUE1, def.EnumField);
+				Assert.Equal(typeof(MockDataClass), def.TypeField);
+				Assert.Equal(40, def.ClassField!.Value);
+				Assert.Equal(new List<int> { 1, 2, 3 }, def.ListField);
+				Assert.Collection(def.DefList.OrderBy(e => e.Key),
+					s => {
+						Assert.Equal("FactoryDef", s.Key);
+					},
+					s => {
+						Assert.Equal("MockDef-Self-Reference", s.Key);
+					},
+					s => {
+						Assert.Equal("MockDef2", s.Key);
+					},
+					s => {
+						Assert.Equal("MockDef3", s.Key);
+					}
+				);
+			},
+			d => {
+				MockDef13 def = (d as MockDef13)!;
+
+				Assert.Equal("MockDef-Self-Reference", d.Key);
+				Assert.Equal("MockDef_Label", d.Label.Address);
+				Assert.Equal("MockDef-Self-Reference", def.NestedDef1.Key);
+				Assert.Equal("MasterDef", def.NestedDef2.Key);
+				Assert.Equal("MockDef3", def.NestedDef3.Key);
+				Assert.Equal("MasterDef", (def.NestedDef3 as MockDef3)!.DefList.First().Key);
+			},
+			d => {
+				MockDef1 def = (d as MockDef1)!;
+
+				Assert.Equal("MockDef-Simple", d.Key);
+				Assert.Equal("MockDef_Label", d.Label.Address);
+				Assert.Equal(3, def.SampleValue1);
+			},
+			d => {
+				MockDef2 def = (d as MockDef2)!;
+
+				Assert.Equal("MockDef2", d.Key);
+				Assert.Equal("MockDef_Label", d.Label.Address);
+				Assert.Equal("MockDef-Simple", def.SubDef.Key);
+			},
+			d => {
+				MockDef2 def = (d as MockDef2)!;
+
+				Assert.Equal("MockDef2-Parent", d.Key);
+				Assert.Equal("MockDef_Label", d.Label.Address);
+				Assert.Equal("MockDef-Simple", def.SubDef.Key);
+			},
+			d => {
+				MockDef3 def = (d as MockDef3)!;
+
+				Assert.Equal("MockDef3", d.Key);
+				Assert.Equal("MockDef_Label", d.Label.Address);
+				_ = Assert.Single(def.DefList);
+				Assert.Equal("MasterDef", def.DefList.First().Key);
+			}
+		);
+	}
+	#endregion
 
 	#region LoadAll tests
 	/// <summary>
@@ -334,77 +514,6 @@ public class DefParserTests {
 
 		Exception e = Assert.Throws<DefFactoryReturnTypeException>(
 			() => service.LoadDef<MockDef8>("MockDef05")
-		);
-	}
-	#endregion
-
-	#region ParseDef tests
-	/// <summary>
-	/// Test that ParseDef throws an exception if an invalid class name is used.
-	/// </summary>
-	[Fact]
-	public void ParseDefTest01() {
-		Init.Setup(6, service);
-
-		Exception e = Assert.Throws<UnresolvedTypeException>(
-			() => service.LoadDef<Def>("MockDef")
-		);
-	}
-	/// <summary>
-	/// Test that ParseDef correctly applies a parent's properties regardless of load order.
-	/// </summary>
-	[Fact]
-	public void ParseDefTest02() {
-		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-valid");
-		_ = service.RegisterResource(mockFile);
-		service.Reload();
-
-		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
-		MockDef1? loadedDef2 = service.LoadDef<MockDef1>("OtherMockDef");
-
-		Assert.NotNull(loadedDef);
-		Assert.Equal(1, loadedDef.SampleValue1);
-
-		Assert.NotNull(loadedDef2);
-		Assert.Equal(1, loadedDef2.SampleValue1);
-	}
-	/// <summary>
-	/// Test that ParseDef throws an exception when a def tries to inherit from itself.
-	/// </summary>
-	[Fact]
-	public void ParseDefTest03() {
-		string mockFile = Path.Combine(Init.MockDirectory(7), "self-reference");
-		_ = service.RegisterResource(mockFile);
-		service.Reload();
-
-		Exception e = Assert.Throws<DefParentInvalidException>(
-			() => service.LoadDef<Def>("MockDef")
-		);
-	}
-	/// <summary>
-	/// Test that ParseDef throws an exception when a def tries to inherit from a parent of a different class.
-	/// </summary>
-	[Fact]
-	public void ParseDefTest04() {
-		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid");
-		_ = service.RegisterResource(mockFile);
-		service.Reload();
-
-		Exception e = Assert.Throws<DefParentInvalidException>(
-			() => service.LoadDef<Def>("MockDef")
-		);
-	}
-	/// <summary>
-	/// Test that an exception is thrown when trying to inherit from a parent with a class that does not exist.
-	/// </summary>
-	[Fact]
-	public void ParseDefTest05() {
-		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid-2");
-		_ = service.RegisterResource(mockFile);
-		service.Reload();
-
-		Exception e = Assert.Throws<UnresolvedTypeException>(
-			() => service.LoadDef<Def>("MockDef")
 		);
 	}
 	#endregion

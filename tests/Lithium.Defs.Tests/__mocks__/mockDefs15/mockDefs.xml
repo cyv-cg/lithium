@@ -1,0 +1,96 @@
+<Defs>
+	<Def Class="Lithium.Defs.Tests.MockDef12">
+		<Key>MasterDef</Key>
+		<Label>MockDef_Label</Label>
+		<PrimitiveField>0.1</PrimitiveField>
+		<EnumField>VALUE1</EnumField>
+		<TypeField>Lithium.Defs.Tests.MockDataClass</TypeField>
+		<ClassField>
+			<!-- Comment in a class -->
+			<Value>20</Value>
+		</ClassField>
+		<ListField>
+			<li>1</li>
+			<li>2</li>
+			<li>3</li>
+		</ListField>
+		<DefList>
+			<li>FactoryDef</li>
+			<li>MockDef2</li>
+			<!-- Comment in a list -->
+			<li>MockDef3</li>
+			<li>MockDef-Self-Reference</li>
+		</DefList>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef3">
+		<Key>MockDef3</Key>
+		<Label>MockDef_Label</Label>
+		<DefList>
+			<li>MasterDef</li>
+		</DefList>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef4">
+		<Key>FactoryDef</Key>
+		<!-- A comment -->
+		<Label>MockDef_Label</Label>
+		<FactoryClass>1</FactoryClass>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef2">
+		<Key>MockDef2-Parent</Key>
+		<Label>MockDef_Label</Label>
+		<SubDef>MockDef-Simple</SubDef>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef1">
+		<Key>MockDef-Simple</Key>
+		<Label>MockDef_Label</Label>
+		<SampleValue1>3</SampleValue1>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef2" Root="MockDef2-Parent">
+		<Key>MockDef2</Key>
+		<Label>MockDef_Label</Label>
+		<SubDef>MockDef-Simple</SubDef>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef12">
+		<Key>MasterDef</Key>
+		<ClassField>
+			<Value>40</Value>
+		</ClassField>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef13">
+		<Key>MockDef-Self-Reference</Key>
+		<Label>MockDef_Label</Label>
+		<!-- Self reference *AND* circular reference. -->
+		<NestedDef1>MockDef-Self-Reference</NestedDef1>
+		<NestedDef2>MasterDef</NestedDef2>
+		<NestedDef3>MockDef3</NestedDef3>
+	</Def>
+
+	<!-- Long chain of circular def references -->
+	<Def Class="Lithium.Defs.Tests.MockDef14">
+		<Key>DefA</Key>
+		<Label>MockDef_Label</Label>
+		<Pointer>DefB</Pointer>
+	</Def>
+	<Def Class="Lithium.Defs.Tests.MockDef14">
+		<Key>DefB</Key>
+		<Label>MockDef_Label</Label>
+		<Pointer>DefC</Pointer>
+	</Def>
+	<Def Class="Lithium.Defs.Tests.MockDef14">
+		<Key>DefC</Key>
+		<Label>MockDef_Label</Label>
+		<Pointer>DefD</Pointer>
+	</Def>
+	<Def Class="Lithium.Defs.Tests.MockDef14">
+		<Key>DefD</Key>
+		<Label>MockDef_Label</Label>
+		<Pointer>DefA</Pointer>
+	</Def>
+</Defs>
