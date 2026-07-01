@@ -77,10 +77,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		}
 
 		foreach (string file in defFiles) {
-			Stream? stream = ResourceLoader.LoadResourceStream(assembly, file);
-			if (stream == null) {
-				return false;
-			}
+			Stream stream = ResourceLoader.LoadResourceStream(assembly, file);
 			XmlDocument? doc = XmlLoader.LoadDocument(stream);
 			if (doc == null) {
 				return false;
@@ -149,7 +146,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 				continue;
 			}
 
-			if (child.GetChildValue<bool>("Disabled")) {
+			if (child.GetChildValue<bool>(Constants.DEF_DISABLED_ELEMENT)) {
 				continue;
 			}
 
@@ -164,16 +161,19 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 
 		// Add each found node to the resources registry.
 		foreach ((string key, XmlNode node) in nodes) {
-			if (!DefXMLUtils.ValidateDefName(key)) {
-				throw new FormatException($"{Constants.DEF_KEY_ELEMENT} ('{key}') must be a valid identifier: '^[a-zA-Z@][a-zA-Z0-9\\-_]*$'.");
-			}
+			RegisterNode(key, node);
+		}
+	}
+	private void RegisterNode(string key, XmlNode node) {
+		if (!DefXMLUtils.ValidateDefName(key)) {
+			throw new FormatException($"{Constants.DEF_KEY_ELEMENT} ('{key}') must be a valid identifier: '^[a-zA-Z@][a-zA-Z0-9\\-_]*$'.");
+		}
 
-			if (resources.TryGetValue(key, out XmlNode? baseNode)) {
-				DefXMLUtils.InheritDefXML(ref baseNode, node);
-			}
-			else {
-				resources.Add(key, node);
-			}
+		if (resources.TryGetValue(key, out XmlNode? baseNode)) {
+			DefXMLUtils.InheritDefXML(ref baseNode, node);
+		}
+		else {
+			resources.Add(key, node);
 		}
 	}
 
@@ -185,7 +185,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	public IEnumerable<T> LoadAll<T>() where T : Def {
 		IEnumerable<T> found = defs.Values
 			.Where(d => d.GetType().Equals(typeof(T)))
-			.Select(d => (d as T)!);
+			.Select(d => (T)d);
 
 		if (!options.DeferredLoad) {
 			return found;
@@ -285,11 +285,12 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		IEnumerable<Def> loadedDefs = this.ParseDef(node);
 		foreach (Def def in loadedDefs) {
 			// Skip temporary defs.
-			if (def.Key.Contains(Constants.TEMP_DEF_INDICATOR)) {
+			if (def.IsTempDef()) {
 				continue;
 			}
 
-			if (!defs.TryAdd(def.Key, def)) {
+			// If the existing dictionary entry is a temporary Def.
+			if (!defs.TryAdd(def.Key, def) && defs[def.Key].IsTempDef()) {
 				// Replace temporary entry.
 				Def tempEntry = defs[def.Key];
 				def.CopyTo(ref tempEntry);

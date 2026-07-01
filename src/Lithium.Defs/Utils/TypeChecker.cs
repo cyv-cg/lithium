@@ -52,6 +52,7 @@ internal static class TypeChecker {
 		}
 		return false;
 	}
+
 	/// <summary>
 	/// Checks if the type has a special constructor or factory method for Def initialization.
 	/// The constructor must have the <see cref="DefConstructor"/> attribute and take a single
@@ -83,6 +84,9 @@ internal static class TypeChecker {
 			throw new DefFactoryMissingException(type);
 		}
 
+		return ValidateFactoryIOTypes(type, factory);
+	}
+	private static bool ValidateFactoryIOTypes(Type type, MethodBase factory) {
 		// Verify the factory has the appropriate return type.
 		Type? factoryReturnType = null;
 		if (factory is MethodInfo method) {
@@ -91,6 +95,7 @@ internal static class TypeChecker {
 		else if (factory is ConstructorInfo ctor) {
 			factoryReturnType = ctor.DeclaringType;
 		}
+
 		if (factoryReturnType != type) {
 			throw new DefFactoryReturnTypeException(type, factoryReturnType);
 		}
@@ -103,6 +108,7 @@ internal static class TypeChecker {
 
 		return true;
 	}
+
 	/// <summary>
 	/// Checks if the type is a non-primitive class.
 	/// Non-primitive classes are those that are not built-in types (like int, string, etc.)
