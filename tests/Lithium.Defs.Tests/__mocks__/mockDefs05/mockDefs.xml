@@ -1,6 +1,45 @@
 <Defs>
-	<Lithium.Defs.Tests.MockDef9>
-		<Key>MockDef</Key>
+	<Def Class="Lithium.Defs.Tests.MockDef10">
+		<Key>MockDef-inheritance-invalid</Key>
+		<Label>MockDef_Label</Label>
+		<TypeField>System.Action</TypeField>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef10">
+		<Key>MockDef-inheritance-valid</Key>
+		<Label>MockDef_Label</Label>
+		<TypeField>System.Int32</TypeField>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef11">
+		<Key>MockDef-invalid-class</Key>
+		<Label>MockDef_Label</Label>
+		<ClassField>
+			<Value>1</Value>
+		</ClassField>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef9">
+		<Key>MockDef-invalid-enum</Key>
+		<Label>MockDef_Label</Label>
+		<EnumField>VALUE3</EnumField>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef1">
+		<Key>MockDef-invalid-prop</Key>
+		<Label>MockDef_Label</Label>
+		<SampleValue1>1</SampleValue1>
+		<PropThatDoesNotExist>1</PropThatDoesNotExist>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef9">
+		<Key>MockDef-invalid-type</Key>
+		<Label>MockDef_Label</Label>
+		<TypeField>Type.That.Does.Not.Exist</TypeField>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef9">
+		<Key>MockDef-comments</Key>
 		<Label>MockDef_Label</Label>
 		<!-- comment -->
 		<PrimitiveField>1.2</PrimitiveField>
@@ -15,7 +54,7 @@
 			<li>2</li>
 			<li>3</li>
 		</ListField>
-	</Lithium.Defs.Tests.MockDef9>
+	</Def>
 
 	<!-- comment -->
 </Defs>
