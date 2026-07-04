@@ -9,10 +9,6 @@ namespace Lithium.Strings;
 /// </summary>
 public interface ITranslationService {
 	/// <summary>
-	/// Convert registered string resources into usable translatable units.
-	/// </summary>
-	void Reload();
-	/// <summary>
 	/// Translates the string by replacing parameters with the given values.
 	/// </summary>
 	/// <param name="key">The key of the string to translate.</param>
@@ -31,17 +27,4 @@ public interface ITranslationService {
 	/// <param name="key">String key to search for.</param>
 	/// <returns>True if the string is loaded.</returns>
 	bool HasMessage(string key);
-}
-
-/// <summary>
-/// Interface for a service used to translate strings.
-/// </summary>
-/// <typeparam name="T">Resource data type.</typeparam>
-public interface ITranslationService<T> : ITranslationService {
-	/// <summary>
-	/// Register a given resource containing translatable units.
-	/// </summary>
-	/// <param name="resource">The resource to add.</param>
-	/// <returns>True if the resource was successfully registered.</returns>
-	bool RegisterResource(T resource);
 }

@@ -444,6 +444,33 @@ public class TranslationServiceTests {
 		Assert.True(success);
 		Assert.Equal("test", service.Translate(keyedString));
 	}
+	/// <summary>
+	/// Tests that the fallback service is correctly invoked when given a key that was not found.
+	/// </summary>
+	[Fact]
+	public void TranslateTest13() {
+		TranslationService frenchService = new TranslationService(
+			new TranslationServiceOptions {
+				PrimaryLocale = new CultureInfo("fr-FR")
+			}
+		);
+		_ = frenchService.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		frenchService.Reload();
+
+		TranslationService englishService = new TranslationService(
+			new TranslationServiceOptions {
+				PrimaryLocale = new CultureInfo("en-US"),
+				FallbackService = frenchService
+			}
+		);
+		_ = englishService.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		englishService.Reload();
+
+		Assert.Equal(
+			":)",
+			englishService.Translate("strings01.sub.mockStrings02.string-that-does-not-exist-in-english")
+		);
+	}
 	#endregion
 
 	#region HasMessage

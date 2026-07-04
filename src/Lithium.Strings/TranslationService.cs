@@ -17,7 +17,7 @@ namespace Lithium.Strings;
 /// Uses Mozilla Fluent for localization.
 /// (https://firefox-source-docs.mozilla.org/l10n/fluent/index.html)
 /// </summary>
-public class TranslationService : ITranslationService<string>, ITranslationService<Assembly> {
+public class TranslationService : ITranslationService, IResourceRegistry<string>, IResourceRegistry<Assembly> {
 	/// <summary>
 	/// Default translation service.
 	/// Used when translating a string without specifying a service to use.
@@ -156,6 +156,10 @@ public class TranslationService : ITranslationService<string>, ITranslationServi
 	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public string Translate(string address, params StringArgument[] args) {
 		if (!TryGetMessage(address, out MessageContext? context, out Message? message)) {
+			if (options.FallbackService != null) {
+				return options.FallbackService.Translate(address, args);
+			}
+
 			throw new KeyNotFoundException(address);
 		}
 
