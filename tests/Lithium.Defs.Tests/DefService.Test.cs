@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using Lithium.Core;
+using Lithium.Core.Exceptions;
 using Lithium.Defs.Exceptions;
 using Xunit;
 
@@ -134,6 +135,88 @@ public class DefServiceTests {
 		Assert.False(_success2);
 		Assert.False(_success3);
 	}
+	/// <summary>
+	/// Tests that registration fails for an assembly if it contains an empty file.
+	/// </summary>
+	[Fact]
+	public void RegisterResourceTest08() {
+		bool success = service.RegisterResource(typeof(TestAssembly01.TestAssembly01Class).Assembly);
+
+		Assert.False(success);
+		Assert.Empty(service.resources);
+	}
+	#endregion
+
+	#region ParseDocument
+	/// <summary>
+	/// Tests that disabled XML Defs do not get read.
+	/// </summary>
+	[Fact]
+	public void ParseDocumentTest01() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Def\"><Key>SampleDefKey</Key><Disabled>true</Disabled></Def></Defs>");
+
+		_ = service.RegisterResource(doc);
+		service.Reload();
+
+		Assert.Empty(service.resources);
+	}
+	/// <summary>
+	/// Tests that documents missing the top-level Defs node do not get read.
+	/// </summary>
+	[Fact]
+	public void ParseDocumentTest02() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Def Class=\"Lithium.Defs.Def\"><Key>SampleDefKey</Key></Def>");
+
+		_ = service.RegisterResource(doc);
+		service.Reload();
+
+		Assert.Empty(service.resources);
+	}
+	/// <summary>
+	/// Tests that an exception is thrown if an XML Def is missing the key element.
+	/// </summary>
+	[Fact]
+	public void ParseDocumentTest03() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Def\"></Def></Defs>");
+
+		_ = service.RegisterResource(doc);
+		Exception ex = Assert.Throws<NodeMissingChildException>(
+			service.Reload
+		);
+		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that an exception is thrown if an XML Def has an invalid key.
+	/// </summary>
+	[Fact]
+	public void ParseDocumentTest04() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Def\"><Key>invalid key name</Key></Def></Defs>");
+
+		_ = service.RegisterResource(doc);
+		Exception ex = Assert.Throws<FormatException>(
+			service.Reload
+		);
+		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that XML nodes inheritance occurs when overloading an XML Def.
+	/// </summary>
+	[Fact]
+	public void ParseDocumentTest05() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def Class=\"SampleClassName\"><Key>SampleDefKey</Key><Property>1</Property><OtherProperty>2</OtherProperty></Def><Def Class=\"SampleClassName\"><Key>SampleDefKey</Key><Property>replaced content</Property></Def></Defs>");
+
+		_ = service.RegisterResource(doc);
+		service.Reload();
+
+		XmlNode node = service.resources["SampleDefKey"];
+		Assert.Equal("replaced content", node.GetChildValue<string>("Property"));
+		Assert.Equal("2", node.GetChildValue<string>("OtherProperty"));
+	}
 	#endregion
 
 	#region LoadAll
@@ -199,6 +282,21 @@ public class DefServiceTests {
 		);
 
 		Assert.Empty(defs3);
+	}
+	/// <summary>
+	/// Tests that LoadAll with deferred loading skips checking XML Defs without a defined class.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest03() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def><Key>SampleDefKey</Key></Def></Defs>");
+
+		_ = service.RegisterResource(doc);
+		service.Reload();
+
+		Def[] defs = service.LoadAll<Def>().ToArray();
+
+		Assert.Empty(defs);
 	}
 	#endregion
 
