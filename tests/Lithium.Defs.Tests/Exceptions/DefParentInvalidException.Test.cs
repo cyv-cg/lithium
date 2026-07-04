@@ -32,6 +32,15 @@ public class DefParentInvalidExceptionTests {
 	public void ConstructorTest03() {
 		DefParentInvalidException ex = new DefParentInvalidException("MockDef", typeof(MockDef1), "MockParentDef", typeof(MockDef1));
 
-		Assert.Equal("Parent invalid.", ex.Message);
+		Assert.Equal("Parent invalid: 'MockDef'.", ex.Message);
+	}
+	/// <summary>
+	/// Tests that the constructor creates the correct message with only a defKey given.
+	/// </summary>
+	[Fact]
+	public void ConstructorTest04() {
+		DefParentInvalidException ex = new DefParentInvalidException("MockDef");
+
+		Assert.Equal("Parent invalid: 'MockDef'.", ex.Message);
 	}
 }

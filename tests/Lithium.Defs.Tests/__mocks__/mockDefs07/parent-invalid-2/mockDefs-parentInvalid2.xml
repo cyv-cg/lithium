@@ -1,0 +1,11 @@
+<Defs>
+	<Def Class="Def.Class.That.Does.Not.Exist">
+		<Key>MockParentDef</Key>
+		<Label>MockDef_Label</Label>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef1" Root="MockParentDef">
+		<Key>MockDef</Key>
+		<Label>MockDef_Label</Label>
+	</Def>
+</Defs>

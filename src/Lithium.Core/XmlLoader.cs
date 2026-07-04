@@ -43,6 +43,27 @@ public static class XmlLoader {
 		doc.LoadXml(contents);
 		return doc;
 	}
+	/// <summary>
+	/// Loads an XML document from a provided stream.
+	/// </summary>
+	/// <param name="stream">The <see cref="Stream"/> to read the XML content from.</param>
+	/// <returns>The loaded <see cref="XmlDocument"/> if the stream contains valid XML; otherwise, <c>null</c>.</returns>
+	/// <exception cref="XmlException">Thrown if the file contents cannot be parsed as valid XML.</exception>
+	/// <exception cref="ArgumentException">Stream does not support reading.</exception>
+	/// <exception cref="ArgumentNullException">Stream is null.</exception>
+	public static XmlDocument? LoadDocument(Stream stream) {
+		StreamReader reader = new StreamReader(stream);
+		string content = reader.ReadToEnd();
+
+		if (string.IsNullOrEmpty(content)) {
+			return null;
+		}
+
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml(content);
+
+		return doc;
+	}
 
 	/// <summary>
 	/// Retrieves the value of a child XML node with the specified name and converts it to the given type <typeparamref name="T"/>.
@@ -80,5 +101,21 @@ public static class XmlLoader {
 			return (T)Convert.ChangeType(keyNode.InnerText, typeof(T));
 		}
 		return default;
+	}
+	/// <summary>
+	/// Retrieves the value of an attribute from the specified XML node. If the attribute does not exist, returns an empty string.
+	/// </summary>
+	/// <param name="parent">The <see cref="XmlNode"/> from which to retrieve the attribute value.</param>
+	/// <param name="attribute">The name of the attribute whose value is to be retrieved.</param>
+	/// <returns>The value of the specified attribute, or an empty string if the attribute does not exist.</returns>
+	public static string GetAttributeValue(this XmlNode parent, string attribute) {
+		if (parent.Attributes == null) {
+			return string.Empty;
+		}
+		XmlAttribute? attr = parent.Attributes[attribute];
+		if (attr == null) {
+			return string.Empty;
+		}
+		return attr.Value;
 	}
 }

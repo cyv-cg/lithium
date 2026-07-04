@@ -9,7 +9,7 @@ namespace Lithium.Defs;
 /// <summary>
 /// Root structure for all Defs.
 /// </summary>
-public record Def {
+public class Def {
 	/// <summary>
 	/// Primary key used to solely define the object.
 	/// Must be distinct from all other Defs.
@@ -19,6 +19,10 @@ public record Def {
 	/// String name for the Def.
 	/// </summary>
 	public required KeyedString Label { get; init; }
+	/// <summary>
+	/// Whether or not the Def should be treated as not in-use.
+	/// </summary>
+	public bool Disabled { get; init; } = false;
 
 	/// <summary>
 	/// Translates the label by replacing parameters with the given values.
@@ -28,6 +32,7 @@ public record Def {
 	/// <returns>Translated string with parameters replaced.</returns>
 	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
 	/// <exception cref="ArgumentException">Thrown when an argument key is null or empty.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public string ToString(params StringArgument[] values) {
 		return Label.Translate(values);
 	}
@@ -39,7 +44,20 @@ public record Def {
 	/// This translates with no parameters. If the string has parameters, call the Translate method directly.
 	/// </remarks>
 	/// <exception cref="StringTranslationException">Thrown when there is an error during translation or interpolation.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when the address is an empty string.</exception>
 	public static implicit operator string(Def def) {
 		return def.ToString();
+	}
+
+	/// <inheritdoc/>
+	public virtual bool Equals(Def? other) {
+		if (other == null) {
+			return false;
+		}
+		return GetHashCode() == other.GetHashCode();
+	}
+	/// <inheritdoc/>
+	public override int GetHashCode() {
+		return HashCode.Combine(Key);
 	}
 }

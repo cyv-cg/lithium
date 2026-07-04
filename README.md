@@ -1,3 +1,9 @@
+[![Build](https://img.shields.io/github/actions/workflow/status/cyv-cg/lithium/dotnet-build-and-test.yaml?branch=main&label=CI)](https://github.com/cyv-cg/lithium/actions/workflows/dotnet-build-and-test.yaml)
+[![codecov](https://codecov.io/gh/cyv-cg/lithium/branch/main/graph/badge.svg)](https://codecov.io/gh/cyv-cg/lithium)
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
+
+[![NuGet](https://img.shields.io/nuget/v/cyv.Lithium.svg)](https://www.nuget.org/packages/cyv.Lithium)
+[![Release](https://img.shields.io/github/v/release/cyv-cg/lithium)](https://github.com/cyv-cg/lithium/releases)
 
 # cyv.Lithium
 
@@ -44,7 +50,7 @@ The simplest form of a def consists of a <b>Key</b>, a unique identifier, and a 
 /// <summary>
 /// Root structure for all Defs.
 /// </summary>
-public record Def {
+public class Def {
 	/// <summary>
 	/// Primary key used to solely define the object.
 	/// Must be distinct from all other Defs.
@@ -57,39 +63,39 @@ public record Def {
 }
 ```
 
-Custom types can be used as a def as well, but all custom types <i>must</i> in some way inherit from this base-level def record.
+Custom types can be used as a def as well, but all custom types <i>must</i> in some way inherit from this base-level def class.
 In that way, these are both valid def objects:
 
 ```C#
 namespace MyNamespace;
 
-public record MyCustomDef : Def {
+public class MyCustomDef : Def {
 	public int MyInteger { get; init; }
 }
-public record MyCustomDef2 : MyCustomDef {
+public class MyCustomDef2 : MyCustomDef {
 	public double MyDouble { get; init; }
 }
 ```
 
-These records are parsed from XML at runtime.
+These classes are parsed from XML at runtime.
 Files containing these definitions must contain a root `<Defs>` tag, where the objects themselves are listed as childen.
 
 ```xml
 <!-- C:\Documents\project\defs\MyDefs.xml -->
 
 <Defs>
-	<MyNamespace.MyCustomDef>
+	<Def Class="MyNamespace.MyCustomDef">
 		<Key>My_Def_Key</Key>
 		<Label>My Def name</Label>
 		<MyInteger>1</MyInteger>
-	</MyNamespace.MyCustomDef>
+	</Def>
 
-	<MyNamespace.MyCustomDef2>
+	<Def Class="MyNamespace.MyCustomDef2">
 		<Key>My_Second_Def_Key</Key>
 		<Label>My other Def name</Label>
 		<MyInteger>2</MyInteger>
 		<MyDouble>2.5</MyDouble>
-	</MyNamespace.MyCustomDef2>
+	</Def>
 </Defs>
 ```
 
@@ -104,16 +110,20 @@ namespace MyNamespace;
 
 public class Program {
 	public static void Main(string[] args) {
-		// Adds "C:\Documents\project\defs" as a source for def XML files.
-		Settings.AddDefRootDirectory("C:\Documents\project\defs");
-		// Initialize defs from every discovered file.
-		DefDatabase.Initialize();
+		// Create an instance of the DefService.
+		DefServiceOptions options = new DefServiceOptions();
+		DefService service = new DefService(options);
 
-		MyCustomDef? myDef = DefDatabase.Load<MyCustomDef>("My_Def_Key");
+		// Adds "C:\Documents\project\defs" as a source for def XML files.
+		bool success = service.RegisterResource("C:\Documents\project\defs");
+		// Initialize defs from every discovered file.
+		service.Reload();
+
+		MyCustomDef? myDef = service.LoadDef<MyCustomDef>("My_Def_Key");
 		Console.WriteLine(myDef); // "My Def name"
 		Console.WriteLine(myDef.MyInteger); // "1"
 
-		MyCustomDef2? myDef2 = DefDatabase.Load<MyCustomDef2>("My_Second_Def_Key");
+		MyCustomDef2? myDef2 = service.LoadDef<MyCustomDef2>("My_Second_Def_Key");
 		Console.WriteLine(myDef2); // "My other Def name"
 		Console.WriteLine(myDef2.MyInteger); // "2"
 		Console.WriteLine(myDef2.MyDouble); // "2.5"
@@ -182,17 +192,30 @@ namespace MyNamespace;
 
 public class Program {
 	public static void Main(string[] args) {
+		// Initialize the service.
+		TranslationServiceOptions options = new TranslationServiceOptions
+		{
+			// Change to your preferred locale.
+			PrimaryLocale = new CultureInfo("en-US")
+		};
+		TranslationService service = new TranslationService(options);
+
 		// Adds "C:\Documents\project\strings\root1" as a source for Fluent files.
-		Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
+		service.RegisterResource("C:\Documents\project\strings\root1");
+		service.Reload();
 
-		// Change to your preferred locale.
-		// Changing the locale automatically updates the strings.
-		Settings.SetLocale("en-US");
-		Console.WriteLine("root1.area1.strings.string-key".Translate()); // "Text in English (United States)."
+		Console.WriteLine(service.Translate("root1.area1.strings.string-key")); // "Text in English (United States)."
 
-		// Locale can be changed at runtime.
-		Settings.SetLocale("fr-FR");
-		Console.WriteLine("root1.area1.strings.string-key".Translate()); // "Texte en français (France)."
+
+		options = new TranslationServiceOptions
+		{
+			PrimaryLocale = new CultureInfo("fr-FR")
+		};
+		service = new TranslationService(options);
+		service.RegisterResource("C:\Documents\project\strings\root1");
+		service.Reload();
+
+		Console.WriteLine(service.Translate("root1.area1.strings.string-key")); // "Texte en français (France)."
 	}
 }
 ```
@@ -209,11 +232,16 @@ namespace MyNamespace;
 
 public class Program {
 	public static void Main(string[] args) {
-		Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
+		TranslationServiceOptions options = new TranslationServiceOptions
+		{
+			PrimaryLocale = new CultureInfo("en-US")
+		};
+		TranslationService service = new TranslationService(options);
+		service.RegisterResource("C:\Documents\project\strings\root1");
+		service.Reload();
 
-		Settings.SetLocale("en-US");
 		Console.WriteLine(
-			"root1.area2.yet-more-strings.string-with-parameters".Translate(
+			service.Translate("root1.area2.yet-more-strings.string-with-parameters",
 				("param1", 2.3f),
 				("param2", "text")
 			)
@@ -231,10 +259,10 @@ When creating a def in XML, you can use one of these string addresses as the lab
 <!-- C:\Documents\project\defs\MyDefs.xml -->
 
 <Defs>
-	<MyNamespace.MyCustomDef>
+	<Def Class="MyNamespace.MyCustomDef">
 		<Key>My_Def_Key</Key>
 		<Label>root1.area1.strings.my-def-name</Label>
-	</MyNamespace.MyCustomDef>
+	</Def>
 </Defs>
 ```
 ```ini
@@ -245,6 +273,9 @@ my-def-name = My Def name
 # C:\Documents\project\strings\root1\fr-FR\area2\yet-more-strings.ftl
 my-def-name = Le nom de ma déf
 ```
+
+The `TranslationService` class comes with a built-in singleton, `TranslationService.Default`. When translating a string without specifying the service, this one is used.
+
 ```C#
 using Lithium.Defs;
 using Lithium.Strings;
@@ -253,31 +284,43 @@ namespace MyNamespace;
 
 public class Program {
 	public static void Main(string[] args) {
-		Lithium.Defs.Settings.AddDefRootDirectory("C:\Documents\project\defs");
-		DefDatabase.Initialize();
-		Lithium.Strings.Settings.AddStringRootDirectory("C:\Documents\project\strings\root1");
+		DefService defService = new DefService(new DefServiceOptions());
+		_ = defService.RegisterResource("C:\Documents\project\defs");
+		defService.Reload();
 
-		MyCustomDef? myDef = DefDatabase.Load<MyCustomDef>("My_Def_Key");
+		TranslationServiceOptions options = new TranslationServiceOptions
+		{
+			PrimaryLocale = new CultureInfo("en-US")
+		};
+		// When declaring your first service, it gets saved to TranslationService.Default.
+		TranslationService service = new TranslationService(options);
+		service.RegisterResource("C:\Documents\project\strings\root1");
+		service.Reload();
+
+		MyCustomDef? myDef = defService.LoadDef<MyCustomDef>("My_Def_Key");
 		Console.WriteLine(myDef.Label.Address); // "root1.area2.yet-more-strings.my-def-name"
 
-		Lithium.Strings.Settings.SetLocale("en-US");
+		// These are all valid ways to translate a string.
+		Console.WriteLine(TranslationService.Default.Translate(myDef.Label)); // "My Def name"
+		Console.WriteLine(service.Translate(myDef.Label)); // "My Def name"
+		Console.WriteLine(myDef.Label.Translate(service)); // "My Def name"
+		Console.WriteLine(myDef.Label); // "My Def name"
 		Console.WriteLine(myDef); // "My Def name"
 
-		Lithium.Strings.Settings.SetLocale("fr-FR");
-		Console.WriteLine(myDef); // "Le nom de ma déf"
+
+		// New services can be declared and used at runtime.
+
+		options = new TranslationServiceOptions
+		{
+			PrimaryLocale = new CultureInfo("fr-FR")
+		};
+		TranslationService otherService = new TranslationService(options);
+		otherService.RegisterResource("C:\Documents\project\strings\root1");
+		otherService.Reload();
+
+		// Creating a second service does not change the default.
+		Console.WriteLine(otherService.Translate(myDef)); // "Le nom de ma déf"
+		Console.WriteLine(myDef); // "My Def name"
 	}
 }
 ```
-
----
-Copyright (C) 2026 Chris Grassi <br><br>
-This program is free software: you can redistribute it and/or modify<br>
-it under the terms of the GNU General Public License as published by<br>
-the Free Software Foundation, either version 3 of the License, or<br>
-(at your option) any later version. <br><br>
-This program is distributed in the hope that it will be useful,<br>
-but WITHOUT ANY WARRANTY; without even the implied warranty of<br>
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br>
-GNU General Public License for more details. <br><br>
-You should have received a copy of the GNU General Public License<br>
-along with this program. If not, see https://www.gnu.org/licenses/.

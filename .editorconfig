@@ -7,6 +7,11 @@ indent_size = 4
 indent_style = tab
 tab_width = 4
 
+[*.{yml,yaml}]
+indent_size = 2
+indent_style = space
+tab_width = unset
+
 [*.cs]
 dotnet_analyzer_diagnostic.category-Style.severity = warning
 
@@ -24,6 +29,7 @@ dotnet_style_prefer_collection_expression = false
 dotnet_style_prefer_conditional_expression_over_return = false
 dotnet_style_coalesce_expression = false
 csharp_style_prefer_primary_constructors = false;
+dotnet_style_require_accessibility_modifiers = for_non_interface_members
 
 dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity
 dotnet_style_parentheses_in_other_binary_operators = always_for_clarity

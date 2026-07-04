@@ -72,7 +72,7 @@ public class XmlLoaderTests {
 		string xml = doc.OuterXml;
 
 		Assert.Equal(
-			"""<Defs><MockDef><key>MockDef</key><label>MockDef_Label</label><sampleValue1>1</sampleValue1></MockDef></Defs>""",
+			"""<Defs><MockDef><key>MockDef</key><label>MockDef_Label</label><sampleValue1>1</sampleValue1></MockDef><MockDef Attribute="attributeValue"><key>MockDef</key><label>MockDef_Label</label><sampleValue1>1</sampleValue1></MockDef></Defs>""",
 			xml
 		);
 	}
@@ -97,6 +97,38 @@ public class XmlLoaderTests {
 				Path.Combine(mockXmlDirectory, "sub", "b.dat")
 			)
 		);
+	}
+	/// <summary>
+	/// Tests the LoadDocument correctly creates an XmlDocument object from an embedded XML resource.
+	/// </summary>
+	[Fact]
+	public void LoadDocumentTest04() {
+		Stream stream = ResourceLoader.LoadResourceStream(typeof(XmlLoaderTests).Assembly, "Lithium.__resources__.xml-resource.xml");
+
+		XmlDocument? doc = XmlLoader.LoadDocument(stream);
+		Assert.NotNull(doc);
+	}
+	/// <summary>
+	/// Tests that LoadDocument returns null when given an empty XML resource.
+	/// </summary>
+	[Fact]
+	public void LoadDocumentTest05() {
+		Stream stream = ResourceLoader.LoadResourceStream(typeof(XmlLoaderTests).Assembly, "Lithium.__resources__.empty-xml-resource.xml");
+
+		XmlDocument? doc = XmlLoader.LoadDocument(stream);
+		Assert.Null(doc);
+	}
+	/// <summary>
+	/// Tests that LoadDocument throws an exception when given a non-XML resource.
+	/// </summary>
+	[Fact]
+	public void LoadDocumentTest06() {
+		Stream stream = ResourceLoader.LoadResourceStream(typeof(XmlLoaderTests).Assembly, "Lithium.__resources__.text-resource.txt");
+
+		Exception ex = Assert.Throws<XmlException>(
+			() => XmlLoader.LoadDocument(stream)
+		);
+		Assert.NotNull(ex);
 	}
 	#endregion
 
@@ -156,6 +188,46 @@ public class XmlLoaderTests {
 
 		Assert.Null(child);
 		Assert.Null(value);
+	}
+	#endregion
+
+	#region GetAttributeValue
+	/// <summary>
+	/// Tests that GetAttributeValue can correctly retreive an attribute's text.
+	/// </summary>
+	[Fact]
+	public void GetAttributeValueTest01() {
+		XmlDocument doc = XmlLoader.LoadDocument(mockXmlFile1);
+		XmlNode root = doc.DocumentElement!;
+		XmlNode node = root.ChildNodes[1]!;
+
+		string content = node.GetAttributeValue("Attribute");
+
+		Assert.Equal("attributeValue", content);
+	}
+	/// <summary>
+	/// Tests that GetAttributeValue returns an empty string if a node does not have the requested attribute.
+	/// </summary>
+	[Fact]
+	public void GetAttributeValueTest02() {
+		XmlDocument doc = XmlLoader.LoadDocument(mockXmlFile1);
+		XmlNode root = doc.DocumentElement!;
+		XmlNode node = root.ChildNodes[0]!;
+
+		string content = node.GetAttributeValue("Attribute");
+
+		Assert.Equal("", content);
+	}
+	/// <summary>
+	/// Tests that GetAttributeValue returns an empty string if the node has no attributes.
+	/// </summary>
+	[Fact]
+	public void GetAttributeValueTest03() {
+		XmlDocument doc = XmlLoader.LoadDocument(mockXmlFile1);
+
+		string content = doc.GetAttributeValue("Attribute");
+
+		Assert.Equal("", content);
 	}
 	#endregion
 }

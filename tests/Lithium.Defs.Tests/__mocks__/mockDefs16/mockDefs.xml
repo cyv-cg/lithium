@@ -1,0 +1,26 @@
+<Defs>
+	<Def Class="Type.That.Does.Not.Exist">
+		<Key>Def01</Key>
+	</Def>
+
+	<Def Class="System.String">
+		<Key>Def02</Key>
+	</Def>
+
+	<Def Class="Lithium.Defs.Def" Root="Def-That-Does-Not-Exist">
+		<Key>Def03</Key>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef15">
+		<Key>Def04</Key>
+		<Label>Label</Label>
+		<DataSingle>
+			<Value>Def-That-Does-Not-Exist</Value>
+		</DataSingle>
+		<DataList>
+			<li>
+				<Value>Def-That-Does-Not-Exist</Value>
+			</li>
+		</DataList>
+	</Def>
+</Defs>
