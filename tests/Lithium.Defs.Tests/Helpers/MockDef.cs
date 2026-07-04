@@ -5,47 +5,62 @@ using Lithium.Core.Attributes;
 namespace Lithium.Defs.Tests;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-public record MockDef1 : Def {
+public class MockDef1 : Def {
 	public int SampleValue1 { get; init; }
 }
 
-public record MockDef2 : Def {
+public class MockDef2 : Def {
 	public required MockDef1 SubDef { get; init; }
 }
 
-public record MockDef3 : Def {
+public class MockDef3 : Def {
 	public required List<Def> DefList { get; init; }
 }
 
-public record MockDef4 : Def {
+public class MockDef4 : Def {
 	public required FactoryClass1 FactoryClass { get; init; }
 }
-public record MockDef5 : Def {
+public class MockDef5 : Def {
 	public required FactoryClass2 FactoryClass { get; init; }
 }
-public record MockDef6 : Def {
+public class MockDef6 : Def {
 	public required FactoryClass3 FactoryClass { get; init; }
 }
-public record MockDef7 : Def {
+public class MockDef7 : Def {
 	public required FactoryClass4 FactoryClass { get; init; }
 }
-public record MockDef8 : Def {
+public class MockDef8 : Def {
 	public required FactoryClass5 FactoryClass { get; init; }
 }
 
-public record MockDef9 : Def {
+public class MockDef9 : Def {
 	public float PrimitiveField { get; init; }
 	public MockEnum EnumField { get; init; }
 	public Type? TypeField { get; init; }
 	public MockDataClass? ClassField { get; init; }
 	public List<int>? ListField { get; init; }
 }
-public record MockDef10 : Def {
+public class MockDef10 : Def {
 	[EnforceInheritance<IComparable>]
 	public required Type TypeField { get; init; }
 }
-public record MockDef11 : Def {
+public class MockDef11 : Def {
 	public MockDataStruct? ClassField { get; init; }
+}
+public class MockDef12 : MockDef9 {
+	public required List<Def> DefList { get; init; }
+}
+public class MockDef13 : Def {
+	public required Def NestedDef1 { get; init; }
+	public required Def NestedDef2 { get; init; }
+	public required Def NestedDef3 { get; init; }
+}
+public class MockDef14 : Def {
+	public required Def Pointer { get; init; }
+}
+public class MockDef15 : Def {
+	public required MockDefDataClass DataSingle { get; init; }
+	public required List<MockDefDataClass> DataList { get; init; }
 }
 
 public enum MockEnum {
@@ -58,6 +73,9 @@ public class MockDataClass {
 }
 public struct MockDataStruct {
 	public int Value { get; set; }
+}
+public class MockDefDataClass {
+	public Def? Value { get; set; }
 }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

@@ -15,7 +15,7 @@ public class MissingDefPropExceptionTests {
 		MissingDefPropException ex = new MissingDefPropException("MockDef", typeof(MockDef1).GetProperties());
 
 		Assert.Equal(
-			"Missing fields in def 'MockDef': SampleValue1, Key, Label",
+			"Missing fields in def 'MockDef': SampleValue1, Key, Label, Disabled",
 			ex.Message
 		);
 	}

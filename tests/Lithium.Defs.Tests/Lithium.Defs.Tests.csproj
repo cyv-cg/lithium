@@ -16,10 +16,17 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Lithium.Defs\Lithium.Defs.csproj" />
+		<Reference Include="TestAssembly01">
+			<HintPath>__test_assemblies__\TestAssembly01\Lithium.Defs.Tests.TestAssembly01.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="__mocks__\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<EmbeddedResource Include="__resources__/**/*.xml" />
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Remove="__test_assemblies__/**/*.cs" />
 	</ItemGroup>
 </Project>

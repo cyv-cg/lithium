@@ -72,7 +72,7 @@ public class XmlLoaderTests {
 		string xml = doc.OuterXml;
 
 		Assert.Equal(
-			"""<Defs><MockDef><key>MockDef</key><label>MockDef_Label</label><sampleValue1>1</sampleValue1></MockDef></Defs>""",
+			"""<Defs><MockDef><key>MockDef</key><label>MockDef_Label</label><sampleValue1>1</sampleValue1></MockDef><MockDef Attribute="attributeValue"><key>MockDef</key><label>MockDef_Label</label><sampleValue1>1</sampleValue1></MockDef></Defs>""",
 			xml
 		);
 	}
@@ -188,6 +188,46 @@ public class XmlLoaderTests {
 
 		Assert.Null(child);
 		Assert.Null(value);
+	}
+	#endregion
+
+	#region GetAttributeValue
+	/// <summary>
+	/// Tests that GetAttributeValue can correctly retreive an attribute's text.
+	/// </summary>
+	[Fact]
+	public void GetAttributeValueTest01() {
+		XmlDocument doc = XmlLoader.LoadDocument(mockXmlFile1);
+		XmlNode root = doc.DocumentElement!;
+		XmlNode node = root.ChildNodes[1]!;
+
+		string content = node.GetAttributeValue("Attribute");
+
+		Assert.Equal("attributeValue", content);
+	}
+	/// <summary>
+	/// Tests that GetAttributeValue returns an empty string if a node does not have the requested attribute.
+	/// </summary>
+	[Fact]
+	public void GetAttributeValueTest02() {
+		XmlDocument doc = XmlLoader.LoadDocument(mockXmlFile1);
+		XmlNode root = doc.DocumentElement!;
+		XmlNode node = root.ChildNodes[0]!;
+
+		string content = node.GetAttributeValue("Attribute");
+
+		Assert.Equal("", content);
+	}
+	/// <summary>
+	/// Tests that GetAttributeValue returns an empty string if the node has no attributes.
+	/// </summary>
+	[Fact]
+	public void GetAttributeValueTest03() {
+		XmlDocument doc = XmlLoader.LoadDocument(mockXmlFile1);
+
+		string content = doc.GetAttributeValue("Attribute");
+
+		Assert.Equal("", content);
 	}
 	#endregion
 }

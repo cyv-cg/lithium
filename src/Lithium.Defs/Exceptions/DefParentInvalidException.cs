@@ -13,6 +13,12 @@ public class DefParentInvalidException(string defName, Type defType, string pare
 	private readonly Type parentType = parentType;
 
 	/// <summary>
+	/// Create an exception simply stating that the Def's inheritance is invalid.
+	/// </summary>
+	/// <param name="defName">Key of the Def.</param>
+	public DefParentInvalidException(string defName) : this(defName, typeof(void), "N/A", typeof(void)) { }
+
+	/// <summary>
 	/// Message describing the error.
 	/// </summary>
 	public override string Message {
@@ -24,7 +30,7 @@ public class DefParentInvalidException(string defName, Type defType, string pare
 				return $"Def '{parentName}' ({parentType}) cannot be a parent of '{defName}' ({defType}).";
 			}
 			else {
-				return "Parent invalid.";
+				return $"Parent invalid: '{defName}'.";
 			}
 		}
 	}
