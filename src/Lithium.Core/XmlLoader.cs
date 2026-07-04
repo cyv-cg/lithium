@@ -102,4 +102,20 @@ public static class XmlLoader {
 		}
 		return default;
 	}
+	/// <summary>
+	/// Retrieves the value of an attribute from the specified XML node. If the attribute does not exist, returns an empty string.
+	/// </summary>
+	/// <param name="parent">The <see cref="XmlNode"/> from which to retrieve the attribute value.</param>
+	/// <param name="attribute">The name of the attribute whose value is to be retrieved.</param>
+	/// <returns>The value of the specified attribute, or an empty string if the attribute does not exist.</returns>
+	public static string GetAttributeValue(this XmlNode parent, string attribute) {
+		if (parent.Attributes == null) {
+			return string.Empty;
+		}
+		XmlAttribute? attr = parent.Attributes[attribute];
+		if (attr == null) {
+			return string.Empty;
+		}
+		return attr.Value;
+	}
 }

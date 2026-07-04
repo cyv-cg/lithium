@@ -1,6 +1,7 @@
 <Defs>
-	<Def.Class.That.Does.Not.Exist>
+	<Def Class="Def.Class.That.Does.Not.Exist">
 		<Key>MockDef</Key>
+		<Class>Def.Class.That.Does.Not.Exist</Class>
 		<Label>MockDef_Label</Label>
-	</Def.Class.That.Does.Not.Exist>
+	</Def>
 </Defs>

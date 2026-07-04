@@ -1,6 +1,0 @@
-<Defs>
-	<Lithium.Defs.Tests.MockDef1 Root="MockDef">
-		<Key>MockDef</Key>
-		<Label>MockDef_Label</Label>
-	</Lithium.Defs.Tests.MockDef1>
-</Defs>

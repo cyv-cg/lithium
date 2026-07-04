@@ -4,4 +4,10 @@
 		<label>MockDef_Label</label>
 		<sampleValue1>1</sampleValue1>
 	</MockDef>
+
+	<MockDef Attribute="attributeValue">
+		<key>MockDef</key>
+		<label>MockDef_Label</label>
+		<sampleValue1>1</sampleValue1>
+	</MockDef>
 </Defs>
