@@ -1,3 +1,9 @@
+[![Build](https://img.shields.io/github/actions/workflow/status/cyv-cg/lithium/dotnet-build-and-test.yaml?branch=main&label=CI)](https://github.com/cyv-cg/lithium/actions/workflows/dotnet-build-and-test.yaml)
+[![codecov](https://codecov.io/gh/cyv-cg/lithium/branch/main/graph/badge.svg)](https://codecov.io/gh/cyv-cg/lithium)
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
+
+[![NuGet](https://img.shields.io/nuget/v/cyv.Lithium.svg)](https://www.nuget.org/packages/cyv.Lithium)
+[![Release](https://img.shields.io/github/v/release/cyv-cg/lithium)](https://github.com/cyv-cg/lithium/releases)
 
 # cyv.Lithium
 
@@ -318,16 +324,3 @@ public class Program {
 	}
 }
 ```
-
----
-Copyright (C) 2026 Chris Grassi <br><br>
-This program is free software: you can redistribute it and/or modify<br>
-it under the terms of the GNU General Public License as published by<br>
-the Free Software Foundation, either version 3 of the License, or<br>
-(at your option) any later version. <br><br>
-This program is distributed in the hope that it will be useful,<br>
-but WITHOUT ANY WARRANTY; without even the implied warranty of<br>
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br>
-GNU General Public License for more details. <br><br>
-You should have received a copy of the GNU General Public License<br>
-along with this program. If not, see https://www.gnu.org/licenses/.
