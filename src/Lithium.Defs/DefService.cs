@@ -9,6 +9,7 @@ using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
 using Lithium.Defs.Exceptions;
+using Lithium.Defs.Utils;
 using Lithium.Defs.XML;
 
 namespace Lithium.Defs;

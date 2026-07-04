@@ -1,5 +1,6 @@
 using System;
 using Xunit;
+using Lithium.Defs.Utils;
 
 namespace Lithium.Defs.Tests;
 

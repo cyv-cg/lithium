@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace Lithium.Defs;
+namespace Lithium.Defs.Utils;
 
 /// <summary>
 /// Utility methods for Defs.
