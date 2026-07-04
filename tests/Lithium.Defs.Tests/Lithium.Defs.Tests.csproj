@@ -17,7 +17,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Lithium.Defs\Lithium.Defs.csproj" />
 		<Reference Include="TestAssembly01">
-			<HintPath>__test_assemblies__\TestAssembly01\bin\Debug\net9.0\Lithium.Defs.Tests.TestAssembly01.dll</HintPath>
+			<HintPath>__test_assemblies__\TestAssembly01\Lithium.Defs.Tests.TestAssembly01.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 	<ItemGroup>
