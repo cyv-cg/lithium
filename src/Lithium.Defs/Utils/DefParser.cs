@@ -306,7 +306,7 @@ public static class DefParser {
 		links = new Stack<DefLink>();
 
 		// Load classes with a special constructor.
-		if (type.IsSpecialConstructor(out MethodBase? factory)) {
+		if (type.IsSpecialConstructor(node, out MethodBase? factory)) {
 			return LoadFactory(node, factory);
 		}
 		// Parse enum values.
