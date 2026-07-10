@@ -16,55 +16,7 @@ internal static class TypeChecker {
 	/// Binding flags used for reflecting on Def fields. This includes public instance fields and also looks up the inheritance hierarchy to include fields from base classes.
 	/// </summary>
 	internal const BindingFlags DEF_PROP_BINDINGS = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
-
-	/// <summary>
-	/// A collection of all classes that are:
-	/// 	1) Public
-	/// 	2) Static
-	/// 	3) Tagged with <see cref="UseDefOverrideInitializer"/>
-	/// </summary>
-	private static Lazy<IEnumerable<Type>> FactoryHelperClasses => new Lazy<IEnumerable<Type>>(
-		AppDomain.CurrentDomain
-			.GetAssemblies()
-			.SelectMany(a => a.GetTypes()
-				.Where(c =>
-					c.IsClass && c.IsPublic && c.IsAbstract && c.IsSealed && c.IsDefined(typeof(UseDefOverrideInitializer), false)
-				)
-			)
-	);
-	/// <summary>
-	/// Collection of all static methods tagged with <see cref="DefFactory"/> from every class in <see cref="FactoryHelperClasses"/>.
-	/// </summary>
-	private static Lazy<IEnumerable<MethodInfo>> StaticFactories => new Lazy<IEnumerable<MethodInfo>>(
-		FactoryHelperClasses.Value.SelectMany(c => c.GetMethods().Where(m => m.IsDefined(typeof(DefFactory), false)))
-	);
-	/// <summary>
-	/// Map of all external static def factories. The structure is as follows:
-	/// <code>
-	/// StaticDefFactories[instanceTypeToBeCreated] = {
-	/// 	(SomeStaticClassType, InstanceTypeFactory),
-	/// 	(AnotherStaticClassType, DifferentInstanceTypeFactory),
-	/// 	etc...
-	/// }
-	/// </code>
-	/// </summary>
-	private static Lazy<Dictionary<Type, Dictionary<Type, MethodInfo>>> StaticDefFactories {
-		get {
-			Dictionary<Type, Dictionary<Type, MethodInfo>> factoryMap = new Dictionary<Type, Dictionary<Type, MethodInfo>>();
-			// Map each factory to its return type.
-			foreach (MethodInfo factory in StaticFactories.Value) {
-				// DeclaringType should never be null here because factory is not a global member.
-				Type factoryHelperClass = factory.DeclaringType!;
-				// Add or append factory.
-				if (factoryMap.TryGetValue(factory.ReturnType, out Dictionary<Type, MethodInfo>? subMap)) {
-					subMap[factoryHelperClass] = factory;
-					continue;
-				}
-				factoryMap.Add(factory.ReturnType, new Dictionary<Type, MethodInfo> { { factoryHelperClass, factory } });
-			}
-			return new Lazy<Dictionary<Type, Dictionary<Type, MethodInfo>>>(factoryMap);
-		}
-	}
+	internal static AssemblyScraper assemblyScraper = new AssemblyScraper(AppDomain.CurrentDomain.GetAssemblies());
 
 	/// <summary>
 	/// Attempts to resolve a type by its name. First checks for internal types in the Lithium namespace, then checks all loaded assemblies.
@@ -72,13 +24,7 @@ internal static class TypeChecker {
 	/// <param name="typeName">Name of the type to resolve.</param>
 	/// <returns>The resolved type, or null if it could not be found.</returns>
 	internal static Type? ResolveType(string typeName) {
-		// Check all loaded assemblies for the type.
-		Type? defType = AppDomain.CurrentDomain
-			.GetAssemblies()
-			.Select(a => a.GetType(typeName))
-			.FirstOrDefault(t => t != null);
-
-		return defType;
+		return assemblyScraper.ResolveType(typeName);
 	}
 
 	/// <summary>
@@ -136,7 +82,7 @@ internal static class TypeChecker {
 			return ValidateFactoryIOTypes(type, factory);
 		}
 		// Check if a factory method exists in a separate static class.
-		else if (StaticDefFactories.Value.TryGetValue(type, out Dictionary<Type, MethodInfo>? methodInfo)) {
+		else if (assemblyScraper.BuildStaticDefFactoriesMap().TryGetValue(type, out Dictionary<Type, MethodInfo>? methodInfo)) {
 			// Look for the attribute specifying which factory class to use.
 			string factoryClass = node.GetAttributeValue(Constants.DEF_FACTORY_ATTR);
 			// If the attribute isn't given, use the first applicable factory class.
