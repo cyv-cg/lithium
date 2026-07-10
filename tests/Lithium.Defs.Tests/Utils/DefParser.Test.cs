@@ -10,6 +10,7 @@ using System.Xml;
 using Lithium.Core;
 using Lithium.Defs.XML;
 using Lithium.Core.Attributes;
+using System.Text;
 
 namespace Lithium.Defs.Tests;
 
@@ -44,7 +45,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest02() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-valid");
-		_ = service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile, out _);
 		service.Reload();
 
 		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
@@ -62,7 +63,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest03() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "self-reference");
-		_ = service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile, out _);
 		service.Reload();
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
@@ -75,7 +76,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest04() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid");
-		_ = service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile, out _);
 		service.Reload();
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
@@ -88,7 +89,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest05() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid-2");
-		_ = service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile, out _);
 		service.Reload();
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
@@ -100,11 +101,12 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest06() {
-		_ = service.RegisterResource(Init.MockDirectory(15));
+		_ = service.RegisterResource(Init.MockDirectory(15), out StringBuilder? errors);
 		service.Reload();
 
 		IEnumerable<Def> defs = service.LoadAll();
 
+		Assert.Null(errors);
 		Assert.Collection(defs.OrderBy(d => d.Key),
 			d => {
 				MockDef14 def = (d as MockDef14)!;
@@ -459,8 +461,8 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest21() {
-		_ = service.RegisterResource(Init.MockDirectory(1));
-		_ = service.RegisterResource(Init.MockDirectory(2));
+		_ = service.RegisterResource(Init.MockDirectory(1), out _);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
 		service.Reload();
 
 

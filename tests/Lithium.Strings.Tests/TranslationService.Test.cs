@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Fluent.Net;
 using Fluent.Net.RuntimeAst;
 using Lithium.Strings.Exceptions;
@@ -53,9 +54,10 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest01() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out StringBuilder? errors);
 
 		Assert.True(success);
+		Assert.Null(errors);
 		Assert.Collection(service.Resources.OrderBy(r => r.ResourcePath),
 			r => {
 				Assert.Equal(Path.Combine(mocksDirectory, "strings01", "en-US", "mockStrings01.ftl"), r.ResourcePath);
@@ -74,7 +76,7 @@ public class TranslationServiceTests {
 	[Fact]
 	public void RegisterResourceTest02() {
 		Exception ex = Assert.Throws<DirectoryNotFoundException>(
-			() => service.RegisterResource(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()))
+			() => service.RegisterResource(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()), out _)
 		);
 		Assert.NotNull(ex);
 		Assert.Empty(service.Resources);
@@ -85,7 +87,7 @@ public class TranslationServiceTests {
 	[Fact]
 	public void RegisterResourceTest03() {
 		Exception ex = Assert.Throws<ArgumentNullException>(
-			() => service.RegisterResource("")
+			() => service.RegisterResource("", out _)
 		);
 		Assert.NotNull(ex);
 		Assert.Empty(service.Resources);
@@ -99,8 +101,9 @@ public class TranslationServiceTests {
 		_ = Directory.CreateDirectory(tempDirectory);
 
 		try {
-			bool success = service.RegisterResource(tempDirectory);
+			bool success = service.RegisterResource(tempDirectory, out StringBuilder? errors);
 			Assert.False(success);
+			Assert.Equal($"Expected 'en-US' directory in '{tempDirectory}'.", errors!.ToString());
 			Assert.Empty(service.Resources);
 		}
 		finally {
@@ -112,10 +115,11 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest05() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out StringBuilder? errors);
 
 		Assert.False(success);
+		Assert.Equal($"The following files could not be added: {Path.Combine(mocksDirectory, "strings01", "en-US", "mockStrings01.ftl")}, {Path.Combine(mocksDirectory, "strings01", "en-US", "sub", "mockStrings02.ftl")}, {Path.Combine(mocksDirectory, "strings01", "en-US", "sub", "mockStrings03.ftl")}", errors!.ToString());
 		Assert.Collection(service.Resources.OrderBy(r => r.ResourcePath),
 			r => {
 				Assert.Equal(Path.Combine(mocksDirectory, "strings01", "en-US", "mockStrings01.ftl"), r.ResourcePath);
@@ -134,9 +138,10 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest06() {
-		bool success = service.RegisterResource(typeof(TranslationServiceTests).Assembly);
+		bool success = service.RegisterResource(typeof(TranslationServiceTests).Assembly, out StringBuilder? errors);
 
 		Assert.True(success);
+		Assert.Null(errors);
 		Assert.Collection(service.Resources.OrderBy(r => r.ResourcePath),
 			r => {
 				Assert.Equal("strings@" + Path.Combine("en-US", "embedded-strings.ftl"), r.ResourcePath);
@@ -151,8 +156,9 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest07() {
-		bool success = service.RegisterResource(typeof(ITranslationService).Assembly);
+		bool success = service.RegisterResource(typeof(ITranslationService).Assembly, out StringBuilder? errors);
 		Assert.False(success);
+		Assert.Equal($"No resources were found in assembly '{typeof(ITranslationService).Assembly.GetName().Name}'", errors!.ToString());
 		Assert.Empty(service.Resources);
 	}
 	/// <summary>
@@ -160,10 +166,11 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest08() {
-		_ = service.RegisterResource(typeof(TranslationServiceTests).Assembly);
-		bool success = service.RegisterResource(typeof(TranslationServiceTests).Assembly);
+		_ = service.RegisterResource(typeof(TranslationServiceTests).Assembly, out _);
+		bool success = service.RegisterResource(typeof(TranslationServiceTests).Assembly, out StringBuilder? errors);
 
 		Assert.False(success);
+		Assert.Equal("The following files could not be added: strings@en-US/embedded-strings.ftl, strings01@en-US/mockStrings01.ftl", errors!.ToString());
 		Assert.Collection(service.Resources.OrderBy(r => r.ResourcePath),
 			r => {
 				Assert.Equal("strings@" + Path.Combine("en-US", "embedded-strings.ftl"), r.ResourcePath);
@@ -179,7 +186,8 @@ public class TranslationServiceTests {
 	private class ReloadTestService : TranslationService {
 		public ReloadTestService(TranslationServiceOptions options) : base(options) { }
 #pragma warning disable IDE0060 // Remove unused parameter
-		public new bool RegisterResource(Assembly? assembly) {
+		public new bool RegisterResource(Assembly? assembly, out StringBuilder? errors) {
+			errors = null;
 			_ = resources.Add(new StringResource(new CultureInfo("en-US"), typeof(TranslationServiceTests).Assembly, "resource/en-US/that/does/not/exist.ftl"));
 			return true;
 		}
@@ -191,7 +199,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void ReloadTest01() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.Collection(service.Contexts.Keys.Order(),
@@ -211,7 +219,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void ReloadTest02() {
-		_ = service.RegisterResource(typeof(TranslationServiceTests).Assembly);
+		_ = service.RegisterResource(typeof(TranslationServiceTests).Assembly, out _);
 		service.Reload();
 
 		Assert.Contains("strings.embedded-strings", service.Contexts.Keys);
@@ -229,8 +237,8 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void ReloadTest04() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
-		_ = service.RegisterResource(typeof(TranslationServiceTests).Assembly);
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
+		_ = service.RegisterResource(typeof(TranslationServiceTests).Assembly, out _);
 
 		Exception ex = Assert.Throws<InvalidOperationException>(
 			service.Reload
@@ -243,7 +251,7 @@ public class TranslationServiceTests {
 	[Fact]
 	public void ReloadTest05() {
 		ReloadTestService testService = new ReloadTestService(new TranslationServiceOptions { PrimaryLocale = new CultureInfo("en-US") });
-		_ = testService.RegisterResource(null);
+		_ = testService.RegisterResource(null, out _);
 		testService.Reload();
 		Assert.Empty(service.Contexts);
 	}
@@ -255,7 +263,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void GetAllStringAddressesTest01() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		IEnumerable<string> addresses = service.GetAllStringKeys();
@@ -286,7 +294,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void GetAllStringAddressesTest02() {
-		_ = service.RegisterResource(typeof(TranslationServiceTests).Assembly);
+		_ = service.RegisterResource(typeof(TranslationServiceTests).Assembly, out _);
 		service.Reload();
 
 		IEnumerable<string> addresses = service.GetAllStringKeys();
@@ -315,7 +323,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest01() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -326,7 +334,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest02() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -337,7 +345,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest03() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -348,7 +356,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest04() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -359,7 +367,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest06() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -372,7 +380,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest07() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -385,7 +393,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest08() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -398,7 +406,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest09() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -411,7 +419,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest10() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -425,7 +433,7 @@ public class TranslationServiceTests {
 	[Fact]
 	public void TranslateTest11() {
 		service = new TestTranslationService(new TranslationServiceOptions { PrimaryLocale = new CultureInfo("ja-JP") });
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings02"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings02"), out _);
 		service.Reload();
 
 		Assert.True(success);
@@ -436,7 +444,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TranslateTest12() {
-		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		bool success = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		KeyedString keyedString = new KeyedString("strings01.mockStrings01.sample-string");
@@ -454,7 +462,7 @@ public class TranslationServiceTests {
 				PrimaryLocale = new CultureInfo("fr-FR")
 			}
 		);
-		_ = frenchService.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = frenchService.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		frenchService.Reload();
 
 		TranslationService englishService = new TranslationService(
@@ -463,7 +471,7 @@ public class TranslationServiceTests {
 				FallbackService = frenchService
 			}
 		);
-		_ = englishService.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = englishService.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		englishService.Reload();
 
 		Assert.Equal(
@@ -479,7 +487,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void HasMessageTest01() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 		Assert.True(service.HasMessage("strings01.mockStrings01.sample-string"));
 	}
@@ -488,7 +496,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void HasMessageTest02() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 		Assert.False(service.HasMessage("address.that.does.not.exist"));
 	}
@@ -530,7 +538,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TryGetMessageTest01() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		bool success = service.TryGetMessage("strings01.mockStrings01.sample-string", out MessageContext? context, out Message? message);
@@ -544,7 +552,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TryGetMessageTest02() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		bool success = service.TryGetMessage("key-that-does-not-exist", out MessageContext? context, out Message? message);
@@ -558,7 +566,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void TryGetMessageTest03() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		bool success = service.TryGetMessage("strings01.mockStrings01.key-that-does-not-exist", out MessageContext? context, out Message? message);
@@ -675,7 +683,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void CompareCompletionTest01() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		float completion = service.CompareCompletion(service);
@@ -686,7 +694,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void CompareCompletionTest02() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		ITranslationService instance = new OtherTranslationService1();
@@ -699,7 +707,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void CompareCompletionTest03() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		ITranslationService instance = new OtherTranslationService2();
@@ -722,7 +730,7 @@ public class TranslationServiceTests {
 	/// </summary>
 	[Fact]
 	public void CompareCompletionTest05() {
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		ITranslationService instance = new OtherTranslationService3();

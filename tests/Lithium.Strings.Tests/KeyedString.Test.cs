@@ -22,7 +22,7 @@ public class KeyedStringTests {
 			PrimaryLocale = new CultureInfo("en-US")
 		};
 		service = new TranslationService(options);
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 	}
 
@@ -142,7 +142,7 @@ public class KeyedStringTests {
 				PrimaryLocale = new CultureInfo("it-IT")
 			}
 		);
-		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"));
+		_ = service.RegisterResource(Path.Combine(mocksDirectory, "strings01"), out _);
 		service.Reload();
 
 		Assert.False(((KeyedString)"sample-string").IsLoaded(service));

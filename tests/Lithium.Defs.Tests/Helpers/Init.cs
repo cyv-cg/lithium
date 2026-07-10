@@ -11,7 +11,7 @@ internal static class Init {
 	}
 
 	internal static void Setup(byte i, DefService service) {
-		_ = service.RegisterResource(MockDirectory(i));
+		_ = service.RegisterResource(MockDirectory(i), out _);
 		service.Reload();
 	}
 }
