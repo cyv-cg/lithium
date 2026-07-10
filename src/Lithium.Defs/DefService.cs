@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
@@ -45,10 +46,13 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// Registers an external directory containing XML files to the registry.
 	/// </summary>
 	/// <param name="directory">Full directory path containing the XML files.</param>
+	/// <param name="errors">If the resource could not be registered, this will contain details about the errors that occurred.</param>
 	/// <returns>True if all files were successfully registered; false if any were not registered.</returns>
 	/// <exception cref="ArgumentNullException">Thrown if the directory path is an empty string.</exception>
 	/// <exception cref="DirectoryNotFoundException">Thrown if the directory path does not exist.</exception>
-	public bool RegisterResource(string directory) {
+	public bool RegisterResource(string directory, [NotNullWhen(false)] out StringBuilder? errors) {
+		errors = null;
+
 		if (string.IsNullOrEmpty(directory)) {
 			throw new ArgumentNullException(nameof(directory));
 		}
@@ -57,11 +61,17 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		}
 
 		IEnumerable<string> defFiles = XmlLoader.GetAllFiles(directory);
+		List<string> failedFiles = new List<string>();
 		foreach (string file in defFiles) {
 			XmlDocument doc = XmlLoader.LoadDocument(file);
 			if (!RegisterResource(file, doc)) {
-				return false;
+				failedFiles.Add(file);
 			}
+		}
+
+		if (failedFiles.Count != 0) {
+			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles.Order())}");
+			return false;
 		}
 
 		return true;
@@ -70,23 +80,34 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// Registers XML files embedded in an assembly to the registry.
 	/// </summary>
 	/// <param name="assembly">Assembly containing the embedded XML files.</param>
+	/// <param name="errors">If the resource could not be registered, this will contain details about the errors that occurred.</param>
 	/// <returns>True if all files were successfully registered; false if any were not registered.</returns>
-	public bool RegisterResource(Assembly assembly) {
+	public bool RegisterResource(Assembly assembly, [NotNullWhen(false)] out StringBuilder? errors) {
+		errors = null;
+
 		IEnumerable<string> defFiles = ResourceLoader.FetchResources(assembly, ".xml");
 		if (!defFiles.Any()) {
+			errors = new StringBuilder($"No resources were found in assembly '{assembly.GetName().Name}'");
 			return false;
 		}
 
+		List<string> failedFiles = new List<string>();
 		foreach (string file in defFiles) {
 			Stream stream = ResourceLoader.LoadResourceStream(assembly, file);
 			XmlDocument? doc = XmlLoader.LoadDocument(stream);
 			if (doc == null) {
+				errors = new StringBuilder($"Failed to parse XML document '{file}' from assembly '{assembly.GetName().Name}'");
 				return false;
 			}
 
-			if (!RegisterResource(assembly.GetName().FullName, doc)) {
-				return false;
+			if (!RegisterResource($"{assembly.GetName().Name}.{file}", doc)) {
+				failedFiles.Add(file);
 			}
+		}
+
+		if (failedFiles.Count > 0) {
+			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles.Order())}");
+			return false;
 		}
 
 		return true;
@@ -95,17 +116,20 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// Registeres a single XML document to the registry.
 	/// </summary>
 	/// <param name="document">Document to register.</param>
+	/// <param name="errors">If the resource could not be registered, this will contain details about the errors that occurred.</param>
 	/// <returns>True if the document was successfully registered; false otherwise.</returns>
-	public bool RegisterResource(XmlDocument document) {
-		return RegisterResource(HashCode.Combine(document.InnerText).ToString(), document);
+	public bool RegisterResource(XmlDocument document, [NotNullWhen(false)] out StringBuilder? errors) {
+		errors = null;
+		if (!RegisterResource(HashCode.Combine(document.InnerText).ToString(), document)) {
+			string contentPreview = document.OuterXml[..Math.Min(256, document.OuterXml.Length)];
+			errors = new StringBuilder($"The document could not be added as a document with the same key has already been registered.\nDocument content: {contentPreview}");
+			return false;
+		}
+		return true;
 	}
 
 	private bool RegisterResource(string key, XmlDocument document) {
-		if (documents.ContainsKey(key)) {
-			return false;
-		}
-		documents.Add(key, document);
-		return true;
+		return documents.TryAdd(key, document);
 	}
 
 	/// <summary>

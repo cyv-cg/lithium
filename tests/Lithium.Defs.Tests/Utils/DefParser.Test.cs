@@ -10,6 +10,9 @@ using System.Xml;
 using Lithium.Core;
 using Lithium.Defs.XML;
 using Lithium.Core.Attributes;
+using System.Text;
+using System.Reflection;
+using System.Runtime.Loader;
 
 namespace Lithium.Defs.Tests;
 
@@ -18,12 +21,15 @@ namespace Lithium.Defs.Tests;
 /// </summary>
 public class DefParserTests {
 	private readonly DefService service;
+	private static IEnumerable<Assembly>? baseAssemblies;
 
 	/// <summary>
 	/// Reset the state for each test.
 	/// </summary>
 	public DefParserTests() {
 		service = new DefService(new DefServiceOptions());
+		baseAssemblies ??= AppDomain.CurrentDomain.GetAssemblies();
+		TypeChecker.assemblyScraper = new AssemblyScraper(baseAssemblies);
 	}
 
 	#region ParseDef tests
@@ -44,7 +50,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest02() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-valid");
-		_ = service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile, out _);
 		service.Reload();
 
 		MockDef1? loadedDef = service.LoadDef<MockDef1>("MockDef");
@@ -62,7 +68,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest03() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "self-reference");
-		_ = service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile, out _);
 		service.Reload();
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
@@ -75,7 +81,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest04() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid");
-		_ = service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile, out _);
 		service.Reload();
 
 		Exception e = Assert.Throws<DefParentInvalidException>(
@@ -88,7 +94,7 @@ public class DefParserTests {
 	[Fact]
 	public void ParseDefTest05() {
 		string mockFile = Path.Combine(Init.MockDirectory(7), "parent-invalid-2");
-		_ = service.RegisterResource(mockFile);
+		_ = service.RegisterResource(mockFile, out _);
 		service.Reload();
 
 		Exception e = Assert.Throws<UnresolvedTypeException>(
@@ -100,11 +106,12 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest06() {
-		_ = service.RegisterResource(Init.MockDirectory(15));
+		_ = service.RegisterResource(Init.MockDirectory(15), out StringBuilder? errors);
 		service.Reload();
 
 		IEnumerable<Def> defs = service.LoadAll();
 
+		Assert.Null(errors);
 		Assert.Collection(defs.OrderBy(d => d.Key),
 			d => {
 				MockDef14 def = (d as MockDef14)!;
@@ -459,8 +466,8 @@ public class DefParserTests {
 	/// </summary>
 	[Fact]
 	public void ParseDefTest21() {
-		_ = service.RegisterResource(Init.MockDirectory(1));
-		_ = service.RegisterResource(Init.MockDirectory(2));
+		_ = service.RegisterResource(Init.MockDirectory(1), out _);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
 		service.Reload();
 
 
@@ -497,6 +504,18 @@ public class DefParserTests {
 				Assert.Equal(6, e);
 			}
 		);
+	}
+	/// <summary>
+	/// Tests that an exception is thrown when a class property on a Def has missing required properties.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest23() {
+		Init.Setup(18, service);
+
+		Exception ex = Assert.Throws<MissingDefPropException>(
+			() => service.LoadDef<Def>("MockDef")
+		);
+		Assert.NotNull(ex);
 	}
 	#endregion
 
@@ -557,6 +576,65 @@ public class DefParserTests {
 		Exception e = Assert.Throws<DefFactoryReturnTypeException>(
 			() => service.LoadDef<MockDef8>("MockDef05")
 		);
+	}
+	/// <summary>
+	/// Tests that Factories can be loaded from separate static classes.
+	/// </summary>
+	[Fact]
+	public void LoadFactoryTest06() {
+		Init.Setup(17, service);
+
+		ExtFactoryDef def = service.LoadDef<ExtFactoryDef>("MockDef1")!;
+
+		Assert.NotNull(def);
+		Assert.Equal("Content: information from XML", def.Data.Content);
+	}
+	/// <summary>
+	/// Tests that the factory can be selected when there are multiple defined.
+	/// </summary>
+	[Fact]
+	public void LoadFactoryTest07() {
+		Init.Setup(17, service);
+
+		ExtFactoryDef def = service.LoadDef<ExtFactoryDef>("MockDef2")!;
+
+		Assert.NotNull(def);
+		Assert.Equal("Different content: information from XML", def.Data.Content);
+	}
+	/// <summary>
+	/// Tests that an exception is thrown when a factory class that doesn't exist is specified.
+	/// </summary>
+	[Fact]
+	public void LoadFactoryTest08() {
+		Init.Setup(17, service);
+
+		Exception ex = Assert.Throws<UnresolvedTypeException>(
+			() => service.LoadDef<ExtFactoryDef>("MockDef3")
+		);
+
+		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that an exception is thrown when a class defines multiple factories for a single type.
+	/// </summary>
+	[Fact]
+	public void LoadFactoryTest09() {
+		AssemblyLoadContext? context = new AssemblyLoadContext("TestAssemblyContext", true);
+
+		try {
+			_ = context.LoadFromAssemblyPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__test_assemblies__", "TestAssembly02", "Lithium.Defs.Tests.TestAssembly02.dll"));
+			TypeChecker.assemblyScraper = new AssemblyScraper(AppDomain.CurrentDomain.GetAssemblies());
+			Init.Setup(17, service);
+
+			Exception ex = Assert.Throws<AmbiguousMatchException>(
+				() => service.LoadDef<ExtFactoryDef>("MockDef1")
+			);
+
+			Assert.NotNull(ex);
+		}
+		finally {
+			TypeChecker.assemblyScraper = new AssemblyScraper(AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name != "Lithium.Defs.Test.TestAssembly02"));
+		}
 	}
 	#endregion
 }

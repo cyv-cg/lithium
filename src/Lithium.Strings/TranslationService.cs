@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Fluent.Net;
 using Fluent.Net.RuntimeAst;
 using Lithium.Core;
@@ -47,10 +49,13 @@ public class TranslationService : ITranslationService, IResourceRegistry<string>
 	/// The directory should contain subdirectories named after locales (e.g. "en-US", "fr-FR") which in turn contain the Fluent resource files (.ftl).
 	/// </summary>
 	/// <param name="directory">Directory containing the Fluent resource files.</param>
+	/// <param name="errors">If the resource could not be registered, this will contain details about the errors that occurred.</param>
 	/// <returns>True if all Fluent resource files were registered successfully, false if any failed to register.</returns>
 	/// <exception cref="ArgumentNullException">Thrown if the directory string is null or empty.</exception>
 	/// <exception cref="DirectoryNotFoundException">Thrown if the given directory does not exist.</exception>
-	public bool RegisterResource(string directory) {
+	public bool RegisterResource(string directory, [NotNullWhen(false)] out StringBuilder? errors) {
+		errors = null;
+
 		if (string.IsNullOrEmpty(directory)) {
 			throw new ArgumentNullException(nameof(directory));
 		}
@@ -60,22 +65,31 @@ public class TranslationService : ITranslationService, IResourceRegistry<string>
 
 		string localeDirectory = Path.Combine(directory, options.PrimaryLocale.Name);
 		if (!Directory.Exists(localeDirectory)) {
+			errors = new StringBuilder($"Expected '{options.PrimaryLocale.Name}' directory in '{directory}'.");
 			return false;
 		}
 
 		string[] files = Directory.GetFiles(localeDirectory, "*.ftl", SearchOption.AllDirectories);
+		List<string> failedFiles = new List<string>();
 		foreach (string file in files) {
 			StringResource resource = new StringResource(options.PrimaryLocale, file);
 			if (!resources.Add(resource)) {
-				return false;
+				failedFiles.Add(file);
 			}
 		}
+
+		if (failedFiles.Count > 0) {
+			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles.Order())}");
+			return false;
+		}
+
 		return true;
 	}
 	/// <summary>
 	/// Registers all Fluent resource files (.ftl) embedded in an assembly.
 	/// </summary>
 	/// <param name="assembly">Assembly containing the embedded resource files.</param>
+	/// <param name="errors">If the resource could not be registered, this will contain details about the errors that occurred.</param>
 	/// <remarks>
 	/// The logical names of the resource files are expected to be in a particular format, identical to a hierarchical folder structure.
 	/// e.g. 'root/locale/path/to/resource.ftl'.
@@ -89,18 +103,28 @@ public class TranslationService : ITranslationService, IResourceRegistry<string>
 	/// </code>
 	/// </remarks>
 	/// <returns>True if all Fluent resource files were registered successfully, false if any failed to register.</returns>
-	public bool RegisterResource(Assembly assembly) {
+	public bool RegisterResource(Assembly assembly, [NotNullWhen(false)] out StringBuilder? errors) {
+		errors = null;
+
 		IEnumerable<string> embeddedResources = ResourceLoader.FetchResources(assembly, ".ftl").Where(r => r.Contains(options.PrimaryLocale.Name));
 		if (!embeddedResources.Any()) {
+			errors = new StringBuilder($"No resources were found in assembly '{assembly.GetName().Name}'");
 			return false;
 		}
 
+		List<string> failedFiles = new List<string>();
 		foreach (string resourcePath in embeddedResources) {
 			StringResource resource = new StringResource(options.PrimaryLocale, assembly, resourcePath);
 			if (!resources.Add(resource)) {
-				return false;
+				failedFiles.Add(resourcePath);
 			}
 		}
+
+		if (failedFiles.Count > 0) {
+			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles.Order())}");
+			return false;
+		}
+
 		return true;
 	}
 
