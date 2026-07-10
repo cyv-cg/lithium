@@ -1,0 +1,17 @@
+<Defs>
+	<Def Class="Lithium.Defs.Tests.ExtFactoryDef">
+		<Key>MockDef1</Key>
+		<Label>MockDef_Label</Label>
+		<Data>information from XML</Data>
+	</Def>
+	<Def Class="Lithium.Defs.Tests.ExtFactoryDef">
+		<Key>MockDef2</Key>
+		<Label>MockDef_Label</Label>
+		<Data FactoryClass="Lithium.Defs.Tests.MoreStaticFactoryMethods">information from XML</Data>
+	</Def>
+	<Def Class="Lithium.Defs.Tests.ExtFactoryDef">
+		<Key>MockDef3</Key>
+		<Label>MockDef_Label</Label>
+		<Data FactoryClass="Class.That.Does.Not.Exist">information from XML</Data>
+	</Def>
+</Defs>

@@ -12,7 +12,7 @@ public class MissingDefPropExceptionTests {
 	/// </summary>
 	[Fact]
 	public void MessageTest01() {
-		MissingDefPropException ex = new MissingDefPropException("MockDef", typeof(MockDef1).GetProperties());
+		MissingDefPropException ex = new MissingDefPropException("MockDef", null, typeof(MockDef1).GetProperties());
 
 		Assert.Equal(
 			"Missing fields in def 'MockDef': SampleValue1, Key, Label, Disabled",
@@ -24,10 +24,22 @@ public class MissingDefPropExceptionTests {
 	/// </summary>
 	[Fact]
 	public void MessageTest02() {
-		MissingDefPropException ex = new MissingDefPropException("MockDef", typeof(MockDataClass).GetProperties());
+		MissingDefPropException ex = new MissingDefPropException("MockDef", null, typeof(MockDataClass).GetProperties());
 
 		Assert.Equal(
 			"Missing fields in def 'MockDef': Value",
+			ex.Message
+		);
+	}
+	/// <summary>
+	/// Tests that MissingDefPropException properly formats properties within a Def.
+	/// </summary>
+	[Fact]
+	public void MessageTest03() {
+		MissingDefPropException ex = new MissingDefPropException("MockDef", "PropertyName", typeof(MockDataClass).GetProperties());
+
+		Assert.Equal(
+			"Missing fields in def 'MockDef' property 'PropertyName': Value",
 			ex.Message
 		);
 	}
