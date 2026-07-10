@@ -51,7 +51,7 @@ public static class DefParser {
 		};
 
 		// Load def properties.
-		Stack<DefLink> links = ParseXmlToClass(ref defInstance, node, defType);
+		Stack<DefLink> links = ParseXmlToClass(ref defInstance, node, node, defType);
 		defs.UnionWith(service.ResolveDefLinks(links));
 
 		return defs;
@@ -152,20 +152,26 @@ public static class DefParser {
 	/// Parses the XML node into a class instance.
 	/// </summary>
 	/// <param name="instance">Reference to the instance to populate.</param>
-	/// <param name="defNode">XML node containing the data.</param>
+	/// <param name="defNode">XML node containing the def data.</param>
+	/// <param name="node">XML node containing the data.</param>
 	/// <param name="type">Type of the class to parse into.</param>
 	/// <returns>Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the class.</returns>
 	/// <exception cref="MissingDefPropException">Thrown when the def XML is missing a required property.</exception>
 	/// <exception cref="MissingFieldException">Thrown when a property specified in the def XML does not exist on the type.</exception>
-	private static Stack<DefLink> ParseXmlToClass(ref object instance, XmlNode defNode, Type type) {
+	private static Stack<DefLink> ParseXmlToClass(ref object instance, XmlNode defNode, XmlNode node, Type type) {
 		// Check if any required fields are not defined in XML.
-		if (!ValidateRequiredFields(defNode, type, out IEnumerable<PropertyInfo> missingProps)) {
-			throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), missingProps.ToArray());
+		if (!ValidateRequiredFields(node, type, out IEnumerable<PropertyInfo> missingProps)) {
+			if (instance is Def def) {
+				throw new MissingDefPropException(def.Key, null, missingProps.ToArray());
+			}
+			else {
+				throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), node.Name, missingProps.ToArray());
+			}
 		}
 
 		Stack<DefLink> links = new Stack<DefLink>();
 
-		foreach (XmlNode propNode in defNode.ChildNodes) {
+		foreach (XmlNode propNode in node.ChildNodes) {
 			if (propNode.NodeType == XmlNodeType.Comment) {
 				continue;
 			}
@@ -177,9 +183,9 @@ public static class DefParser {
 
 			IEnumerable<DefLink> nestedLinks = prop.PropertyType.IsList(out Type? listType)
 				// Load list elements individually.
-				? ParseList(ref instance, prop, defNode, propNode, listType)
+				? ParseList(ref instance, prop, node, propNode, listType)
 				// Load single values.
-				: ParseSingle(ref instance, prop, defNode, propNode);
+				: ParseSingle(ref instance, prop, node, propNode);
 
 			// Add stack elements from start to finish to preserve the order instead of flipping it with pop/push.
 			foreach (DefLink link in nestedLinks) {
@@ -319,7 +325,7 @@ public static class DefParser {
 		}
 		// Load sub-classes.
 		else if (type.IsNonPrimitive()) {
-			return LoadClass(node, type, out links);
+			return LoadClass(defNode, node, type, out links);
 		}
 
 		// Convert primitive types.
@@ -386,13 +392,14 @@ public static class DefParser {
 	/// <summary>
 	/// Loads a non-primitive class by recursively parsing its properties from the XML node.
 	/// </summary>
+	/// <param name="defNode">XML node containing the def data.</param>
 	/// <param name="node">XML node containing the data.</param>
 	/// <param name="type">Type of the class to parse.</param>
 	/// <param name="links">Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the class.</param>
 	/// <returns>Parsed class instance.</returns>
-	private static object LoadClass(XmlNode node, Type type, out Stack<DefLink> links) {
+	private static object LoadClass(XmlNode defNode, XmlNode node, Type type, out Stack<DefLink> links) {
 		object subClass = Activator.CreateInstance(type)!;
-		links = ParseXmlToClass(ref subClass, node, type);
+		links = ParseXmlToClass(ref subClass, defNode, node, type);
 		return subClass;
 	}
 }

@@ -505,6 +505,18 @@ public class DefParserTests {
 			}
 		);
 	}
+	/// <summary>
+	/// Tests that an exception is thrown when a class property on a Def has missing required properties.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest23() {
+		Init.Setup(18, service);
+
+		Exception ex = Assert.Throws<MissingDefPropException>(
+			() => service.LoadDef<Def>("MockDef")
+		);
+		Assert.NotNull(ex);
+	}
 	#endregion
 
 	#region LoadFactory tests
