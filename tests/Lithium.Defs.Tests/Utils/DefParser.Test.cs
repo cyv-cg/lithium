@@ -11,6 +11,8 @@ using Lithium.Core;
 using Lithium.Defs.XML;
 using Lithium.Core.Attributes;
 using System.Text;
+using System.Reflection;
+using System.Runtime.Loader;
 
 namespace Lithium.Defs.Tests;
 
@@ -19,12 +21,15 @@ namespace Lithium.Defs.Tests;
 /// </summary>
 public class DefParserTests {
 	private readonly DefService service;
+	private static IEnumerable<Assembly>? baseAssemblies;
 
 	/// <summary>
 	/// Reset the state for each test.
 	/// </summary>
 	public DefParserTests() {
 		service = new DefService(new DefServiceOptions());
+		baseAssemblies ??= AppDomain.CurrentDomain.GetAssemblies();
+		TypeChecker.assemblyScraper = new AssemblyScraper(baseAssemblies);
 	}
 
 	#region ParseDef tests
@@ -596,6 +601,28 @@ public class DefParserTests {
 		);
 
 		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that an exception is thrown when a class defines multiple factories for a single type.
+	/// </summary>
+	[Fact]
+	public void LoadFactoryTest09() {
+		AssemblyLoadContext? context = new AssemblyLoadContext("TestAssemblyContext", true);
+
+		try {
+			_ = context.LoadFromAssemblyPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "__test_assemblies__", "TestAssembly02", "Lithium.Defs.Tests.TestAssembly02.dll"));
+			TypeChecker.assemblyScraper = new AssemblyScraper(AppDomain.CurrentDomain.GetAssemblies());
+			Init.Setup(17, service);
+
+			Exception ex = Assert.Throws<AmbiguousMatchException>(
+				() => service.LoadDef<ExtFactoryDef>("MockDef1")
+			);
+
+			Assert.NotNull(ex);
+		}
+		finally {
+			TypeChecker.assemblyScraper = new AssemblyScraper(AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name != "Lithium.Defs.Test.TestAssembly02"));
+		}
 	}
 	#endregion
 }
