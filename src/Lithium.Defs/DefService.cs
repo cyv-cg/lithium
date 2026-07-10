@@ -84,7 +84,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 				return false;
 			}
 
-			if (!RegisterResource(assembly.GetName().FullName, doc)) {
+			if (!RegisterResource($"{assembly.GetName().Name}.{file}", doc)) {
 				return false;
 			}
 		}
