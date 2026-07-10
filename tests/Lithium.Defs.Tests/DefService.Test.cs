@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
@@ -32,12 +33,13 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest01() {
-		bool success = service.RegisterResource(Init.MockDirectory(1));
+		bool success = service.RegisterResource(Init.MockDirectory(1), out StringBuilder? errors);
 		service.Reload();
 
 		_ = service.LoadAll();
 
 		Assert.True(success);
+		Assert.Null(errors);
 		Assert.Collection(service.defs,
 			d => {
 				Assert.Equal("MockDef", d.Key);
@@ -49,12 +51,13 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest02() {
-		bool success = service.RegisterResource(typeof(DefServiceTests).Assembly);
+		bool success = service.RegisterResource(typeof(DefServiceTests).Assembly, out StringBuilder? errors);
 		service.Reload();
 
 		_ = service.LoadAll();
 
 		Assert.True(success);
+		Assert.Null(errors);
 		Assert.Collection(service.defs,
 			d => {
 				Assert.Equal("MockDef", d.Key);
@@ -70,12 +73,13 @@ public class DefServiceTests {
 	[Fact]
 	public void RegisterResourceTest03() {
 		XmlDocument doc = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(1), "mockDefs.xml"));
-		bool success = service.RegisterResource(doc);
+		bool success = service.RegisterResource(doc, out StringBuilder? errors);
 		service.Reload();
 
 		_ = service.LoadAll();
 
 		Assert.True(success);
+		Assert.Null(errors);
 		Assert.Collection(service.defs,
 			d => {
 				Assert.Equal("MockDef", d.Key);
@@ -89,7 +93,7 @@ public class DefServiceTests {
 	public void RegisterResourceTest04() {
 		bool success = false;
 		Exception ex = Assert.Throws<ArgumentNullException>(
-			() => success = service.RegisterResource("")
+			() => success = service.RegisterResource("", out StringBuilder? errors)
 		);
 		Assert.False(success);
 		Assert.NotNull(ex);
@@ -101,7 +105,7 @@ public class DefServiceTests {
 	public void RegisterResourceTest05() {
 		bool success = false;
 		Exception ex = Assert.Throws<DirectoryNotFoundException>(
-			() => success = service.RegisterResource(Guid.NewGuid().ToString())
+			() => success = service.RegisterResource(Guid.NewGuid().ToString(), out StringBuilder? errors)
 		);
 		Assert.False(success);
 		Assert.NotNull(ex);
@@ -111,42 +115,56 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest06() {
-		bool success = service.RegisterResource(typeof(DefService).Assembly);
+		bool success = service.RegisterResource(typeof(DefService).Assembly, out StringBuilder? errors);
 		service.Reload();
 
 		Assert.False(success);
 		Assert.Empty(service.resources);
+
+		Assert.NotNull(errors);
+		Assert.Equal($"No resources were found in assembly '{typeof(DefService).Assembly.GetName().Name}'", errors.ToString());
 	}
 	/// <summary>
 	/// Tests that the registration fails when adding the same resource again.
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest07() {
-		bool success1 = service.RegisterResource(Init.MockDirectory(1));
-		bool success2 = service.RegisterResource(typeof(DefServiceTests).Assembly);
-		bool success3 = service.RegisterResource(XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(1), "mockDefs.xml")));
+		XmlDocument doc = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(1), "mockDefs.xml"));
+
+		bool success1 = service.RegisterResource(Init.MockDirectory(1), out StringBuilder? errors1);
+		bool success2 = service.RegisterResource(typeof(DefServiceTests).Assembly, out StringBuilder? errors2);
+		bool success3 = service.RegisterResource(doc, out StringBuilder? errors3);
 
 		Assert.True(success1);
+		Assert.Null(errors1);
 		Assert.True(success2);
+		Assert.Null(errors2);
 		Assert.True(success3);
+		Assert.Null(errors3);
 
-		bool _success1 = service.RegisterResource(Init.MockDirectory(1));
-		bool _success2 = service.RegisterResource(typeof(DefServiceTests).Assembly);
-		bool _success3 = service.RegisterResource(XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(1), "mockDefs.xml")));
+		bool _success1 = service.RegisterResource(Init.MockDirectory(1), out errors1);
+		bool _success2 = service.RegisterResource(typeof(DefServiceTests).Assembly, out errors2);
+		bool _success3 = service.RegisterResource(doc, out errors3);
 
 		Assert.False(_success1);
+		Assert.Equal($"The following files could not be added: {Path.Combine(Init.MockDirectory(1), "mockDefs.xml")}", errors1!.ToString());
 		Assert.False(_success2);
+		Assert.Equal($"The following files could not be added: Lithium.Defs.Tests.__resources__.mockDefs.xml, Lithium.Defs.Tests.__resources__.mockDefs2.xml", errors2!.ToString());
 		Assert.False(_success3);
+		Assert.Equal($"The document could not be added as a document with the same key has already been registered.\nDocument content: {doc.OuterXml}", errors3!.ToString());
 	}
 	/// <summary>
 	/// Tests that registration fails for an assembly if it contains an empty file.
 	/// </summary>
 	[Fact]
 	public void RegisterResourceTest08() {
-		bool success = service.RegisterResource(typeof(TestAssembly01.TestAssembly01Class).Assembly);
+		bool success = service.RegisterResource(typeof(TestAssembly01.TestAssembly01Class).Assembly, out StringBuilder? errors);
 
 		Assert.False(success);
 		Assert.Empty(service.resources);
+
+		Assert.NotNull(errors);
+		Assert.Equal($"Failed to parse XML document 'Lithium.Defs.Tests.TestAssembly01.__resources__.mockDefs.xml' from assembly '{typeof(TestAssembly01.TestAssembly01Class).Assembly.GetName().Name}'", errors.ToString());
 	}
 	#endregion
 
@@ -159,10 +177,11 @@ public class DefServiceTests {
 		XmlDocument doc = new XmlDocument();
 		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Def\"><Key>SampleDefKey</Key><Disabled>true</Disabled></Def></Defs>");
 
-		_ = service.RegisterResource(doc);
+		_ = service.RegisterResource(doc, out StringBuilder? errors);
 		service.Reload();
 
 		Assert.Empty(service.resources);
+		Assert.Null(errors);
 	}
 	/// <summary>
 	/// Tests that documents missing the top-level Defs node do not get read.
@@ -172,7 +191,7 @@ public class DefServiceTests {
 		XmlDocument doc = new XmlDocument();
 		doc.LoadXml("<Def Class=\"Lithium.Defs.Def\"><Key>SampleDefKey</Key></Def>");
 
-		_ = service.RegisterResource(doc);
+		_ = service.RegisterResource(doc, out _);
 		service.Reload();
 
 		Assert.Empty(service.resources);
@@ -185,7 +204,7 @@ public class DefServiceTests {
 		XmlDocument doc = new XmlDocument();
 		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Def\"></Def></Defs>");
 
-		_ = service.RegisterResource(doc);
+		_ = service.RegisterResource(doc, out _);
 		Exception ex = Assert.Throws<NodeMissingChildException>(
 			service.Reload
 		);
@@ -199,7 +218,7 @@ public class DefServiceTests {
 		XmlDocument doc = new XmlDocument();
 		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Def\"><Key>invalid key name</Key></Def></Defs>");
 
-		_ = service.RegisterResource(doc);
+		_ = service.RegisterResource(doc, out _);
 		Exception ex = Assert.Throws<FormatException>(
 			service.Reload
 		);
@@ -213,7 +232,7 @@ public class DefServiceTests {
 		XmlDocument doc = new XmlDocument();
 		doc.LoadXml("<Defs><Def Class=\"SampleClassName\"><Key>SampleDefKey</Key><Property>1</Property><OtherProperty>2</OtherProperty></Def><Def Class=\"SampleClassName\"><Key>SampleDefKey</Key><Property>replaced content</Property></Def></Defs>");
 
-		_ = service.RegisterResource(doc);
+		_ = service.RegisterResource(doc, out _);
 		service.Reload();
 
 		XmlNode node = service.resources["SampleDefKey"];
@@ -228,7 +247,7 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void LoadAllTest01() {
-		_ = service.RegisterResource(Init.MockDirectory(14));
+		_ = service.RegisterResource(Init.MockDirectory(14), out _);
 		service.Reload();
 
 		MockDef1[] defs1 = service.LoadAll<MockDef1>().OrderBy(d => d.Key).ToArray();
@@ -262,7 +281,7 @@ public class DefServiceTests {
 				DeferredLoad = false
 			}
 		);
-		_ = service.RegisterResource(Init.MockDirectory(14));
+		_ = service.RegisterResource(Init.MockDirectory(14), out _);
 		service.Reload();
 
 		MockDef1[] defs1 = service.LoadAll<MockDef1>().OrderBy(d => d.Key).ToArray();
@@ -294,7 +313,7 @@ public class DefServiceTests {
 		XmlDocument doc = new XmlDocument();
 		doc.LoadXml("<Defs><Def><Key>SampleDefKey</Key></Def></Defs>");
 
-		_ = service.RegisterResource(doc);
+		_ = service.RegisterResource(doc, out _);
 		service.Reload();
 
 		Def[] defs = service.LoadAll<Def>().ToArray();
@@ -309,7 +328,7 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void TryLoadDefTest01() {
-		_ = service.RegisterResource(Init.MockDirectory(2));
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
 		service.Reload();
 
 		bool success = service.TryLoadDef("FirstDef", out MockDef2? def);
@@ -323,7 +342,7 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void TryLoadDefTest02() {
-		_ = service.RegisterResource(Init.MockDirectory(2));
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
 		service.Reload();
 
 		bool success = service.TryLoadDef("FirstDef", out MockDef1? def);
@@ -336,7 +355,7 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void TryLoadDefTest03() {
-		_ = service.RegisterResource(Init.MockDirectory(2));
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
 		service.Reload();
 
 		bool success = service.TryLoadDef("DefThatDoesNotExist", out MockDef2? def);
@@ -352,7 +371,7 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void LoadDefTest01() {
-		_ = service.RegisterResource(Init.MockDirectory(2));
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
 		service.Reload();
 
 		MockDef2? def = service.LoadDef<MockDef2>("FirstDef");
@@ -365,7 +384,7 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void LoadDefTest02() {
-		_ = service.RegisterResource(Init.MockDirectory(2));
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
 		service.Reload();
 
 		MockDef1? def = service.LoadDef<MockDef1>("FirstDef");
@@ -377,7 +396,7 @@ public class DefServiceTests {
 	/// </summary>
 	[Fact]
 	public void LoadDefTest03() {
-		_ = service.RegisterResource(Init.MockDirectory(2));
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
 		service.Reload();
 
 		Exception ex = Assert.Throws<DefNotFoundException>(
