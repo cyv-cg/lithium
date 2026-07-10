@@ -560,5 +560,42 @@ public class DefParserTests {
 			() => service.LoadDef<MockDef8>("MockDef05")
 		);
 	}
+	/// <summary>
+	/// Tests that Factories can be loaded from separate static classes.
+	/// </summary>
+	[Fact]
+	public void LoadFactoryTest06() {
+		Init.Setup(17, service);
+
+		ExtFactoryDef def = service.LoadDef<ExtFactoryDef>("MockDef1")!;
+
+		Assert.NotNull(def);
+		Assert.Equal("Content: information from XML", def.Data.Content);
+	}
+	/// <summary>
+	/// Tests that the factory can be selected when there are multiple defined.
+	/// </summary>
+	[Fact]
+	public void LoadFactoryTest07() {
+		Init.Setup(17, service);
+
+		ExtFactoryDef def = service.LoadDef<ExtFactoryDef>("MockDef2")!;
+
+		Assert.NotNull(def);
+		Assert.Equal("Different content: information from XML", def.Data.Content);
+	}
+	/// <summary>
+	/// Tests that an exception is thrown when a factory class that doesn't exist is specified.
+	/// </summary>
+	[Fact]
+	public void LoadFactoryTest08() {
+		Init.Setup(17, service);
+
+		Exception ex = Assert.Throws<UnresolvedTypeException>(
+			() => service.LoadDef<ExtFactoryDef>("MockDef3")
+		);
+
+		Assert.NotNull(ex);
+	}
 	#endregion
 }
