@@ -70,7 +70,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		}
 
 		if (failedFiles.Count != 0) {
-			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles)}");
+			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles.Order())}");
 			return false;
 		}
 
@@ -106,7 +106,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		}
 
 		if (failedFiles.Count > 0) {
-			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles)}");
+			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles.Order())}");
 			return false;
 		}
 

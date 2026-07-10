@@ -79,7 +79,7 @@ public class TranslationService : ITranslationService, IResourceRegistry<string>
 		}
 
 		if (failedFiles.Count > 0) {
-			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles)}");
+			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles.Order())}");
 			return false;
 		}
 
@@ -121,7 +121,7 @@ public class TranslationService : ITranslationService, IResourceRegistry<string>
 		}
 
 		if (failedFiles.Count > 0) {
-			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles)}");
+			errors = new StringBuilder($"The following files could not be added: {string.Join(", ", failedFiles.Order())}");
 			return false;
 		}
 
