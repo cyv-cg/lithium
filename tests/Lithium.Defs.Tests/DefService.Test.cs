@@ -58,6 +58,9 @@ public class DefServiceTests {
 		Assert.Collection(service.defs,
 			d => {
 				Assert.Equal("MockDef", d.Key);
+			},
+			d => {
+				Assert.Equal("MockDef2", d.Key);
 			}
 		);
 	}
