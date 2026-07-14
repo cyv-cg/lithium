@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Attributes;
@@ -53,6 +54,10 @@ public static class DefParser {
 		// Load def properties.
 		Stack<DefLink> links = ParseXmlToClass(ref defInstance, node, node, defType);
 		defs.UnionWith(service.ResolveDefLinks(links));
+
+		if (!defs.ElementAt(0).Validate(out StringBuilder? errors)) {
+			throw new DefValidationException(defs.ElementAt(0), errors);
+		}
 
 		return defs;
 	}

@@ -517,6 +517,22 @@ public class DefParserTests {
 		);
 		Assert.NotNull(ex);
 	}
+	/// <summary>
+	/// Tests that ParseDef throws an exception when a Def fails validation.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest24() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Tests.MockDef17\"><Key>SampleDefKey</Key><Label>Label</Label></Def></Defs>");
+
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		Exception ex = Assert.Throws<DefValidationException>(
+			() => _ = service.LoadDef<MockDef17>("SampleDefKey")
+		);
+		Assert.NotNull(ex);
+	}
 	#endregion
 
 	#region LoadFactory tests
