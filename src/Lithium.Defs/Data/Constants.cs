@@ -7,6 +7,7 @@ internal class Constants {
 
 	public const string DEF_CLASS_ATTR = "Class";
 	public const string DEF_PARENT_ATTR = "Root";
+	public const string DEF_FACTORY_ATTR = "FactoryClass";
 
 	public const char TEMP_DEF_INDICATOR = '^';
 }

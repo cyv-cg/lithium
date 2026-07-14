@@ -24,6 +24,9 @@
 		<None Include="__mocks__\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Include="__test_assemblies__\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<EmbeddedResource Include="__resources__/**/*.xml" />
 	</ItemGroup>
 	<ItemGroup>
