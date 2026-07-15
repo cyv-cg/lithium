@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Lithium.Core.Attributes;
+using Lithium.Core;
 
 namespace Lithium.Defs;
 
@@ -43,7 +43,7 @@ internal sealed class AssemblyScraper {
 	/// An external Def factory a public static method that is defined in a class that is:
 	/// 	1) Public
 	/// 	2) Static
-	/// 	3) Tagged with <see cref="UseDefOverrideInitializer"/>.
+	/// 	3) Tagged with <see cref="XmlFactory"/>.
 	/// </summary>
 	public Dictionary<Type, Dictionary<Type, MethodInfo>> BuildStaticDefFactoriesMap() {
 		if (staticDefFactoriesMapCache != null) {
@@ -53,11 +53,11 @@ internal sealed class AssemblyScraper {
 		IEnumerable<MethodInfo> factories = assemblies
 			.SelectMany(a => a.GetTypes()
 				.Where(c =>
-					c.IsClass && c.IsPublic && c.IsAbstract && c.IsSealed && c.IsDefined(typeof(UseDefOverrideInitializer), false)
+					c.IsClass && c.IsPublic && c.IsAbstract && c.IsSealed
 				)
 			)
-			.SelectMany(c => c.GetMethods()
-				.Where(m => m.IsPublic && m.IsStatic && m.IsDefined(typeof(DefFactory), false))
+			.SelectMany(c => c.GetMethods(BindingFlags.Public | BindingFlags.Static)
+				.Where(m => m.IsDefined(typeof(XmlFactory), false))
 			);
 
 		Dictionary<Type, Dictionary<Type, MethodInfo>> factoryMap = new Dictionary<Type, Dictionary<Type, MethodInfo>>();

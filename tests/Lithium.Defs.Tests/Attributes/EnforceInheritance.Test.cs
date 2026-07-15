@@ -1,11 +1,10 @@
 using Xunit;
-using Lithium.Core.Attributes;
 using System;
 
-namespace Lithium.Core.Tests;
+namespace Lithium.Defs.Tests;
 
 /// <summary>
-/// Tests for Lithium.Core.Attributes.EnforceInheritance.cs
+/// Tests for Lithium.Defs.EnforceInheritance.cs
 /// </summary>
 public class EnforceInheritanceTests {
 	/// <summary>
