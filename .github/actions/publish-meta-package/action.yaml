@@ -136,4 +136,5 @@ runs:
         tag_name: ${{ steps.meta-version.outputs.version }}
         name: ${{ steps.meta-version.outputs.version }}
         prerelease: false
+        generate_release_notes: true
         files: package/*.nupkg
