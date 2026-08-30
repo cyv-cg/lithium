@@ -142,7 +142,7 @@ public static class DefParser {
 		}
 
 		// Validate the types match.
-		if (!rootInstance.GetType().Equals(defType)) {
+		if (!rootInstance.GetType().Equals(defType) && !rootInstance.GetType().IsAssignableFrom(defType)) {
 			throw new DefParentInvalidException(defKey, defType, rootKey, rootInstance.GetType());
 		}
 
