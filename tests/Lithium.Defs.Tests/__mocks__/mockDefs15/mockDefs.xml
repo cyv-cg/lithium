@@ -112,4 +112,17 @@
 			</li>
 		</DataList>
 	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef9">
+		<Key>MockDefParent9</Key>
+		<Label>MockDef-Label</Label>
+		<PrimitiveField>25</PrimitiveField>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef12" Root="MockDefParent9">
+		<Key>MockDefChild9</Key>
+		<Label>MockDef_Label</Label>
+		<DefList>
+		</DefList>
+	</Def>
 </Defs>

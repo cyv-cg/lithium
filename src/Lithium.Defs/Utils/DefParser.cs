@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Xml;
 using Lithium.Core;
-using Lithium.Core.Attributes;
 using Lithium.Core.Exceptions;
 using Lithium.Defs.Exceptions;
 
@@ -30,7 +30,6 @@ public static class DefParser {
 	/// <exception cref="PropertyLoadException">Thrown when a string could not be matched to a property value.</exception>
 	/// <exception cref="DefInheritanceException">Thrown when a <see cref="Type"/> property value does not meet its inheritance restrictions.</exception>
 	/// <exception cref="NodeMissingChildException">Thrown when the "Key" element does not exist in a Def's XML.</exception>
-	/// <exception cref="DefFactoryMissingException">Thrown when the class has the <see cref="UseDefOverrideInitializer"/> attribute but no applicable constructor or factory method.</exception>
 	/// <exception cref="DefFactoryReturnTypeException">Thrown when the def factory has the wrong return type.</exception>
 	/// <exception cref="DefFactoryConstructorParamsException">Thrown when the def constructor has the wrong parameter list.</exception>
 	public static IEnumerable<Def> ParseDef(this IDefService service, XmlNode node) {
@@ -53,6 +52,10 @@ public static class DefParser {
 		// Load def properties.
 		Stack<DefLink> links = ParseXmlToClass(ref defInstance, node, node, defType);
 		defs.UnionWith(service.ResolveDefLinks(links));
+
+		if (!defs.ElementAt(0).Validate(out StringBuilder? errors)) {
+			throw new DefValidationException(defs.ElementAt(0), errors);
+		}
 
 		return defs;
 	}
@@ -139,7 +142,7 @@ public static class DefParser {
 		}
 
 		// Validate the types match.
-		if (!rootInstance.GetType().Equals(defType)) {
+		if (!rootInstance.GetType().Equals(defType) && !rootInstance.GetType().IsAssignableFrom(defType)) {
 			throw new DefParentInvalidException(defKey, defType, rootKey, rootInstance.GetType());
 		}
 
@@ -161,12 +164,7 @@ public static class DefParser {
 	private static Stack<DefLink> ParseXmlToClass(ref object instance, XmlNode defNode, XmlNode node, Type type) {
 		// Check if any required fields are not defined in XML.
 		if (!ValidateRequiredFields(node, type, out IEnumerable<PropertyInfo> missingProps)) {
-			if (instance is Def def) {
-				throw new MissingDefPropException(def.Key, null, missingProps.ToArray());
-			}
-			else {
-				throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), node.Name, missingProps.ToArray());
-			}
+			throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), node.Name, missingProps.ToArray());
 		}
 
 		Stack<DefLink> links = new Stack<DefLink>();

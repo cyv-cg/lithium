@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using Lithium.Strings;
 using Lithium.Strings.Exceptions;
 
@@ -23,6 +24,16 @@ public class Def {
 	/// Whether or not the Def should be treated as not in-use.
 	/// </summary>
 	public bool Disabled { get; init; } = false;
+
+	/// <summary>
+	/// Additional custom validation run after a Def is created.
+	/// </summary>
+	/// <param name="errors">Optional error explanations should the validation fail.</param>
+	/// <returns>True if the Def is valid; false otherwise.</returns>
+	public virtual bool Validate(out StringBuilder? errors) {
+		errors = null;
+		return true;
+	}
 
 	/// <summary>
 	/// Translates the label by replacing parameters with the given values.

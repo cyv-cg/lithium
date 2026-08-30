@@ -52,7 +52,7 @@ public static class XmlLoader {
 	/// <exception cref="ArgumentException">Stream does not support reading.</exception>
 	/// <exception cref="ArgumentNullException">Stream is null.</exception>
 	public static XmlDocument? LoadDocument(Stream stream) {
-		StreamReader reader = new StreamReader(stream);
+		using StreamReader reader = new StreamReader(stream);
 		string content = reader.ReadToEnd();
 
 		if (string.IsNullOrEmpty(content)) {

@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Defs.XML;
-using Lithium.Core.Attributes;
 using System.Text;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -226,6 +225,19 @@ public class DefParserTests {
 				Assert.Equal("MockDef_Label", d.Label.Address);
 				_ = Assert.Single(def.DefList);
 				Assert.Equal("MasterDef", def.DefList.First().Key);
+			},
+			d => {
+				MockDef12 def = (d as MockDef12)!;
+
+				Assert.Equal("MockDefChild9", def.Key);
+				Assert.Equal(25, def.PrimitiveField);
+				Assert.Empty(def.DefList);
+			},
+			d => {
+				MockDef9 def = (d as MockDef9)!;
+
+				Assert.Equal("MockDefParent9", def.Key);
+				Assert.Equal(25, def.PrimitiveField);
 			}
 		);
 	}
@@ -517,6 +529,22 @@ public class DefParserTests {
 		);
 		Assert.NotNull(ex);
 	}
+	/// <summary>
+	/// Tests that ParseDef throws an exception when a Def fails validation.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest24() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Tests.MockDef17\"><Key>SampleDefKey</Key><Label>Label</Label></Def></Defs>");
+
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		Exception ex = Assert.Throws<DefValidationException>(
+			() => _ = service.LoadDef<MockDef17>("SampleDefKey")
+		);
+		Assert.NotNull(ex);
+	}
 	#endregion
 
 	#region LoadFactory tests
@@ -543,17 +571,6 @@ public class DefParserTests {
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("test", loadedDef.FactoryClass.value);
-	}
-	/// <summary>
-	/// Tests that an exception is thrown when a class marked with the <see cref="UseDefOverrideInitializer"/> attribute does not have a method with the DefFactory attribute or a constructor with the DefConstructor attribute.
-	/// </summary>
-	[Fact]
-	public void LoadFactoryTest03() {
-		Init.Setup(4, service);
-
-		Exception e = Assert.Throws<DefFactoryMissingException>(
-			() => service.LoadDef<MockDef6>("MockDef03")
-		);
 	}
 	/// <summary>
 	/// Tests that an exception is thrown when a factory method or constructor does not take a single parameter of type XmlNode.

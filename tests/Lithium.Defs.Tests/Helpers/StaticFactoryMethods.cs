@@ -1,13 +1,12 @@
 using System.Xml;
-using Lithium.Core.Attributes;
+using Lithium.Core;
 
 namespace Lithium.Defs.Tests;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
-[UseDefOverrideInitializer]
 public static class StaticFactoryMethods {
-	[DefFactory]
+	[XmlFactory]
 	public static DataClassWithExternalFactory Factory(XmlNode node) {
 		DataClassWithExternalFactory data = new DataClassWithExternalFactory {
 			Content = $"Content: {node.InnerText}"
@@ -16,9 +15,8 @@ public static class StaticFactoryMethods {
 	}
 }
 
-[UseDefOverrideInitializer]
 public static class MoreStaticFactoryMethods {
-	[DefFactory]
+	[XmlFactory]
 	public static DataClassWithExternalFactory Factory(XmlNode node) {
 		DataClassWithExternalFactory data = new DataClassWithExternalFactory {
 			Content = $"Different content: {node.InnerText}"

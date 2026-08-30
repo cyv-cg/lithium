@@ -1,6 +1,6 @@
 using System;
 
-namespace Lithium.Core.Attributes;
+namespace Lithium.Defs;
 
 /// <summary>
 /// Attribute indicating that a type property on a def needs to inherit from a specific type.
