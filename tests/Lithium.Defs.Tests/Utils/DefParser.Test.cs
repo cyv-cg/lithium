@@ -225,6 +225,19 @@ public class DefParserTests {
 				Assert.Equal("MockDef_Label", d.Label.Address);
 				_ = Assert.Single(def.DefList);
 				Assert.Equal("MasterDef", def.DefList.First().Key);
+			},
+			d => {
+				MockDef12 def = (d as MockDef12)!;
+
+				Assert.Equal("MockDefChild9", def.Key);
+				Assert.Equal(25, def.PrimitiveField);
+				Assert.Empty(def.DefList);
+			},
+			d => {
+				MockDef9 def = (d as MockDef9)!;
+
+				Assert.Equal("MockDefParent9", def.Key);
+				Assert.Equal(25, def.PrimitiveField);
 			}
 		);
 	}
