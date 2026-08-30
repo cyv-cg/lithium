@@ -142,7 +142,7 @@ public static class DefParser {
 		}
 
 		// Validate the types match.
-		if (!rootInstance.GetType().Equals(defType)) {
+		if (!rootInstance.GetType().Equals(defType) && !rootInstance.GetType().IsAssignableFrom(defType)) {
 			throw new DefParentInvalidException(defKey, defType, rootKey, rootInstance.GetType());
 		}
 
@@ -164,12 +164,7 @@ public static class DefParser {
 	private static Stack<DefLink> ParseXmlToClass(ref object instance, XmlNode defNode, XmlNode node, Type type) {
 		// Check if any required fields are not defined in XML.
 		if (!ValidateRequiredFields(node, type, out IEnumerable<PropertyInfo> missingProps)) {
-			if (instance is Def def) {
-				throw new MissingDefPropException(def.Key, null, missingProps.ToArray());
-			}
-			else {
-				throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), node.Name, missingProps.ToArray());
-			}
+			throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), node.Name, missingProps.ToArray());
 		}
 
 		Stack<DefLink> links = new Stack<DefLink>();
