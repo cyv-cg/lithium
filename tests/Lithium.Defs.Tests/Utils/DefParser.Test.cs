@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Xml;
 using Lithium.Core;
 using Lithium.Defs.XML;
-using Lithium.Core.Attributes;
 using System.Text;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -559,17 +558,6 @@ public class DefParserTests {
 
 		Assert.NotNull(loadedDef);
 		Assert.Equal("test", loadedDef.FactoryClass.value);
-	}
-	/// <summary>
-	/// Tests that an exception is thrown when a class marked with the <see cref="UseDefOverrideInitializer"/> attribute does not have a method with the DefFactory attribute or a constructor with the DefConstructor attribute.
-	/// </summary>
-	[Fact]
-	public void LoadFactoryTest03() {
-		Init.Setup(4, service);
-
-		Exception e = Assert.Throws<DefFactoryMissingException>(
-			() => service.LoadDef<MockDef6>("MockDef03")
-		);
 	}
 	/// <summary>
 	/// Tests that an exception is thrown when a factory method or constructor does not take a single parameter of type XmlNode.

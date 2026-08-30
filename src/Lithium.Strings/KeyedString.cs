@@ -1,10 +1,10 @@
 using System;
 using System.Xml;
-using Lithium.Core.Attributes;
 using System.Diagnostics.CodeAnalysis;
 using Lithium.Strings.Exceptions;
 
 using StringArgument = (string key, object value);
+using Lithium.Core;
 
 namespace Lithium.Strings;
 
@@ -16,7 +16,6 @@ namespace Lithium.Strings;
 /// This does not automatically ensure that the string it points to exists.
 /// Use the IsLoaded method to check if the string key exists before attempting to translate it.
 /// </remarks>
-[UseDefOverrideInitializer]
 public sealed class KeyedString {
 	/// <summary>
 	/// Namespace of the string, used for lookup in the string context.
@@ -51,7 +50,7 @@ public sealed class KeyedString {
 	/// </summary>
 	/// <param name="node">XML node for the string definition.</param>
 	/// <returns>Loaded KeyedString value.</returns>
-	[DefFactory]
+	[XmlFactory]
 	public static KeyedString Factory(XmlNode node) {
 		return new KeyedString(node.InnerText);
 	}
