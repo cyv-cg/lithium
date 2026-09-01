@@ -163,7 +163,7 @@ public static class DefParser {
 	/// <exception cref="MissingFieldException">Thrown when a property specified in the def XML does not exist on the type.</exception>
 	private static Stack<DefLink> ParseXmlToClass(ref object instance, XmlNode defNode, XmlNode node, Type type) {
 		// Check if any required fields are not defined in XML.
-		if (!ValidateRequiredFields(node, type, out IEnumerable<PropertyInfo> missingProps)) {
+		if (!ValidateRequiredFields(ref instance, node, type, out IEnumerable<PropertyInfo> missingProps)) {
 			throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), node.Name, missingProps.ToArray());
 		}
 
@@ -271,11 +271,12 @@ public static class DefParser {
 	/// <summary>
 	/// Validates that all required fields are present in the XML node.
 	/// </summary>
+	/// <param name="instance">Reference to the Def object being parsed.</param>
 	/// <param name="defNode">XML node containing the def data.</param>
 	/// <param name="type">Type of the def being loaded.</param>
 	/// <param name="missingProps">Output variable containing any missing required fields.</param>
 	/// <returns>True if all required fields are present, false otherwise.</returns>
-	private static bool ValidateRequiredFields(XmlNode defNode, Type type, out IEnumerable<PropertyInfo> missingProps) {
+	private static bool ValidateRequiredFields(ref object instance, XmlNode defNode, Type type, out IEnumerable<PropertyInfo> missingProps) {
 		missingProps = new List<PropertyInfo>();
 		// Look at every field on the type.
 		foreach (PropertyInfo prop in type.GetProperties(TypeChecker.DEF_PROP_BINDINGS)) {
@@ -283,6 +284,10 @@ public static class DefParser {
 			// When compiled, required types are given the [RequiredMember] attribute, which we can test for instead.
 			// If that attribute isn't there, then it doesn't matter whether that property is defined.
 			if (!Attribute.IsDefined(prop, typeof(System.Runtime.CompilerServices.RequiredMemberAttribute))) {
+				continue;
+			}
+			// Skip if the value is already defined, ex: from a root def.
+			if (prop.GetValue(instance) != null) {
 				continue;
 			}
 			// Try to grab the matching node from the XML.
