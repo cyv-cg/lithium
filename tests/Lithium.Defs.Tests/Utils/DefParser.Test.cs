@@ -524,10 +524,15 @@ public class DefParserTests {
 	public void ParseDefTest23() {
 		Init.Setup(18, service);
 
-		Exception ex = Assert.Throws<MissingDefPropException>(
-			() => service.LoadDef<Def>("MockDef")
+		Exception ex1 = Assert.Throws<MissingDefPropException>(
+			() => service.LoadDef<Def>("MockDef1")
 		);
-		Assert.NotNull(ex);
+		Assert.NotNull(ex1);
+
+		Exception ex2 = Assert.Throws<MissingDefPropException>(
+			() => service.LoadDef<Def>("MockDef2")
+		);
+		Assert.NotNull(ex2);
 	}
 	/// <summary>
 	/// Tests that ParseDef throws an exception when a Def fails validation.

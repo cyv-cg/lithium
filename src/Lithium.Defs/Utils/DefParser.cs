@@ -164,7 +164,12 @@ public static class DefParser {
 	private static Stack<DefLink> ParseXmlToClass(ref object instance, XmlNode defNode, XmlNode node, Type type) {
 		// Check if any required fields are not defined in XML.
 		if (!ValidateRequiredFields(ref instance, node, type, out IEnumerable<PropertyInfo> missingProps)) {
-			throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), node.Name, missingProps.ToArray());
+			if (!node.Name.Equals(Constants.DEF_NODE_NAME)) {
+				throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), node.Name, missingProps.ToArray());
+			}
+			else {
+				throw new MissingDefPropException(DefXMLUtils.GetDefKey(defNode), null, missingProps.ToArray());
+			}
 		}
 
 		Stack<DefLink> links = new Stack<DefLink>();
