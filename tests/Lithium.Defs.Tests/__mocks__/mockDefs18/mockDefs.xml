@@ -8,6 +8,18 @@
 	<Def Class="Lithium.Defs.Tests.MockDef16">
 		<Key>MockDef2</Key>
 		<Label>MockDef_Label</Label>
-		<Data></Data>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef16">
+		<Key>MockDef3</Key>
+		<Label>MockDef_Label</Label>
+		<Data>
+			<Value>3</Value>
+		</Data>
+	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef16" Root="MockDef3">
+		<Key>MockDef4</Key>
+		<Label>MockDef_Label</Label>
 	</Def>
 </Defs>
