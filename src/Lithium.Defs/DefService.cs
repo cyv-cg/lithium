@@ -10,7 +10,6 @@ using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
 using Lithium.Defs.Exceptions;
-using Lithium.Defs.Utils;
 using Lithium.Defs.XML;
 
 namespace Lithium.Defs;
@@ -384,10 +383,6 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 
 		IEnumerable<Def> loadedDefs = this.ParseDef(node);
 		foreach (Def def in loadedDefs) {
-			// Skip temporary defs.
-			if (def.IsTempDef()) {
-				continue;
-			}
 			_ = resources.Remove(def.Key);
 		}
 		return loadedDefs.First();
