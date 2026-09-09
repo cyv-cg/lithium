@@ -390,7 +390,6 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 
 	private void SetID(Def def, string key) {
 		uint id = 0;
-		uint maxValue = uint.MaxValue;
 		byte[] data = Encoding.UTF8.GetBytes(key);
 
 		if (options.IDGenerators.TryGetValue(def.GetType(), out Func<byte[], uint>? func)) {
@@ -401,13 +400,6 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		}
 		else {
 			id = AssignID(data);
-		}
-
-		while (defsByID.ContainsKey(id)) {
-			if (id == maxValue) {
-				id = 0;
-			}
-			id++;
 		}
 
 		def.ID = id;
