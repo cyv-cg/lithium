@@ -33,6 +33,10 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// Fully processed Def objects mapped to their keys.
 	/// </summary>
 	internal readonly Dictionary<string, Def> defs = new Dictionary<string, Def>();
+	/// <summary>
+	/// Fully processed Def objects mapped to their IDs.
+	/// </summary>
+	internal readonly Dictionary<uint, Def> defsByID = new Dictionary<uint, Def>();
 
 	/// <summary>
 	/// Initializes the service with set options.
@@ -138,6 +142,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	public void Reload() {
 		resources.Clear();
 		defs.Clear();
+		defsByID.Clear();
 
 		foreach (XmlDocument doc in documents.Values) {
 			ParseDocument(doc);
@@ -272,6 +277,41 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 			return false;
 		}
 	}
+	/// <summary>
+	/// Attempts to load a Def object from the registry.
+	/// </summary>
+	/// <param name="id">Def ID to load.</param>
+	/// <param name="def">The stored Def object.</param>
+	/// <typeparam name="T">Type of the Def to load.</typeparam>
+	/// <returns>True if the Def could be loaded, false otherwise.</returns>
+	public bool TryLoadDef<T>(int id, [NotNullWhen(true)] out T? def) where T : Def {
+		return TryLoadDef((uint)id, out def);
+	}
+	/// <summary>
+	/// Attempts to load a Def object from the registry.
+	/// </summary>
+	/// <param name="id">Def ID to load.</param>
+	/// <param name="def">The stored Def object.</param>
+	/// <typeparam name="T">Type of the Def to load.</typeparam>
+	/// <returns>True if the Def could be loaded, false otherwise.</returns>
+	public bool TryLoadDef<T>(uint id, [NotNullWhen(true)] out T? def) where T : Def {
+		if (TryLoadDef(id, out Def? value) && value is T typedDef) {
+			def = typedDef;
+			return true;
+		}
+		def = null;
+		return false;
+	}
+	private bool TryLoadDef(uint id, [NotNullWhen(true)] out Def? def) {
+		try {
+			def = LoadDef(id);
+			return true;
+		}
+		catch (DefNotFoundException) {
+			def = null;
+			return false;
+		}
+	}
 
 	/// <summary>
 	/// Loads a Def object from the registry.
@@ -296,6 +336,35 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		}
 
 		throw new DefNotFoundException(key);
+	}
+	/// <summary>
+	/// Loads a Def object from the registry.
+	/// </summary>
+	/// <param name="id">Def ID to load.</param>
+	/// <typeparam name="T">Type of the Def to load.</typeparam>
+	/// <returns>The stored Def object, or null if the Def exists but does not match the supplied type.</returns>
+	/// <exception cref="DefNotFoundException">Thrown when a Def with the specified ID could not be found.</exception>
+	public T? LoadDef<T>(int id) where T : Def {
+		return LoadDef<T>((uint)id);
+	}
+	/// <summary>
+	/// Loads a Def object from the registry.
+	/// </summary>
+	/// <param name="id">Def ID to load.</param>
+	/// <typeparam name="T">Type of the Def to load.</typeparam>
+	/// <returns>The stored Def object, or null if the Def exists but does not match the supplied type.</returns>
+	/// <exception cref="DefNotFoundException">Thrown when a Def with the specified ID could not be found.</exception>
+	public T? LoadDef<T>(uint id) where T : Def {
+		if (LoadDef(id) is T typed) {
+			return typed;
+		}
+		return null;
+	}
+	private Def LoadDef(uint id) {
+		if (defsByID.TryGetValue(id, out Def? def)) {
+			return def;
+		}
+		throw new DefNotFoundException(id.ToString());
 	}
 
 	/// <summary>
