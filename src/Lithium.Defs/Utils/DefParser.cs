@@ -8,6 +8,7 @@ using System.Xml;
 using Lithium.Core;
 using Lithium.Core.Exceptions;
 using Lithium.Defs.Exceptions;
+using Lithium.Defs.Utils;
 
 namespace Lithium.Defs.XML;
 
@@ -35,14 +36,23 @@ public static class DefParser {
 	public static IEnumerable<Def> ParseDef(this IDefService service, XmlNode node) {
 		string defClass = node.GetAttributeValue(Constants.DEF_CLASS_ATTR);
 		Type? defType = TypeChecker.ResolveType(defClass);
+		string key = DefXMLUtils.GetDefKey(node);
+
 		if (defType == null) {
 			throw new UnresolvedTypeException(defClass);
 		}
 		if (!defType.IsDef()) {
-			throw new DefInheritanceException(DefXMLUtils.GetDefKey(node), defType, typeof(Def));
+			throw new DefInheritanceException(key, defType, typeof(Def));
 		}
 
-		object defInstance = Activator.CreateInstance(defType)!;
+		object defInstance;
+		// If there is an existing temporary instance, load that and modify it directly.
+		if (service.TryLoadDef(key, out Def? instance) && instance.IsTempDef()) {
+			defInstance = instance;
+		}
+		else {
+			defInstance = Activator.CreateInstance(defType)!;
+		}
 		service.ParseAttributes(ref defInstance, node, defType);
 
 		HashSet<Def> defs = new HashSet<Def>() {
