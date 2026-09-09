@@ -313,17 +313,6 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 			if (def.IsTempDef()) {
 				continue;
 			}
-
-			// Because a temporary instance is stored when initially loading a Def,
-			// the 'defs' dictionary will always contains the key.
-			// That means we can just assume it's already there, and we just need
-			// to check if it's the temporary instance to overwrite it.
-			if (defs[def.Key].IsTempDef()) {
-				// Replace temporary entry.
-				Def tempEntry = defs[def.Key];
-				def.CopyTo(ref tempEntry);
-			}
-
 			_ = resources.Remove(def.Key);
 		}
 		return loadedDefs.First();
