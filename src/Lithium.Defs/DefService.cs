@@ -373,8 +373,14 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 	/// <param name="node">Def node to parse.</param>
 	/// <returns>The parsed Def object.</returns>
 	private Def InitDef(XmlNode node) {
+		string key = DefXMLUtils.GetDefKey(node);
+		Def value = DefXMLUtils.CreateTempDef(node);
+
 		// Save a temporary version of the Def to load in case of circular references.
-		defs.Add(DefXMLUtils.GetDefKey(node), DefXMLUtils.CreateTempDef(node));
+		defs.Add(key, value);
+
+		SetID(value);
+		defsByID.Add(value.ID, value);
 
 		IEnumerable<Def> loadedDefs = this.ParseDef(node);
 		foreach (Def def in loadedDefs) {
@@ -385,5 +391,53 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 			_ = resources.Remove(def.Key);
 		}
 		return loadedDefs.First();
+	}
+
+	private void SetID(Def def) {
+		uint id = 0;
+		uint maxValue = uint.MaxValue;
+		byte[] data = Encoding.UTF8.GetBytes(def.Key);
+
+		if (options.IDGenerators.TryGetValue(def.GetType(), out Func<byte[], uint>? func)) {
+			id = func(data);
+		}
+		else if (options.DefaultIDGenerator != null) {
+			id = options.DefaultIDGenerator(data);
+		}
+		else {
+			id = AssignID(data);
+		}
+
+		while (defsByID.ContainsKey(id)) {
+			if (id == maxValue) {
+				id = 0;
+			}
+			id++;
+		}
+
+		def.ID = id;
+	}
+
+	/// <summary>
+	/// Compute a fletcher-32 checksum from a def's key.
+	/// </summary>
+	/// <param name="data">UTF-8 bytes of the def's key.</param>
+	private static uint AssignID(byte[] data) {
+		const int MOD = ushort.MaxValue;
+		uint rollingSum = 0;
+		uint dataBlock = 0;
+
+		for (int i = 0; i < data.Length; i += 2) {
+			byte block1 = data[i];
+			byte block2 = 0;
+			if (i + 1 < data.Length) {
+				block2 = data[i + 1];
+			}
+
+			dataBlock = (dataBlock + (((uint)block1 << 8) | block2)) % MOD;
+			rollingSum = (rollingSum + dataBlock) % MOD;
+		}
+
+		return ((rollingSum & 0xFFFF) << 16) | (dataBlock & 0xFFFF);
 	}
 }
