@@ -321,6 +321,26 @@ public class DefServiceTests {
 
 		Assert.Empty(defs);
 	}
+	/// <summary>
+	/// Tests that LoadAll without deferred loading skips checking for unloaded Defs.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest04() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Tests.MockDef1\"><Key>SampleDefKey</Key><Label>label</Label><SampleValue1>1</SampleValue1></Def></Defs>");
+
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false
+		};
+		service = new DefService(options);
+
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		Def[] defs = service.LoadAll().ToArray();
+		Def def = Assert.Single(defs);
+		Assert.Equal("SampleDefKey", def.Key);
+	}
 	#endregion
 
 	#region TryLoadDef

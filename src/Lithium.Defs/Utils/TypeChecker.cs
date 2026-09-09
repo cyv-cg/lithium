@@ -99,8 +99,10 @@ internal static class TypeChecker {
 		if (factory is MethodInfo method) {
 			factoryReturnType = method.ReturnType;
 		}
-		else if (factory is ConstructorInfo ctor) {
-			factoryReturnType = ctor.DeclaringType;
+		// The factory attribute can only be applied to methods and constructors,
+		// so if it's not a method...
+		else {
+			factoryReturnType = (factory as ConstructorInfo)!.DeclaringType;
 		}
 
 		if (factoryReturnType != type) {
