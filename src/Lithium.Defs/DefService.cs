@@ -378,7 +378,7 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		// Save a temporary version of the Def to load in case of circular references.
 		defs.Add(key, value);
 
-		SetID(value);
+		SetID(value, key);
 		defsByID.Add(value.ID, value);
 
 		IEnumerable<Def> loadedDefs = this.ParseDef(node);
@@ -388,10 +388,10 @@ public class DefService : IDefService, IResourceRegistry<string>, IResourceRegis
 		return loadedDefs.First();
 	}
 
-	private void SetID(Def def) {
+	private void SetID(Def def, string key) {
 		uint id = 0;
 		uint maxValue = uint.MaxValue;
-		byte[] data = Encoding.UTF8.GetBytes(def.Key);
+		byte[] data = Encoding.UTF8.GetBytes(key);
 
 		if (options.IDGenerators.TryGetValue(def.GetType(), out Func<byte[], uint>? func)) {
 			id = func(data);
