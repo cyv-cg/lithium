@@ -240,6 +240,23 @@ public class DefParserTests {
 				Assert.Equal(25, def.PrimitiveField);
 			}
 		);
+
+		foreach (Def def in defs) {
+			// Every property that points to a Def points to an existing reference.
+			foreach (PropertyInfo prop in def.GetType().GetProperties(TypeChecker.DEF_PROP_BINDINGS)) {
+				if (typeof(Def).IsAssignableFrom(prop.PropertyType)) {
+					Def propValue = (Def)prop.GetValue(def)!;
+					Assert.Same(propValue, service.defs[propValue.Key]);
+				}
+				else if (prop.PropertyType.IsList(out Type? listType) && typeof(Def).IsAssignableFrom(listType)) {
+					List<Def> list = (List<Def>)prop.GetValue(def)!;
+					for (int i = 0; i < list.Count; i++) {
+						Def propValue = list[i];
+						Assert.Same(propValue, service.defs[propValue.Key]);
+					}
+				}
+			}
+		}
 	}
 	/// <summary>
 	/// Tests that ParseDef fails under various conditions
