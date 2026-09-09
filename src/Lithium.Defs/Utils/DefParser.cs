@@ -151,12 +151,14 @@ public static class DefParser {
 			throw new DefNotFoundException(rootKey);
 		}
 
+		Type rootType = rootInstance.GetType();
+
 		// Validate the types match.
-		if (!rootInstance.GetType().Equals(defType) && !rootInstance.GetType().IsAssignableFrom(defType)) {
-			throw new DefParentInvalidException(defKey, defType, rootKey, rootInstance.GetType());
+		if (!rootType.Equals(defType) && !rootType.IsAssignableFrom(defType)) {
+			throw new DefParentInvalidException(defKey, defType, rootKey, rootType);
 		}
 
-		foreach (PropertyInfo prop in rootInstance.GetType().GetProperties(TypeChecker.DEF_PROP_BINDINGS)) {
+		foreach (PropertyInfo prop in rootType.GetDefProps()) {
 			prop.SetValue(defInstance, prop.GetValue(rootInstance));
 		}
 	}
@@ -191,7 +193,7 @@ public static class DefParser {
 			}
 
 			PropertyInfo? prop = type.GetProperty(propNode.Name, TypeChecker.DEF_PROP_BINDINGS);
-			if (prop == null) {
+			if (prop == null || !type.GetDefProps().Contains(prop)) {
 				throw new MissingFieldException(type.ToString(), propNode.Name);
 			}
 

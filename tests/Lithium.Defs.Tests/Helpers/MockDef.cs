@@ -64,6 +64,7 @@ public class MockDef15 : Def {
 }
 public class MockDef16 : Def {
 	public required MockDataClassWithRequirement Data { get; init; }
+	public int PropWithNoSetter => Data.Value;
 }
 public class MockDef17 : Def {
 	public override bool Validate(out StringBuilder? errors) {
