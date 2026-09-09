@@ -14,10 +14,10 @@ public interface IResourceRegistry<T> {
 	/// <param name="resource">The resource to add.</param>
 	/// <param name="errors">If the resource could not be registered, this will contain details about the errors that occurred.</param>
 	/// <returns>True if the resource was successfully registered.</returns>
-	bool RegisterResource(T resource, [NotNullWhen(false)] out StringBuilder? errors);
+	public bool RegisterResource(T resource, [NotNullWhen(false)] out StringBuilder? errors);
 
 	/// <summary>
 	/// Convert registered resources into usable data.
 	/// </summary>
-	void Reload();
+	public void Reload();
 }
