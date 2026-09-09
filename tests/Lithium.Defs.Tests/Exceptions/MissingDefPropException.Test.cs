@@ -1,3 +1,4 @@
+using System.Linq;
 using Lithium.Defs.Exceptions;
 using Xunit;
 
@@ -12,10 +13,10 @@ public class MissingDefPropExceptionTests {
 	/// </summary>
 	[Fact]
 	public void MessageTest01() {
-		MissingDefPropException ex = new MissingDefPropException("MockDef", null, typeof(MockDef1).GetProperties());
+		MissingDefPropException ex = new MissingDefPropException("MockDef", null, typeof(MockDef1).GetProperties().OrderBy(p => p.Name).Where(p => p.Name is "Key" or "Label").ToArray());
 
 		Assert.Equal(
-			"Missing fields in def 'MockDef': SampleValue1, Key, Label, Disabled",
+			"Missing fields in def 'MockDef': Key, Label",
 			ex.Message
 		);
 	}

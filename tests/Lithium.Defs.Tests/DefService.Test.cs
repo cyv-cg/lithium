@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -320,6 +321,26 @@ public class DefServiceTests {
 
 		Assert.Empty(defs);
 	}
+	/// <summary>
+	/// Tests that LoadAll without deferred loading skips checking for unloaded Defs.
+	/// </summary>
+	[Fact]
+	public void LoadAllTest04() {
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml("<Defs><Def Class=\"Lithium.Defs.Tests.MockDef1\"><Key>SampleDefKey</Key><Label>label</Label><SampleValue1>1</SampleValue1></Def></Defs>");
+
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false
+		};
+		service = new DefService(options);
+
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		Def[] defs = service.LoadAll().ToArray();
+		Def def = Assert.Single(defs);
+		Assert.Equal("SampleDefKey", def.Key);
+	}
 	#endregion
 
 	#region TryLoadDef
@@ -359,6 +380,41 @@ public class DefServiceTests {
 		service.Reload();
 
 		bool success = service.TryLoadDef("DefThatDoesNotExist", out MockDef2? def);
+
+		Assert.False(success);
+		Assert.Null(def);
+	}
+	/// <summary>
+	/// Tests that TryLoadDef can correctly load a Def that exists.
+	/// </summary>
+	[Fact]
+	public void TryLoadDefTest04() {
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false
+		};
+		service = new DefService(options);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
+		service.Reload();
+
+		bool success = service.TryLoadDef(unchecked((int)3203306119), out MockDef2? def);
+
+		Assert.True(success);
+		Assert.NotNull(def);
+		Assert.Equal("FirstDef", def.Key);
+	}
+	/// <summary>
+	/// Tests that TryLoadDef returns false when requesting a Def that does not exist.
+	/// </summary>
+	[Fact]
+	public void TryLoadDefTest05() {
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false
+		};
+		service = new DefService(options);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
+		service.Reload();
+
+		bool success = service.TryLoadDef(0, out MockDef2? def);
 
 		Assert.False(success);
 		Assert.Null(def);
@@ -403,6 +459,98 @@ public class DefServiceTests {
 			() => service.LoadDef<MockDef2>("DefThatDoesNotExist")
 		);
 		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that when loading a registered Def key, it is successful.
+	/// </summary>
+	[Fact]
+	public void LoadDefTest04() {
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false
+		};
+		service = new DefService(options);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
+		service.Reload();
+
+		MockDef2? def = service.LoadDef<MockDef2>(unchecked((int)3203306119));
+
+		Assert.NotNull(def);
+		Assert.Equal("FirstDef", def.Key);
+	}
+	/// <summary>
+	/// Tests that LoadDef throws an exception when requesting a Def that does not exist.
+	/// </summary>
+	[Fact]
+	public void LoadDefTest05() {
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false
+		};
+		service = new DefService(options);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
+		service.Reload();
+
+		Exception ex = Assert.Throws<DefNotFoundException>(
+			() => service.LoadDef<MockDef2>(0)
+		);
+		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that when loading a Def that exists but with the wrong type, LoadDef returns null.
+	/// </summary>
+	[Fact]
+	public void LoadDefTest06() {
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false
+		};
+		service = new DefService(options);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
+		service.Reload();
+
+		MockDef1? def = service.LoadDef<MockDef1>(3203306119);
+
+		Assert.Null(def);
+	}
+	#endregion
+
+	#region SetID
+	/// <summary>
+	/// Tests that SetID will use the default ID generator function from the options.
+	/// </summary>
+	[Fact]
+	public void SetIDTest01() {
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false,
+			DefaultIDGenerator = (data) => data[0]
+		};
+		service = new DefService(options);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
+		service.Reload();
+
+		Assert.Equal('F', service.LoadDef<MockDef2>("FirstDef")!.ID);
+		Assert.Equal('S', service.LoadDef<MockDef1>("SecondDef")!.ID);
+		Assert.Equal('T', service.LoadDef<MockDef3>("ThirdDef")!.ID);
+	}
+	/// <summary>
+	/// Tests that SetID will use the supplied ID generator function for the def type.
+	/// </summary>
+	[Fact]
+	public void SetIDTest02() {
+		Dictionary<Type, Func<byte[], uint>> generators = new() {
+			[typeof(MockDef2)] = (data) => 1,
+			[typeof(MockDef1)] = (data) => 2,
+			[typeof(MockDef3)] = (data) => 3
+		};
+		DefServiceOptions options = new DefServiceOptions {
+			DeferredLoad = false,
+			IDGenerators = generators
+		};
+		service = new DefService(options);
+		_ = service.RegisterResource(Init.MockDirectory(2), out _);
+		service.Reload();
+
+		Assert.Equal((uint)1, service.LoadDef<MockDef2>("FirstDef")!.ID);
+		Assert.Equal((uint)2, service.LoadDef<MockDef1>("SecondDef")!.ID);
+		Assert.Equal((uint)3, service.LoadDef<MockDef3>("ThirdDef")!.ID);
 	}
 	#endregion
 }

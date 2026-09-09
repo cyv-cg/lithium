@@ -14,17 +14,17 @@ public interface ITranslationService {
 	/// <param name="key">The key of the string to translate.</param>
 	/// <param name="args">Tuples where the first item is the placeable name and the second is the value.</param>
 	/// <returns>Translated string with parameters replaced.</returns>
-	string Translate(string key, params StringArgument[] args);
+	public string Translate(string key, params StringArgument[] args);
 
 	/// <summary>
 	/// Fetches a list of all string keys in the service.
 	/// </summary>
 	/// <returns>List of string keys.</returns>
-	IEnumerable<string> GetAllStringKeys();
+	public IEnumerable<string> GetAllStringKeys();
 	/// <summary>
 	/// Determine whether a string with the given key is defined as a translatable unit.
 	/// </summary>
 	/// <param name="key">String key to search for.</param>
 	/// <returns>True if the string is loaded.</returns>
-	bool HasMessage(string key);
+	public bool HasMessage(string key);
 }

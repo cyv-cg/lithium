@@ -12,6 +12,11 @@ namespace Lithium.Defs;
 /// </summary>
 public class Def {
 	/// <summary>
+	/// Numeric unique identifier for the Def.
+	/// </summary>
+	public uint ID { get; internal set; }
+
+	/// <summary>
 	/// Primary key used to solely define the object.
 	/// Must be distinct from all other Defs.
 	/// </summary>

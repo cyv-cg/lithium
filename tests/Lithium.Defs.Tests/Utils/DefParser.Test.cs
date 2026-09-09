@@ -12,6 +12,7 @@ using Lithium.Defs.XML;
 using System.Text;
 using System.Reflection;
 using System.Runtime.Loader;
+using Lithium.Defs.Utils;
 
 namespace Lithium.Defs.Tests;
 
@@ -240,6 +241,31 @@ public class DefParserTests {
 				Assert.Equal(25, def.PrimitiveField);
 			}
 		);
+
+		// Make sure both indeces contain the same number of items.
+		Assert.Equal(service.defs.Count, service.defsByID.Count);
+		foreach (Def def in defs) {
+			// The ID index contains the def's ID.
+			Assert.True(service.defsByID.ContainsKey(def.ID));
+			// The objects in each index are actually the same reference.
+			Assert.Same(def, service.defsByID[def.ID]);
+			// Every property that points to a Def points to an existing reference.
+			foreach (PropertyInfo prop in def.GetType().GetDefProps()) {
+				if (typeof(Def).IsAssignableFrom(prop.PropertyType)) {
+					Def propValue = (Def)prop.GetValue(def)!;
+					Assert.Same(propValue, service.defs[propValue.Key]);
+					Assert.Same(propValue, service.defsByID[propValue.ID]);
+				}
+				else if (prop.PropertyType.IsList(out Type? listType) && typeof(Def).IsAssignableFrom(listType)) {
+					List<Def> list = (List<Def>)prop.GetValue(def)!;
+					for (int i = 0; i < list.Count; i++) {
+						Def propValue = list[i];
+						Assert.Same(propValue, service.defs[propValue.Key]);
+						Assert.Same(propValue, service.defsByID[propValue.ID]);
+					}
+				}
+			}
+		}
 	}
 	/// <summary>
 	/// Tests that ParseDef fails under various conditions
@@ -524,10 +550,22 @@ public class DefParserTests {
 	public void ParseDefTest23() {
 		Init.Setup(18, service);
 
-		Exception ex = Assert.Throws<MissingDefPropException>(
-			() => service.LoadDef<Def>("MockDef")
+		Exception ex1 = Assert.Throws<MissingDefPropException>(
+			() => service.LoadDef<Def>("MockDef1")
 		);
-		Assert.NotNull(ex);
+		Assert.NotNull(ex1);
+
+		Exception ex2 = Assert.Throws<MissingDefPropException>(
+			() => service.LoadDef<Def>("MockDef2")
+		);
+		Assert.NotNull(ex2);
+
+		try {
+			_ = service.LoadDef<Def>("MockDef4");
+		}
+		catch (MissingDefPropException) {
+			Assert.True(false);
+		}
 	}
 	/// <summary>
 	/// Tests that ParseDef throws an exception when a Def fails validation.

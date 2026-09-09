@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -9,20 +11,12 @@ namespace Lithium.Defs.Utils;
 /// </summary>
 public static partial class DefUtils {
 	/// <summary>
-	/// Copies all properties from one Def to another.
+	/// Gets all applicable properties of a Def.
 	/// </summary>
-	/// <param name="source">The Def to copy from.</param>
-	/// <param name="target">Reference to the Def to copy to.</param>
-	/// <exception cref="ArgumentException">Thrown if the source and target are not the same type.</exception>
-	public static void CopyTo(this Def source, ref Def target) {
-		if (!target.GetType().Equals(source.GetType())) {
-			throw new ArgumentException($"Cannot copy properties from type '{source.GetType()}' to '{target.GetType()}'.", nameof(target));
-		}
-
-		PropertyInfo[] props = target.GetType().GetProperties(TypeChecker.DEF_PROP_BINDINGS);
-		foreach (PropertyInfo prop in props) {
-			prop.SetValue(target, prop.GetValue(source));
-		}
+	/// <param name="target">The type to get properties from.</param>
+	/// <returns>Collection of settable properties.</returns>
+	internal static IEnumerable<PropertyInfo> GetDefProps(this Type target) {
+		return target.GetProperties(TypeChecker.DEF_PROP_BINDINGS).Where(p => p.SetMethod != null).Where(p => p.Name != Constants.DEF_ID_PROP);
 	}
 
 	/// <summary>
