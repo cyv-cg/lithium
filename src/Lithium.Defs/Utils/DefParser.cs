@@ -188,21 +188,7 @@ public static class DefParser {
 		Stack<DefLink> links = new Stack<DefLink>();
 
 		foreach (XmlNode propNode in node.ChildNodes) {
-			if (propNode.NodeType == XmlNodeType.Comment) {
-				continue;
-			}
-
-			PropertyInfo? prop = type.GetProperty(propNode.Name, TypeChecker.DEF_PROP_BINDINGS);
-			if (prop == null || !type.GetDefProps().Contains(prop)) {
-				throw new MissingFieldException(type.ToString(), propNode.Name);
-			}
-
-			IEnumerable<DefLink> nestedLinks = prop.PropertyType.IsList(out Type? listType)
-				// Load list elements individually.
-				? ParseList(ref instance, service, prop, node, propNode, listType)
-				// Load single values.
-				: ParseSingle(ref instance, service, prop, node, propNode);
-
+			Stack<DefLink> nestedLinks = ParseXmlProp(ref instance, service, propNode, type, node);
 			// Add stack elements from start to finish to preserve the order instead of flipping it with pop/push.
 			foreach (DefLink link in nestedLinks) {
 				links.Push(link);
@@ -210,6 +196,32 @@ public static class DefParser {
 		}
 
 		return links;
+	}
+	/// <summary>
+	/// Parse a single XML property node.
+	/// </summary>
+	/// <param name="instance">Reference to the instance to populate.</param>
+	/// <param name="service">The service used to load nested defs.</param>
+	/// <param name="propNode">XML node containing the property data.</param>
+	/// <param name="node">XML node containing the data.</param>
+	/// <param name="type">Type of the class to parse into.</param>
+	/// <returns>Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the class.</returns>
+	/// <exception cref="MissingFieldException">Thrown when a property specified in the def XML does not exist on the type.</exception>
+	private static Stack<DefLink> ParseXmlProp(ref object instance, IDefService service, XmlNode propNode, Type type, XmlNode node) {
+		if (propNode.NodeType == XmlNodeType.Comment) {
+			return new Stack<DefLink>();
+		}
+
+		PropertyInfo? prop = type.GetProperty(propNode.Name, TypeChecker.DEF_PROP_BINDINGS);
+		if (prop == null || !type.GetDefProps().Contains(prop)) {
+			throw new MissingFieldException(type.ToString(), propNode.Name);
+		}
+
+		return prop.PropertyType.IsList(out Type? listType)
+			// Load list elements individually.
+			? ParseList(ref instance, service, prop, node, propNode, listType)
+			// Load single values.
+			: ParseSingle(ref instance, service, prop, node, propNode);
 	}
 
 	/// <summary>
@@ -222,7 +234,7 @@ public static class DefParser {
 	/// <param name="listNode">Top-level XML node containing all the list items as children.</param>
 	/// <param name="listType">Generic type of the list property.</param>
 	/// <returns>Collection of <see cref="DefLink"/>s that will need to be resolved to fully load the list elements.</returns>
-	private static IEnumerable<DefLink> ParseList(ref object instance, IDefService service, PropertyInfo prop, XmlNode defNode, XmlNode listNode, Type listType) {
+	private static Stack<DefLink> ParseList(ref object instance, IDefService service, PropertyInfo prop, XmlNode defNode, XmlNode listNode, Type listType) {
 		IList typedList = (Activator.CreateInstance(typeof(List<>).MakeGenericType(listType)) as IList)!;
 		prop.SetValue(instance, typedList);
 
@@ -255,7 +267,7 @@ public static class DefParser {
 			}
 		}
 
-		return links.ToList();
+		return links;
 	}
 	/// <summary>
 	/// Loads a single object from XML.
