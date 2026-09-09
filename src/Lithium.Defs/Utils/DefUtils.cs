@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace Lithium.Defs.Utils;
@@ -6,6 +10,15 @@ namespace Lithium.Defs.Utils;
 /// Utility methods for Defs.
 /// </summary>
 public static partial class DefUtils {
+	/// <summary>
+	/// Gets all applicable properties of a Def.
+	/// </summary>
+	/// <param name="target">The type to get properties from.</param>
+	/// <returns>Collection of settable properties.</returns>
+	internal static IEnumerable<PropertyInfo> GetDefProps(this Type target) {
+		return target.GetProperties(TypeChecker.DEF_PROP_BINDINGS).Where(p => p.SetMethod != null);
+	}
+
 	/// <summary>
 	/// Determines whether a Def is only a temporary instance by checking if its key contains a <c>^</c> character.
 	/// </summary>
