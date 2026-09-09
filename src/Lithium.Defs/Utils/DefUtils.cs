@@ -16,7 +16,7 @@ public static partial class DefUtils {
 	/// <param name="target">The type to get properties from.</param>
 	/// <returns>Collection of settable properties.</returns>
 	internal static IEnumerable<PropertyInfo> GetDefProps(this Type target) {
-		return target.GetProperties(TypeChecker.DEF_PROP_BINDINGS).Where(p => p.SetMethod != null);
+		return target.GetProperties(TypeChecker.DEF_PROP_BINDINGS).Where(p => p.SetMethod != null).Where(p => p.Name != Constants.DEF_ID_PROP);
 	}
 
 	/// <summary>
