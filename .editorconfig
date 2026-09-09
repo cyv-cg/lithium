@@ -29,7 +29,12 @@ dotnet_style_prefer_collection_expression = false
 dotnet_style_prefer_conditional_expression_over_return = false
 dotnet_style_coalesce_expression = false
 csharp_style_prefer_primary_constructors = false;
-dotnet_style_require_accessibility_modifiers = for_non_interface_members
+dotnet_style_require_accessibility_modifiers = always
+csharp_style_prefer_implicitly_typed_lambda_expression = false
+dotnet_style_prefer_conditional_expression_over_assignment = false
+
+csharp_style_prefer_pattern_matching = false
+csharp_style_pattern_matching_over_as_with_null_check = false
 
 dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity
 dotnet_style_parentheses_in_other_binary_operators = always_for_clarity
@@ -44,3 +49,6 @@ dotnet_diagnostic.IDE0090.severity = none
 dotnet_diagnostic.IDE0005.severity = warning
 # Formatting rule
 dotnet_diagnostic.IDE0055.severity = none
+
+# IDE0320: Make anonymous function static
+dotnet_diagnostic.IDE0320.severity = silent
