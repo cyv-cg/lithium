@@ -189,13 +189,6 @@ public class DefParserTests {
 				Assert.Empty(def.ListField);
 			},
 			d => {
-				MockDef18 def = (d as MockDef18)!;
-
-				Assert.Equal("MockDef-Interface", def.Key);
-				Assert.NotNull(def.Interface);
-				Assert.Equal(45, def.Interface.Test());
-			},
-			d => {
 				MockDef13 def = (d as MockDef13)!;
 
 				Assert.Equal("MockDef-Self-Reference", d.Key);
@@ -588,6 +581,50 @@ public class DefParserTests {
 		Exception ex = Assert.Throws<DefValidationException>(
 			() => _ = service.LoadDef<MockDef17>("SampleDefKey")
 		);
+		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that ParseDef loads an interface property.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest25() {
+		XmlDocument doc = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(19), "valid.xml"));
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		MockDef18 def = service.LoadDef<MockDef18>("MockDef-Interface")!;
+
+		Assert.NotNull(def.Interface);
+		Assert.Equal(45, def.Interface.Test());
+	}
+	/// <summary>
+	/// Tests that ParseDef throws an error if the supplied type does not implement the specified interface.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest26() {
+		XmlDocument doc = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(19), "invalid-inheritance.xml"));
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		Exception ex = Assert.Throws<DefInheritanceException>(
+			() => service.LoadDef<MockDef18>("MockDef-Interface")
+		);
+
+		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that ParseDef throws an error if a supplied interface implementation type could not be resolved.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest27() {
+		XmlDocument doc = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(19), "invalid-type.xml"));
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		Exception ex = Assert.Throws<UnresolvedTypeException>(
+			() => service.LoadDef<MockDef18>("MockDef-Interface")
+		);
+
 		Assert.NotNull(ex);
 	}
 	#endregion
