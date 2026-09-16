@@ -125,4 +125,10 @@
 		<DefList>
 		</DefList>
 	</Def>
+
+	<Def Class="Lithium.Defs.Tests.MockDef18">
+		<Key>MockDef-Interface</Key>
+		<Label>MockDef_Label</Label>
+		<Interface>Lithium.Defs.Tests.MockInterfaceImplementation</Interface>
+	</Def>
 </Defs>

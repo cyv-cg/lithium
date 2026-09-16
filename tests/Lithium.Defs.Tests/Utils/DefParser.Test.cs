@@ -189,6 +189,13 @@ public class DefParserTests {
 				Assert.Empty(def.ListField);
 			},
 			d => {
+				MockDef18 def = (d as MockDef18)!;
+
+				Assert.Equal("MockDef-Interface", def.Key);
+				Assert.NotNull(def.Interface);
+				Assert.Equal(45, def.Interface.Test());
+			},
+			d => {
 				MockDef13 def = (d as MockDef13)!;
 
 				Assert.Equal("MockDef-Self-Reference", d.Key);
