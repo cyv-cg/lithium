@@ -351,8 +351,8 @@ public static class DefParser {
 			return LoadFactory(node, factory);
 		}
 		// Parse enum values.
-		else if (type.IsEnum()) {
-			return LoadEnum(defNode, node, type);
+		else if (type.IsEnum(out bool flags)) {
+			return LoadEnum(defNode, node, type, flags);
 		}
 		// Special case for System.Type.
 		else if (type.IsType()) {
@@ -385,14 +385,28 @@ public static class DefParser {
 	/// <param name="defNode">XML node containing the def data.</param>
 	/// <param name="node">XML node containing the enum value as a string.</param>
 	/// <param name="type">Type of the enum to parse.</param>
+	/// <param name="flags">Whether the enum is a flags enum.</param>
 	/// <returns>Parsed enum value.</returns>
 	/// <exception cref="PropertyLoadException">Thrown if the string could not be matched to an enum value.</exception>
-	private static object LoadEnum(XmlNode defNode, XmlNode node, Type type) {
-		if (Enum.TryParse(type, node.InnerText, out object? value)) {
-			return value;
+	private static object LoadEnum(XmlNode defNode, XmlNode node, Type type, bool flags) {
+		if (flags && node.HasChildNodes) {
+			ulong value = 0;
+			foreach (XmlNode li in node.ChildNodes) {
+				if (li.NodeType == XmlNodeType.Comment) {
+					continue;
+				}
+				object @enum = LoadEnum(defNode, li, type, false);
+				value |= Convert.ToUInt64(@enum);
+			}
+			return Enum.ToObject(type, value);
 		}
 		else {
-			throw new PropertyLoadException(DefXMLUtils.GetDefKey(defNode), node.Name, node.InnerText, type);
+			if (Enum.TryParse(type, node.InnerText, out object? value)) {
+				return value;
+			}
+			else {
+				throw new PropertyLoadException(DefXMLUtils.GetDefKey(defNode), node.Name, node.InnerText, type);
+			}
 		}
 	}
 	/// <summary>
