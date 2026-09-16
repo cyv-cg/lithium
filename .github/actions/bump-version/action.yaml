@@ -1,0 +1,105 @@
+name: Bump Version
+description: Bumps the `version` field inside a JSON file (e.g. package/version.json) based on a PR label.
+
+inputs:
+  version-file:
+    description: Path to the JSON file containing a top-level `version` string.
+    required: true
+    default: package/version.json
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Ensure jq
+      shell: bash
+      run: |
+        if ! command -v jq >/dev/null 2>&1; then
+          sudo apt-get update
+          sudo apt-get install -y jq
+        fi
+
+    - name: Bump version file
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        FILE="${{ inputs.version-file }}"
+
+        if [ -n "${GITHUB_EVENT_PATH:-}" ] && [ -f "$GITHUB_EVENT_PATH" ]; then
+          labels_list="$(jq -r '.label.name // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)\n$(jq -r '.pull_request.labels[]?.name // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)"
+
+          if echo "$labels_list" | grep -E -i '^(breaking|major)$' >/dev/null 2>&1; then
+            LABEL=breaking
+          elif echo "$labels_list" | grep -E -i '^enhancement$' >/dev/null 2>&1; then
+            LABEL=enhancement
+          else
+            LABEL=""
+          fi
+        fi
+
+        echo "Detected label: $LABEL"
+        if [ "$LABEL" = "enhancement" ]; then
+          BUMP=minor
+        elif [ "$LABEL" = "breaking" ] || [ "$LABEL" = "major" ]; then
+          BUMP=major
+        else
+          BUMP=none
+        fi
+
+        if [ "$BUMP" = "none" ]; then
+          echo "No bump required for label '$LABEL'"
+          exit 0
+        fi
+
+        if [ ! -f "$FILE" ]; then
+          echo "File $FILE not found"
+          exit 1
+        fi
+
+        version=$(jq -r '.version' "$FILE")
+        if [ "$version" = "null" ] || [ -z "$version" ]; then
+          echo "No top-level string field named \"version\" in $FILE"
+          exit 1
+        fi
+
+        IFS='.' read -r major minor <<< "$version"
+        major=${major:-0}
+        minor=${minor:-0}
+
+        old="$major.$minor"
+
+        if [ "$BUMP" = "major" ]; then
+          major=$((major+1))
+          minor=0
+        else
+          minor=$((minor+1))
+        fi
+
+        new="$major.$minor"
+
+        tmp=$(mktemp)
+        jq --arg v "$new" '.version = $v' "$FILE" > "$tmp" && mv "$tmp" "$FILE"
+
+        if [ -z "${GITHUB_ACTOR:-}" ]; then
+          GIT_USER="github-actions[bot]"
+          GIT_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+        else
+          GIT_USER="$GITHUB_ACTOR"
+          GIT_EMAIL="$GITHUB_ACTOR@users.noreply.github.com"
+        fi
+        git config user.name "$GIT_USER"
+        git config user.email "$GIT_EMAIL"
+
+        COMMIT_MSG="ci: bump $FILE from $old to $new"
+
+        git add "$FILE"
+        if git commit -m "$COMMIT_MSG" --no-verify; then
+          git push
+        else
+          echo "No changes to commit"
+        fi
