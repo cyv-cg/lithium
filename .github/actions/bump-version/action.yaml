@@ -6,6 +6,10 @@ inputs:
     description: Path to the JSON file containing a top-level `version` string.
     required: true
     default: package/version.json
+  label:
+    description: Optional label to determine bump behavior (e.g. enhancement, breaking, major). If provided it overrides reading the event payload.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -30,7 +34,8 @@ runs:
 
         FILE="${{ inputs.version-file }}"
 
-        if [ -n "${GITHUB_EVENT_PATH:-}" ] && [ -f "$GITHUB_EVENT_PATH" ]; then
+        LABEL="${{ inputs.label }}"
+        if [ -z "$LABEL" ] && [ -n "${GITHUB_EVENT_PATH:-}" ] && [ -f "$GITHUB_EVENT_PATH" ]; then
           labels_list="$(jq -r '.label.name // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)\n$(jq -r '.pull_request.labels[]?.name // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)"
 
           if echo "$labels_list" | grep -E -i '^(breaking|major)$' >/dev/null 2>&1; then
