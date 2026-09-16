@@ -1,0 +1,7 @@
+<Defs>
+	<Def Class="Lithium.Defs.Tests.MockDef18">
+		<Key>MockDef-Interface</Key>
+		<Label>MockDef_Label</Label>
+		<Interface>Lithium.Defs.Tests.type-that-does-not-exist</Interface>
+	</Def>
+</Defs>
