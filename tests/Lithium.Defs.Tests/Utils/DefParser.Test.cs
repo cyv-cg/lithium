@@ -583,6 +583,25 @@ public class DefParserTests {
 		);
 		Assert.NotNull(ex);
 	}
+	/// <summary>
+	/// Tests that ParseDef can load a Def with enum flags.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest25() {
+		_ = service.RegisterResource(Init.MockDirectory(19), out _);
+		service.Reload();
+
+		MockDef18 def1 = service.LoadDef<MockDef18>("MockDef1")!;
+		MockDef18 def2 = service.LoadDef<MockDef18>("MockDef2")!;
+
+		Assert.NotNull(def1);
+		Assert.Equal(5, (int)def1.EnumFlags);
+		Assert.Equal(0, (int)def1.Enum);
+
+		Assert.NotNull(def2);
+		Assert.Equal(0, (int)def2.EnumFlags);
+		Assert.Equal(8, (int)def2.Enum);
+	}
 	#endregion
 
 	#region LoadFactory tests

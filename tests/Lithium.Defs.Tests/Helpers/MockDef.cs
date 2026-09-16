@@ -72,6 +72,18 @@ public class MockDef17 : Def {
 		return false;
 	}
 }
+public class MockDef18 : Def {
+	public Values EnumFlags { get; init; }
+	public Values Enum { get; init; }
+
+	[Flags]
+	public enum Values {
+		VAL1 = 1,
+		VAL2 = 2,
+		VAL3 = 4,
+		VAL4 = 8,
+	}
+}
 
 public enum MockEnum {
 	VALUE1,
