@@ -132,9 +132,20 @@ internal static class TypeChecker {
 	/// Checks if the type is an enum.
 	/// </summary>
 	/// <param name="type">Type to check.</param>
+	/// <param name="isFlagEnum">True if the type is an enum with the <see cref="FlagsAttribute"/> attribute.</param>
 	/// <returns>True if the type is an enum.</returns>
-	internal static bool IsEnum(this Type type) {
-		return type.IsEnum;
+	internal static bool IsEnum(this Type type, out bool isFlagEnum) {
+		bool isEnum = type.IsEnum;
+		isFlagEnum = isEnum && type.IsDefined(typeof(FlagsAttribute), false);
+		return isEnum;
+	}
+	/// <summary>
+	/// Checks if the type is an interface.
+	/// </summary>
+	/// <param name="type">Type to check.</param>
+	/// <returns>True if the type is an interface.</returns>
+	internal static bool IsInterface(this Type type) {
+		return type.IsInterface;
 	}
 	/// <summary>
 	/// Checks if the type is <c>System.Type</c>.
