@@ -1,0 +1,66 @@
+name: Detect Changed Assemblies
+description: Detect which assemblies under src/ changed between two commit SHAs.
+
+inputs:
+  before:
+    description: The base commit SHA (github.event.before)
+    required: true
+  sha:
+    description: The head commit SHA (github.sha)
+    required: true
+
+outputs:
+  changed:
+    description: Space-separated list of changed assemblies (Lithium.Core Lithium.Defs Lithium.Strings)
+  label:
+    description: Chosen PR label (breaking or enhancement) or empty
+
+runs:
+  using: composite
+  steps:
+    - name: Ensure jq
+      shell: bash
+      run: |
+        if ! command -v jq >/dev/null 2>&1; then
+          sudo apt-get update
+          sudo apt-get install -y jq
+        fi
+
+    - name: Detect changed assemblies and PR label
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        BEFORE="${{ inputs.before }}"
+        SHA="${{ inputs.sha }}"
+
+        echo "Computing changed files between $BEFORE and $SHA"
+        files=$(git diff --name-only "$BEFORE" "$SHA" || true)
+        changed=""
+        if echo "$files" | grep -E '^src/Lithium.Core/' >/dev/null; then
+          changed="$changed Lithium.Core"
+        fi
+        if echo "$files" | grep -E '^src/Lithium.Defs/' >/dev/null; then
+          changed="$changed Lithium.Defs"
+        fi
+        if echo "$files" | grep -E '^src/Lithium.Strings/' >/dev/null; then
+          changed="$changed Lithium.Strings"
+        fi
+        changed="$(echo "$changed" | sed 's/^ //')"
+        echo "changed=$changed" >> $GITHUB_OUTPUT
+
+        # If this is a pull_request event, read all labels and choose by precedence:
+        # breaking|major -> breaking (major bump), else enhancement -> minor bump.
+        LABEL=""
+        if [ "${GITHUB_EVENT_NAME:-}" = "pull_request" ] && [ -n "${GITHUB_EVENT_PATH:-}" ] && [ -f "$GITHUB_EVENT_PATH" ]; then
+          labels_list="$(jq -r '.label.name // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)\n$(jq -r '.pull_request.labels[]?.name // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)"
+
+          if echo "$labels_list" | grep -E -i '^(breaking|major)$' >/dev/null 2>&1; then
+            LABEL=breaking
+          elif echo "$labels_list" | grep -E -i '^enhancement$' >/dev/null 2>&1; then
+            LABEL=enhancement
+          else
+            LABEL=""
+          fi
+        fi
+        echo "label=$LABEL" >> $GITHUB_OUTPUT

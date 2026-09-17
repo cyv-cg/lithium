@@ -140,6 +140,14 @@ internal static class TypeChecker {
 		return isEnum;
 	}
 	/// <summary>
+	/// Checks if the type is an interface.
+	/// </summary>
+	/// <param name="type">Type to check.</param>
+	/// <returns>True if the type is an interface.</returns>
+	internal static bool IsInterface(this Type type) {
+		return type.IsInterface;
+	}
+	/// <summary>
 	/// Checks if the type is <c>System.Type</c>.
 	/// </summary>
 	/// <param name="type">Type to check.</param>

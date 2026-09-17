@@ -1,5 +1,5 @@
 <Defs>
-	<Def Class="Lithium.Defs.Tests.MockDef18">
+	<Def Class="Lithium.Defs.Tests.MockDef19">
 		<Key>MockDef1</Key>
 		<Label>MockDef_Label</Label>
 		<EnumFlags>
@@ -8,7 +8,7 @@
 			<li>VAL3</li>
 		</EnumFlags>
 	</Def>
-	<Def Class="Lithium.Defs.Tests.MockDef18">
+	<Def Class="Lithium.Defs.Tests.MockDef19">
 		<Key>MockDef2</Key>
 		<Label>MockDef_Label</Label>
 		<Enum>VAL4</Enum>

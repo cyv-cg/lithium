@@ -584,15 +584,59 @@ public class DefParserTests {
 		Assert.NotNull(ex);
 	}
 	/// <summary>
-	/// Tests that ParseDef can load a Def with enum flags.
+	/// Tests that ParseDef loads an interface property.
 	/// </summary>
 	[Fact]
 	public void ParseDefTest25() {
-		_ = service.RegisterResource(Init.MockDirectory(19), out _);
+		XmlDocument doc = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(19), "valid.xml"));
+		_ = service.RegisterResource(doc, out _);
 		service.Reload();
 
-		MockDef18 def1 = service.LoadDef<MockDef18>("MockDef1")!;
-		MockDef18 def2 = service.LoadDef<MockDef18>("MockDef2")!;
+		MockDef18 def = service.LoadDef<MockDef18>("MockDef-Interface")!;
+
+		Assert.NotNull(def.Interface);
+		Assert.Equal(45, def.Interface.Test());
+	}
+	/// <summary>
+	/// Tests that ParseDef throws an error if the supplied type does not implement the specified interface.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest26() {
+		XmlDocument doc = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(19), "invalid-inheritance.xml"));
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		Exception ex = Assert.Throws<DefInheritanceException>(
+			() => service.LoadDef<MockDef18>("MockDef-Interface")
+		);
+
+		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that ParseDef throws an error if a supplied interface implementation type could not be resolved.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest27() {
+		XmlDocument doc = XmlLoader.LoadDocument(Path.Combine(Init.MockDirectory(19), "invalid-type.xml"));
+		_ = service.RegisterResource(doc, out _);
+		service.Reload();
+
+		Exception ex = Assert.Throws<UnresolvedTypeException>(
+			() => service.LoadDef<MockDef18>("MockDef-Interface")
+		);
+
+		Assert.NotNull(ex);
+	}
+	/// <summary>
+	/// Tests that ParseDef can load a Def with enum flags.
+	/// </summary>
+	[Fact]
+	public void ParseDefTest28() {
+		_ = service.RegisterResource(Init.MockDirectory(20), out _);
+		service.Reload();
+
+		MockDef19 def1 = service.LoadDef<MockDef19>("MockDef1")!;
+		MockDef19 def2 = service.LoadDef<MockDef19>("MockDef2")!;
 
 		Assert.NotNull(def1);
 		Assert.Equal(5, (int)def1.EnumFlags);
