@@ -21,6 +21,10 @@ jobs:
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
 
+    outputs:
+      changed: ${{ steps.detect-changed.outputs.changed }}
+      pr-label: ${{ steps.detect-changed.outputs.label }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -74,6 +78,13 @@ jobs:
           recreate: true
           path: code-coverage-results.md
 
+      - name: Detect changed assemblies and PR label
+        id: detect-changed
+        uses: ./.github/actions/detect-changed
+        with:
+          before: ${{ github.event.before }}
+          sha: ${{ github.sha }}
+
   pack-and-upload:
     needs: test
     if: ${{ needs.test.result == 'success' && github.event_name == 'push' }}
@@ -91,6 +102,33 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: "9.0.x"
+
+      - name: Bump package version
+        uses: ./.github/actions/bump-version
+        with:
+          version-file: "package/version.json"
+          label: ${{ needs.test.outputs.pr-label }}
+
+      - name: Bump Core version
+        if: ${{ contains(needs.test.outputs.changed, 'Lithium.Core') && needs.test.outputs.pr-label != '' }}
+        uses: ./.github/actions/bump-version
+        with:
+          version-file: "src/Lithium.Core/version.json"
+          label: ${{ needs.test.outputs.pr-label }}
+
+      - name: Bump Defs version
+        if: ${{ contains(needs.test.outputs.changed, 'Lithium.Defs') && needs.test.outputs.pr-label != '' }}
+        uses: ./.github/actions/bump-version
+        with:
+          version-file: "src/Lithium.Defs/version.json"
+          label: ${{ needs.test.outputs.pr-label }}
+
+      - name: Bump Strings version
+        if: ${{ contains(needs.test.outputs.changed, 'Lithium.Strings') && needs.test.outputs.pr-label != '' }}
+        uses: ./.github/actions/bump-version
+        with:
+          version-file: "src/Lithium.Strings/version.json"
+          label: ${{ needs.test.outputs.pr-label }}
 
       - name: Install NBGV
         run: dotnet tool install -g nbgv

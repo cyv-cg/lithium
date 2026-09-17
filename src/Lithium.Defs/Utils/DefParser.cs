@@ -351,8 +351,12 @@ public static class DefParser {
 			return LoadFactory(node, factory);
 		}
 		// Parse enum values.
-		else if (type.IsEnum()) {
-			return LoadEnum(defNode, node, type);
+		else if (type.IsEnum(out bool flags)) {
+			return LoadEnum(defNode, node, type, flags);
+		}
+		// Parse interface implementation.
+		else if (type.IsInterface()) {
+			return LoadInterface(defNode, node, prop, type);
 		}
 		// Special case for System.Type.
 		else if (type.IsType()) {
@@ -385,15 +389,51 @@ public static class DefParser {
 	/// <param name="defNode">XML node containing the def data.</param>
 	/// <param name="node">XML node containing the enum value as a string.</param>
 	/// <param name="type">Type of the enum to parse.</param>
+	/// <param name="flags">Whether the enum is a flags enum.</param>
 	/// <returns>Parsed enum value.</returns>
 	/// <exception cref="PropertyLoadException">Thrown if the string could not be matched to an enum value.</exception>
-	private static object LoadEnum(XmlNode defNode, XmlNode node, Type type) {
-		if (Enum.TryParse(type, node.InnerText, out object? value)) {
-			return value;
+	private static object LoadEnum(XmlNode defNode, XmlNode node, Type type, bool flags) {
+		if (flags && node.HasChildNodes) {
+			ulong value = 0;
+			foreach (XmlNode li in node.ChildNodes) {
+				if (li.NodeType == XmlNodeType.Comment) {
+					continue;
+				}
+				object @enum = LoadEnum(defNode, li, type, false);
+				value |= Convert.ToUInt64(@enum);
+			}
+			return Enum.ToObject(type, value);
 		}
 		else {
-			throw new PropertyLoadException(DefXMLUtils.GetDefKey(defNode), node.Name, node.InnerText, type);
+			if (Enum.TryParse(type, node.InnerText, out object? value)) {
+				return value;
+			}
+			else {
+				throw new PropertyLoadException(DefXMLUtils.GetDefKey(defNode), node.Name, node.InnerText, type);
+			}
 		}
+	}
+	/// <summary>
+	/// Loads an interface implementation from an XML node.
+	/// </summary>
+	/// <param name="defNode">XML node containing the def data.</param>
+	/// <param name="node">XML node containing the interface implementation name as a string.</param>
+	/// <param name="prop">PropertyInfo of the property being set.</param>
+	/// <param name="interfaceType">Type of the interface to implement.</param>
+	/// <returns>Instance of the implementing class.</returns>
+	/// <exception cref="UnresolvedTypeException">Thrown if the specified implementation type could not be resolved.</exception>
+	/// <exception cref="DefInheritanceException">Thrown if the implementation type does not implement the required interface.</exception>
+	private static object LoadInterface(XmlNode defNode, XmlNode node, PropertyInfo prop, Type interfaceType) {
+		Type? implementingType = TypeChecker.ResolveType(node.InnerText);
+		if (implementingType == null) {
+			throw new UnresolvedTypeException(node.InnerText);
+		}
+
+		if (!interfaceType.IsAssignableFrom(implementingType)) {
+			throw new DefInheritanceException(DefXMLUtils.GetDefKey(defNode), prop.Name, interfaceType, implementingType);
+		}
+
+		return Activator.CreateInstance(implementingType)!;
 	}
 	/// <summary>
 	/// Loads a System.Type value from an XML node, with inheritance enforcement.

@@ -72,6 +72,21 @@ public class MockDef17 : Def {
 		return false;
 	}
 }
+public class MockDef18 : Def {
+	public required IMockDefInterface Interface { get; init; }
+}
+public class MockDef19 : Def {
+	public Values EnumFlags { get; init; }
+	public Values Enum { get; init; }
+
+	[Flags]
+	public enum Values {
+		VAL1 = 1,
+		VAL2 = 2,
+		VAL3 = 4,
+		VAL4 = 8,
+	}
+}
 
 public enum MockEnum {
 	VALUE1,
@@ -89,6 +104,15 @@ public class MockDefDataClass {
 }
 public class MockDataClassWithRequirement {
 	public required int Value { get; set; }
+}
+
+public interface IMockDefInterface {
+	public int Test();
+}
+public class MockInterfaceImplementation : IMockDefInterface {
+	public int Test() {
+		return 45;
+	}
 }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
